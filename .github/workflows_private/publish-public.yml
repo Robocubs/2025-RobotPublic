@@ -1,0 +1,45 @@
+# Thanks to FRC 6328 for the original version of this script
+name: Public Release
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 10 * * *" # 10:00 UTC
+
+jobs:
+  build:
+    name: Public Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout private repository
+        uses: actions/checkout@v4
+        with:
+          repository: Robocubs/2025-RobotPrivate
+          path: code-private
+      - name: Checkout public repository
+        uses: actions/checkout@v4
+        with:
+          repository: Robocubs/2025-RobotPublic
+          path: code-public
+      - name: Configure user
+        run: |
+          git config --global user.email "github@robocubs.com"
+          git config --global user.name "Robocubs-Bot"
+      - name: Copy files to public
+        run: |
+          rm code-private/README.md
+          mv code-private/README-Public.md code-private/README.md
+          mv code-private/.github/workflows code-private/.github/workflows_private
+          rsync -av --delete code-private/ code-public --exclude .git
+      - name: Create public commit
+        working-directory: code-public
+        run: |
+          git add -A
+          git diff-index --quiet HEAD || git commit -m "Publish on `TZ=":US/Eastern" date +"%D at %I:%M%p %Z"`" -m "Check the repository README for details. Contact software@team6328.org with any questions."
+      - name: Push public commit
+        working-directory: code-public
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          git config --unset-all http.https://github.com/.extraheader
+          git push --set-upstream https://Robocubs-Bot:$GITHUB_TOKEN@github.com/Robocubs/2025-RobotPublic main
