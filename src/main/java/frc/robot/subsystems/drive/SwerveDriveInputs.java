@@ -9,6 +9,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.struct.StructSerializable;
 import edu.wpi.first.wpilibj.Timer;
+import frc.robot.subsystems.drive.struct.SwerveDriveInputsStruct;
 
 public class SwerveDriveInputs implements StructSerializable {
     public final Pose2d pose;

@@ -13,6 +13,9 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIO;
 import frc.robot.subsystems.drive.DriveIOHardware;
 import frc.robot.subsystems.drive.DriveIOSim;
+import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.arm.ArmIO;
+import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
 import frc.robot.util.TriggeredAlert;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
@@ -23,12 +26,14 @@ public class RobotContainer {
     // Subsystems
     private final RobotState robotState;
     private final Drive drive;
+    private final Superstructure superstructure;
 
     // state triggers
     private final Trigger teleop = RobotModeTriggers.teleop();
 
     public RobotContainer() {
         Drive drive = null;
+        Superstructure superstructure = null;
 
         this.robotState = new RobotState();
 
@@ -46,9 +51,11 @@ public class RobotContainer {
 
         if (drive == null) {
             drive = new Drive(new DriveIO() {}, robotState);
+            superstructure = new Superstructure(new ElevatorIO() {}, new ArmIO() {}, robotState);
         }
 
         this.drive = drive;
+        this.superstructure = superstructure;
 
         configureBindings();
     }

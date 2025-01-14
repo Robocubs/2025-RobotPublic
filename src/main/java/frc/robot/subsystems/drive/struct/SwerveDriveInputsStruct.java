@@ -1,4 +1,4 @@
-package frc.robot.subsystems.drive;
+package frc.robot.subsystems.drive.struct;
 
 import java.nio.ByteBuffer;
 
@@ -8,6 +8,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.struct.Struct;
+import frc.robot.subsystems.drive.SwerveDriveInputs;
 
 public class SwerveDriveInputsStruct implements Struct<SwerveDriveInputs> {
     @Override

@@ -59,6 +59,9 @@
     "edu.wpi.first.math.proto.*",
     "edu.wpi.first.math.**.proto.*",
     "edu.wpi.first.math.**.struct.*",
-    null
+    null,
+    "java.util.logging.*",
+    "java.lang.System.Logger",
+    "edu.wpi.first.wpilibj.RobotState"
   ]
 }
