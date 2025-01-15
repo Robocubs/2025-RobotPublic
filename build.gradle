@@ -3,6 +3,7 @@ plugins {
     id "edu.wpi.first.GradleRIO" version "2025.1.1"
     id "com.peterabeles.gversion" version "1.10"
     id "com.diffplug.spotless" version "6.25.0"
+    id 'com.google.protobuf' version '0.9.4'
 }
 
 java {
@@ -215,4 +216,28 @@ spotless {
 // Task groups
 task lint() {
     dependsOn System.getenv('CI') ? spotlessCheck : spotlessApply
+}
+
+//Protobuf generation
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.21.12'
+    }
+    plugins {
+        quickbuf {
+            artifact = 'us.hebi.quickbuf:protoc-gen-quickbuf:1.3.3'
+        }
+    }
+    generateProtoTasks {
+        all().configureEach { task ->
+            task.builtins {
+                remove java
+            }
+            task.plugins {
+                quickbuf {
+                    option "gen_descriptors=true"
+                }
+            }
+        }
+    }
 }

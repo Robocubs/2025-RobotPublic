@@ -1,14 +1,17 @@
 package frc.robot;
 
+import choreo.auto.AutoChooser;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Mode;
+import frc.robot.autonomous.AutoRoutines;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIO;
 import frc.robot.subsystems.drive.DriveIOHardware;
@@ -16,23 +19,29 @@ import frc.robot.subsystems.drive.DriveIOSim;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.arm.ArmIO;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
+import frc.robot.subsystems.vision.Vision;
+import frc.robot.subsystems.vision.VisionConstants;
+import frc.robot.subsystems.vision.apriltag.AprilTagIO;
+import frc.robot.subsystems.vision.apriltag.AprilTagIOSim;
 import frc.robot.util.TriggeredAlert;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class RobotContainer {
     private final CommandXboxController driverController = new CommandXboxController(0);
+    private final choreo.auto.AutoChooser autoChooser = new AutoChooser();
 
     // Subsystems
     private final RobotState robotState;
     private final Drive drive;
     private final Superstructure superstructure;
 
-    // state triggers
+    // State triggers
     private final Trigger teleop = RobotModeTriggers.teleop();
 
     public RobotContainer() {
         Drive drive = null;
+        Vision vision = null;
         Superstructure superstructure = null;
 
         this.robotState = new RobotState();
@@ -42,9 +51,14 @@ public class RobotContainer {
                 case COMP_BOT:
                     drive = new Drive(new DriveIOHardware(), robotState);
                     break;
-
                 case SIM_BOT:
                     drive = new Drive(new DriveIOSim(), robotState);
+                    vision = new Vision(
+                            new AprilTagIO[] {
+                                new AprilTagIOSim(VisionConstants.frontAprilTagConfig, robotState),
+                                new AprilTagIOSim(VisionConstants.backAprilTagConfig, robotState)
+                            },
+                            robotState);
                     break;
             }
         }
@@ -54,10 +68,15 @@ public class RobotContainer {
             superstructure = new Superstructure(new ElevatorIO() {}, new ArmIO() {}, robotState);
         }
 
+        if (vision == null) {
+            vision = new Vision(new AprilTagIO[] {}, robotState);
+        }
+
         this.drive = drive;
         this.superstructure = superstructure;
 
         configureBindings();
+        configureAutoRoutines();
     }
 
     private void configureBindings() {
@@ -86,7 +105,16 @@ public class RobotContainer {
         driverController.x().whileTrue(drive.toPose(() -> new Pose2d(8.33, 4, Rotation2d.kCCW_90deg), false));
     }
 
+    private void configureAutoRoutines() {
+        var autoRoutines = new AutoRoutines(robotState, drive);
+
+        autoChooser.addRoutine("Demo", autoRoutines::demoAuto);
+
+        SmartDashboard.putData("Auto Chooser", autoChooser);
+        autoChooser.select("Demo");
+    }
+
     public Command getAutonomousCommand() {
-        return print("No autonomous command");
+        return autoChooser.selectedCommand();
     }
 }

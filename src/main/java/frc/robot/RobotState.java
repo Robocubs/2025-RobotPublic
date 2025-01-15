@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.DriveMeasurement;
+import frc.robot.subsystems.vision.VisionMeasurement;
 import org.littletonrobotics.junction.AutoLogOutput;
 
 public class RobotState {
@@ -74,6 +75,12 @@ public class RobotState {
 
         robotVelocity = measurements[measurements.length - 1].chassisSpeeds;
         fieldVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(robotVelocity, getHeading());
+    }
+
+    public void addVisionMeasurements(VisionMeasurement... measurements) {
+        for (var measurement : measurements) {
+            poseEstimator.addVisionMeasurement(measurement.pose.toPose2d(), measurement.timestampSeconds);
+        }
     }
 
     public void resetPose(Pose2d pose) {

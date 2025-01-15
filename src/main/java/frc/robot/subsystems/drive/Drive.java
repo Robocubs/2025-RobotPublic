@@ -9,6 +9,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -24,6 +25,7 @@ public class Drive extends SubsystemBase {
     // Swerve drive requests
     private final SwerveRequest.SwerveDriveBrake brakeRequest = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt pointRequest = new SwerveRequest.PointWheelsAt();
+    private final SwerveRequest.ApplyRobotSpeeds robotRequest = new SwerveRequest.ApplyRobotSpeeds();
 
     private final DriveIO io;
     private final DriveIOInputsAutoLogged inputs = new DriveIOInputsAutoLogged();
@@ -86,6 +88,10 @@ public class Drive extends SubsystemBase {
                     odometryPoseLastReset = Logger.getTimestamp();
                 })
                 .withName("DriveResetRotation");
+    }
+
+    public Command withSpeeds(ChassisSpeeds chassisSpeeds) {
+        return run(() -> io.setControl(robotRequest.withSpeeds(chassisSpeeds))).withName("DriveWithSpeeds");
     }
 
     public Command withJoysticks(DoubleSupplier throttle, DoubleSupplier strafe, DoubleSupplier rotation) {
