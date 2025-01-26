@@ -2,6 +2,7 @@ package frc.robot.subsystems.superstructure.elevator;
 
 import java.util.Optional;
 
+import edu.wpi.first.math.MathUtil;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -53,30 +54,37 @@ public class Elevator {
     }
 
     public void setGoal(Goal goal) {
-        /*
-         * TODO: Control the elevator to move to the specified goal
-         * 1. Set the goal to the specified goal
-         * 2. Set the position on the IO
-         *
-         * If the goal is HOLD, set the position to the current measured value.
-         * Make sure that this position does not change if the goal is already HOLD.
-         */
+        this.goal = goal;
+        if (goal == Goal.HOLD) {
+            if (holdPosition.isEmpty()) {
+                holdPosition = Optional.of(inputs.position);
+            }
+
+            io.setPosition(holdPosition.get());
+            return;
+        }
+
+        holdPosition = Optional.empty();
+
+        if (goal == Goal.STOP) {
+            io.stop();
+            return;
+        }
+
+        io.setPosition(goal.position);
     }
 
     public void stop() {
-        // TODO: Stop the elevator from moving
-        // Set the goal to STOP
+        setGoal(Goal.STOP);
     }
 
     @AutoLogOutput
     public boolean atGoal() {
-        // TODO: Return whether the elevator is at the goal within the tolerance set in ElevatorConstants
-        return false;
+        return atGoal(this.goal);
     }
 
     @AutoLogOutput
     public boolean atGoal(Goal goal) {
-        // TODO: Return whether the elevator is at the supplied goal within the tolerance set in ElevatorConstants
-        return false;
+        return MathUtil.isNear(this.inputs.position, goal.position, positionTolerance);
     }
 }
