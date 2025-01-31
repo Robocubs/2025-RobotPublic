@@ -1,6 +1,9 @@
 package frc.robot;
 
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.RobotBase;
+
+import static edu.wpi.first.units.Units.*;
 
 public final class Constants {
     private static final Mode simMode = Mode.SIM;
@@ -20,4 +23,6 @@ public final class Constants {
         REPLAY,
         SIM
     }
+
+    public static final Time mainLoopPeriod = Milliseconds.of(20);
 }

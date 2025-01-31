@@ -2,47 +2,23 @@ package frc.robot.subsystems.superstructure.elevator;
 
 import java.util.Optional;
 
-import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Force;
+import edu.wpi.first.units.measure.LinearVelocity;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
+import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.superstructure.elevator.ElevatorConstants.*;
 
 public class Elevator {
     private final ElevatorIO io;
     private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
 
-    private Optional<Double> holdPosition = Optional.empty();
+    private Optional<Distance> holdPosition = Optional.empty();
 
     @AutoLogOutput
-    private Goal goal = Goal.STOP;
-
-    public enum Goal {
-        STOP(),
-        HOLD(),
-        STOW(0.0),
-        L1_LONG(0.5),
-        L1_WIDE(0.2),
-        L2_CORAL(1.0),
-        L2_ALGAE(1.0),
-        L3_CORAL(2.0),
-        L3_ALGAE(2.0),
-        L4(3.5),
-        BARGE(4.5),
-        ALGAE_INTAKE(0.1),
-        CORAL_INTAKE_FLOOR(0.3),
-        CORAL_INTAKE_FUNNEL(0.0);
-
-        private final double position;
-
-        private Goal() {
-            this.position = -1.0;
-        }
-
-        private Goal(double position) {
-            this.position = position;
-        }
-    }
+    private Distance targetHeight = Meters.zero();
 
     public Elevator(ElevatorIO io) {
         this.io = io;
@@ -53,38 +29,37 @@ public class Elevator {
         Logger.processInputs("Elevator", inputs);
     }
 
-    public void setGoal(Goal goal) {
-        this.goal = goal;
-        if (goal == Goal.HOLD) {
-            if (holdPosition.isEmpty()) {
-                holdPosition = Optional.of(inputs.position);
-            }
+    public Distance getHeight() {
+        return inputs.position;
+    }
 
-            io.setPosition(holdPosition.get());
-            return;
-        }
-
+    public void setHeight(Distance height) {
         holdPosition = Optional.empty();
+        targetHeight = height;
+        io.setPosition(height);
+    }
 
-        if (goal == Goal.STOP) {
-            io.stop();
-            return;
-        }
+    public void setHeight(Distance height, Force feedforward) {
+        holdPosition = Optional.empty();
+        targetHeight = height;
+        io.setPosition(height, feedforward);
+    }
 
-        io.setPosition(goal.position);
+    public void setVelocity(LinearVelocity velocity, Force forceFeedforward) {
+        holdPosition = Optional.empty();
+        io.setVelocity(velocity, forceFeedforward);
     }
 
     public void stop() {
-        setGoal(Goal.STOP);
+        holdPosition = Optional.empty();
+        io.stop();
     }
 
-    @AutoLogOutput
-    public boolean atGoal() {
-        return atGoal(this.goal);
-    }
+    public void hold() {
+        if (holdPosition.isEmpty()) {
+            holdPosition = Optional.of(inputs.position);
+        }
 
-    @AutoLogOutput
-    public boolean atGoal(Goal goal) {
-        return MathUtil.isNear(this.inputs.position, goal.position, positionTolerance);
+        io.setPosition(holdPosition.get());
     }
 }
