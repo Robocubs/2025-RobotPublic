@@ -1,16 +1,11 @@
 package frc.robot.subsystems.vision;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import frc.robot.subsystems.vision.apriltag.AprilTagConfig;
 
 public final class VisionConstants {
-    public static final AprilTagFieldLayout aprilTagLayout =
-            AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
-
     public static final double ambiguityThreshold = 0.4;
     public static final double fieldBorderMargin = 0.0;
     public static final double zMargin = 0.75;

@@ -30,7 +30,7 @@ public class AutoRoutines {
                 (trajectory, starting) -> {
                     if (starting) {
                         var poses =
-                                RobotState.isBlue() ? trajectory.getPoses() : GeometryUtil.flipX(trajectory.getPoses());
+                                RobotState.isBlue() ? trajectory.getPoses() : GeometryUtil.flip(trajectory.getPoses());
                         Logger.recordOutput("Choreo/Trajectory", poses);
                     } else {
                         Logger.recordOutput("Choreo/Trajectory", new Pose2d[] {});

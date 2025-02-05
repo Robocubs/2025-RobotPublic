@@ -11,9 +11,9 @@ import static edu.wpi.first.units.Units.*;
 public interface ArmIO {
     @AutoLog
     public class ArmIOInputs {
-        public Angle angle = Degrees.zero();
-        public Angle position;
-        public AngularVelocity velocity;
+        public Angle angle = Radians.zero();
+        public Angle position = Radians.zero();
+        public AngularVelocity velocity = RadiansPerSecond.zero();
         public Current current = Amps.zero();
     }
 
@@ -23,7 +23,7 @@ public interface ArmIO {
 
     public default void setAngle(Angle angle, Torque feedforward) {}
 
-    public default void setVelocity(AngularVelocity velocity, Torque forceFeedforward) {}
+    public default void setVelocity(AngularVelocity velocity, Torque feedforward) {}
 
     public default void stop() {}
 }

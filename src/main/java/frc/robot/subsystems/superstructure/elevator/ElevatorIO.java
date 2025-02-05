@@ -23,7 +23,7 @@ public interface ElevatorIO {
 
     public default void setPosition(Distance position, Force feedforward) {}
 
-    public default void setVelocity(LinearVelocity velocity, Force forceFeedforward) {}
+    public default void setVelocity(LinearVelocity velocity, Force feedforward) {}
 
     public default void stop() {}
 }

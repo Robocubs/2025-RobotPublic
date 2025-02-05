@@ -18,32 +18,45 @@ import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
-import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Torque;
 import frc.robot.Constants;
+import frc.robot.util.CustomDCMotor;
+import frc.robot.util.tuning.LoggedTunableBoolean;
+import frc.robot.util.tuning.LoggedTunableNumber;
+import frc.robot.util.tuning.LoggedTunableValue;
 
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.superstructure.arm.ArmConstants.*;
+import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 public class ArmIOHardware implements ArmIO {
-    // TODO: update the motor when the library has the Kraken X44
-    public static final double kT = DCMotor.getKrakenX60(1).KtNMPerAmp * reduction;
-    public static final double kG = 9.81 * mass.in(Kilograms) * cg.in(Meters) / kT;
+    private static final double kT = CustomDCMotor.getKrakenX44(1).KtNMPerAmp * reduction * numMotors;
+    private static final LoggedTunableNumber kG =
+            new LoggedTunableNumber("Arm/KG", 9.81 * mass.in(Kilograms) * cg.in(Meters) / kT);
+    // a * kA = i = T / kT = I * (2 pi a) / kT // kA = I * 2 pi / kT
+    private static final LoggedTunableNumber positionKA =
+            new LoggedTunableNumber("Arm/PositionKA", 2 * Math.PI * moi.in(KilogramSquareMeters) / kT);
+    private static final LoggedTunableNumber positionKP = new LoggedTunableNumber("Arm/PositionKP", 500.0);
+    private static final LoggedTunableNumber positionKD = new LoggedTunableNumber("Arm/PositionKD", 70.0);
+    private static final LoggedTunableNumber velocityKP = new LoggedTunableNumber("Arm/VelocityKP", 0.0);
+    private static final LoggedTunableNumber velocityKD = new LoggedTunableNumber("Arm/VelocityKD", 0.0);
+    private static final LoggedTunableBoolean useMotionMagic = new LoggedTunableBoolean("Arm/UseMotionMagic", true);
 
     protected final CANcoder cancoder;
     protected final TalonFX motor;
-    private final StatusSignal<Angle> positionSignal;
+    private final TalonFXConfiguration motorConfig;
     private final StatusSignal<Angle> angleSignal;
+    private final StatusSignal<Angle> positionSignal;
     private final StatusSignal<AngularVelocity> velocitySignal;
-    private final StatusSignal<Current> motorCurrentSignal;
+    private final StatusSignal<Current> currentSignal;
 
     private final MotionMagicTorqueCurrentFOC motionMagicControlRequest =
-            new MotionMagicTorqueCurrentFOC(0.0).withSlot(4);
-    private final PositionTorqueCurrentFOC positionControlRequest = new PositionTorqueCurrentFOC(0.0).withSlot(5);
-    private final VelocityTorqueCurrentFOC velocityControlRequest = new VelocityTorqueCurrentFOC(0.0).withSlot(6);
+            new MotionMagicTorqueCurrentFOC(0.0).withSlot(0);
+    private final PositionTorqueCurrentFOC positionControlRequest = new PositionTorqueCurrentFOC(0.0).withSlot(1);
+    private final VelocityTorqueCurrentFOC velocityControlRequest = new VelocityTorqueCurrentFOC(0.0).withSlot(2);
 
     public ArmIOHardware() {
         cancoder = new CANcoder(10);
@@ -51,71 +64,94 @@ public class ArmIOHardware implements ArmIO {
                 .apply(new CANcoderConfiguration()
                         .withMagnetSensor(new MagnetSensorConfigs().withMagnetOffset(Radians.zero())));
 
-        motor = new TalonFX(22);
-        motor.getConfigurator()
-                .apply(new TalonFXConfiguration()
-                        .withFeedback(new FeedbackConfigs()
-                                .withSensorToMechanismRatio(1.0)
-                                .withRotorToSensorRatio(reduction)
-                                .withFusedCANcoder(cancoder))
-                        .withMotionMagic(new MotionMagicConfigs()
-                                .withMotionMagicCruiseVelocity(maximumVelocity)
-                                .withMotionMagicAcceleration(maximumAcceleration)
-                                .withMotionMagicJerk(maximumJerk))
-                        .withSlot0(new Slot0Configs()
-                                .withKG(kG)
-                                .withGravityType(GravityTypeValue.Arm_Cosine)
-                                .withKS(0)
-                                .withKV(0)
-                                .withKA(2 * Math.PI * moi.in(KilogramSquareMeters) / kT)
-                                .withKP(100.0)
-                                .withKD(60.0))
-                        .withSlot1(new Slot1Configs()
-                                .withKG(kG)
-                                .withGravityType(GravityTypeValue.Arm_Cosine)
-                                .withKP(100.0)
-                                .withKD(1.0))
-                        .withSlot2(new Slot2Configs()
-                                .withKG(kG)
-                                .withGravityType(GravityTypeValue.Arm_Cosine)
-                                .withKP(0.0)
-                                .withKD(0.0))
-                        .withSoftwareLimitSwitch(new SoftwareLimitSwitchConfigs()
-                                .withForwardSoftLimitEnable(true)
-                                .withForwardSoftLimitThreshold(maximumAngle)
-                                .withReverseSoftLimitEnable(true)
-                                .withReverseSoftLimitThreshold(minimumAngle))
-                        .withTorqueCurrent(new TorqueCurrentConfigs()
-                                .withPeakForwardTorqueCurrent(Amps.of(80))
-                                .withPeakForwardTorqueCurrent(Amps.of(80))));
+        motorConfig = new TalonFXConfiguration()
+                .withFeedback(new FeedbackConfigs()
+                        .withSensorToMechanismRatio(1.0)
+                        .withRotorToSensorRatio(reduction)
+                        .withFusedCANcoder(cancoder))
+                .withMotionMagic(new MotionMagicConfigs()
+                        .withMotionMagicCruiseVelocity(maximumVelocity)
+                        .withMotionMagicAcceleration(maximumAcceleration)
+                        .withMotionMagicJerk(maximumJerk))
+                .withSlot0(new Slot0Configs()
+                        .withKG(kG.get())
+                        .withGravityType(GravityTypeValue.Arm_Cosine)
+                        .withKS(0)
+                        .withKV(0)
+                        .withKA(positionKA.get())
+                        .withKP(positionKP.get())
+                        .withKD(positionKD.get()))
+                .withSlot1(new Slot1Configs()
+                        .withKG(kG.get())
+                        .withGravityType(GravityTypeValue.Arm_Cosine)
+                        .withKP(positionKP.get())
+                        .withKD(positionKD.get()))
+                .withSlot2(new Slot2Configs()
+                        .withKG(kG.get())
+                        .withGravityType(GravityTypeValue.Arm_Cosine)
+                        .withKP(velocityKP.get())
+                        .withKD(velocityKD.get()))
+                .withSoftwareLimitSwitch(new SoftwareLimitSwitchConfigs()
+                        .withForwardSoftLimitEnable(true)
+                        .withForwardSoftLimitThreshold(maximumAngle)
+                        .withReverseSoftLimitEnable(true)
+                        .withReverseSoftLimitThreshold(minimumAngle))
+                .withTorqueCurrent(new TorqueCurrentConfigs()
+                        .withPeakForwardTorqueCurrent(Amps.of(80))
+                        .withPeakReverseTorqueCurrent(Amps.of(80)));
 
+        motor = new TalonFX(22);
+        motor.getConfigurator().apply(motorConfig);
+
+        angleSignal = cancoder.getAbsolutePosition();
         positionSignal = motor.getPosition();
-        angleSignal = motor.getPosition();
         velocitySignal = motor.getVelocity();
-        motorCurrentSignal = motor.getTorqueCurrent();
+        currentSignal = motor.getTorqueCurrent();
 
         BaseStatusSignal.setUpdateFrequencyForAll(
-                Constants.mainLoopPeriod.in(Milliseconds),
-                angleSignal,
-                positionSignal,
-                velocitySignal,
-                motorCurrentSignal);
+                Constants.mainLoopPeriod.in(Milliseconds), angleSignal, positionSignal, velocitySignal, currentSignal);
         cancoder.optimizeBusUtilization();
         motor.optimizeBusUtilization();
     }
 
     @Override
     public void updateInputs(ArmIOInputs inputs) {
-        BaseStatusSignal.refreshAll(angleSignal, positionSignal, velocitySignal, motorCurrentSignal);
+        BaseStatusSignal.refreshAll(angleSignal, positionSignal, velocitySignal, currentSignal);
         inputs.angle = angleSignal.getValue();
         inputs.position = positionSignal.getValue();
         inputs.velocity = velocitySignal.getValue();
-        inputs.current = motorCurrentSignal.getValue();
+        inputs.current = currentSignal.getValue();
+
+        LoggedTunableValue.ifChanged(
+                0,
+                () -> {
+                    motorConfig.Slot0.kG = kG.get();
+                    motorConfig.Slot0.kA = positionKA.get();
+                    motorConfig.Slot0.kP = positionKP.get();
+                    motorConfig.Slot0.kD = positionKD.get();
+                    motorConfig.Slot1.kG = kG.get();
+                    motorConfig.Slot1.kP = positionKP.get();
+                    motorConfig.Slot1.kD = positionKD.get();
+                    motorConfig.Slot2.kG = kG.get();
+                    motorConfig.Slot2.kP = velocityKP.get();
+                    motorConfig.Slot2.kD = velocityKD.get();
+                    tryUntilOk(() -> motor.getConfigurator().apply(motorConfig));
+                },
+                kG,
+                positionKA,
+                positionKP,
+                positionKD,
+                velocityKP,
+                velocityKD);
     }
 
     @Override
     public void setAngle(Angle angle) {
-        motor.setControl(motionMagicControlRequest.withPosition(angle));
+        if (useMotionMagic.get()) {
+            motor.setControl(motionMagicControlRequest.withPosition(angle));
+        } else {
+            setAngle(angle, NewtonMeters.zero());
+        }
     }
 
     @Override

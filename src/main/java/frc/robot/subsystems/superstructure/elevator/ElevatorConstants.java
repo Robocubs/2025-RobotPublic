@@ -1,16 +1,21 @@
 package frc.robot.subsystems.superstructure.elevator;
 
-import edu.wpi.first.units.*;
-import edu.wpi.first.units.collections.*;
-import edu.wpi.first.units.measure.*;
+import edu.wpi.first.units.LinearAccelerationUnit;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearAcceleration;
+import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Mass;
+import edu.wpi.first.units.measure.Velocity;
 
 import static edu.wpi.first.units.Units.*;
 
 public final class ElevatorConstants {
+    public static final int numMotors = 2;
     public static final double reduction = 2.0;
     public static final Angle elevatorAngle = Degrees.of(85);
-    public static final Distance sprocketRadius = Inches.of(0.875 / 2);
-    public static final Mass loadMass = Pounds.of(20);
+    public static final Distance sprocketRadius = Inches.of(0.875);
+    public static final Mass loadMass = Pounds.of(23.5);
 
     public static final Distance positionTolerance = Inches.of(0.5);
     public static final Distance maximumHeight = Inches.of(85);

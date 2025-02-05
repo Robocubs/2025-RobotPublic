@@ -3,9 +3,13 @@ package frc.robot.subsystems.superstructure.arm;
 import java.util.Optional;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Torque;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
+import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.superstructure.arm.ArmConstants.*;
 
 public class Arm {
@@ -15,52 +19,39 @@ public class Arm {
     private Optional<Rotation2d> holdAngle = Optional.empty();
 
     @AutoLogOutput
-    private Goal goal = Goal.STOP;
-
-    public enum Goal {
-        STOP(),
-        HOLD(),
-        STOW(Rotation2d.fromDegrees(80)),
-        L1_SCORE_LONG(Rotation2d.fromDegrees(180)),
-        L1_SCORE_WIDE(Rotation2d.fromDegrees(110)),
-        L23_SCORE(Rotation2d.fromDegrees(90)),
-        L23_INTAKE(Rotation2d.fromDegrees(110)),
-        L4_SCORE(Rotation2d.fromDegrees(110)),
-        BARGE_SCORE(Rotation2d.fromDegrees(110)),
-        ALGAE_INTAKE(Rotation2d.fromDegrees(150)),
-        CORAL_INTAKE_FLOOR(Rotation2d.fromDegrees(240)),
-        CORAL_INTAKE_FUNNEL(Rotation2d.fromDegrees(45)),
-        PROCESSOR(Rotation2d.fromDegrees(90));
-
-        private final Rotation2d angle;
-
-        private Goal() {
-            this.angle = Rotation2d.kZero;
-        }
-
-        private Goal(Rotation2d angle) {
-            this.angle = angle;
-        }
-    }
+    private Angle targetAngle = Radians.zero();
 
     public Arm(ArmIO io) {
         this.io = io;
-        Logger.processInputs("Arm", inputs);
     }
 
     public void periodic() {
         io.updateInputs(inputs);
+        Logger.processInputs("Arm", inputs);
     }
 
-    public void setGoal(Goal goal) {
-        /*
-         * TODO: Control the arm to rotate to the specified goal
-         * 1. Set the goal to the specified goal
-         * 2. Set the position on the IO
-         *
-         * If the goal is HOLD, set the angle to the current measured value.
-         * Make sure that this angle does not change if the goal is already HOLD.
-         */
+    public Angle getAngle() {
+        // TODO: Return the measured encoder angle from the inputs
+        return Radians.zero();
+    }
+
+    public boolean isNear(Angle angle) {
+        // TODO: Return whether the measured encoder angle is within tolerance of the angle
+        return false;
+    }
+
+    public void setAngle(Angle angle) {
+        // TODO: Command the io to set the angle
+    }
+
+    public void setAngle(Angle angle, Torque feedforward) {
+        // TODO: Command the io to set the angle with feedforward torque value
+        // Use new angle as the target angle
+    }
+
+    public void setVelocity(AngularVelocity velocity, Torque feedforward) {
+        // TODO: Command the io to set the velocity with feedforward torque value
+        // Calculate the target angle based on the current angle and the velocity
     }
 
     public void stop() {
@@ -68,9 +59,12 @@ public class Arm {
         // Set the goal to stop
     }
 
-    @AutoLogOutput
-    public boolean atGoal() {
-        // TODO: Return whether the arm is at the goal within a tolerance set in ArmConstants
-        return false;
+    public void hold() {
+        /*
+         * TODO: Set the hold angle if it is no already set.
+         * Command the io to go to the hold angle.
+         * Make sure that this angle does not change if there is already a hold angle.
+         * All other set methods (and stop) should clear the hold angle.
+         */
     }
 }

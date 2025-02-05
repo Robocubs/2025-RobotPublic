@@ -19,8 +19,8 @@ public class ArmIOSim extends ArmIOHardware {
     public ArmIOSim() {
         lastSimTime = Utils.getCurrentTimeSeconds();
 
-        // TODO: change the motor when the library has the Kraken X44
-        var gearbox = DCMotor.getKrakenX60Foc(2);
+        // var gearbox = CustomDCMotor.getKrakenX44(1);
+        var gearbox = DCMotor.getKrakenX60Foc(1);
         motorSim = new SingleJointedArmSim(
                 gearbox,
                 reduction,
@@ -30,7 +30,7 @@ public class ArmIOSim extends ArmIOHardware {
                 maximumAngle.in(Radians),
                 true,
                 Degrees.of(90).in(Radians));
-        motorSim.setState(Degrees.of(95).in(Radians), 0.0);
+        motorSim.setState(Degrees.of(95).in(Radians), 0);
 
         var cancoderSimState = cancoder.getSimState();
         cancoderSimState.setRawPosition(Degrees.of(90));
@@ -39,7 +39,7 @@ public class ArmIOSim extends ArmIOHardware {
         motorSimState.setRawRotorPosition(Degrees.of(90).times(reduction));
 
         simNotifier = new Notifier(() -> {
-            final var currentTime = Utils.getCurrentTimeSeconds();
+            var currentTime = Utils.getCurrentTimeSeconds();
             var deltaTime = currentTime - lastSimTime;
             lastSimTime = currentTime;
 

@@ -2,8 +2,8 @@ package frc.robot.subsystems.vision.apriltag;
 
 import java.util.Arrays;
 
+import frc.robot.FieldConstants;
 import frc.robot.RobotState;
-import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.util.GeometryUtil;
 import org.photonvision.PhotonCamera;
 import org.photonvision.simulation.PhotonCameraSim;
@@ -25,7 +25,7 @@ public class AprilTagIOSim implements AprilTagIO {
 
         if (visionSim == null) {
             visionSim = new VisionSystemSim("main");
-            visionSim.addAprilTags(VisionConstants.aprilTagLayout);
+            visionSim.addAprilTags(FieldConstants.fieldLayout);
         }
 
         camera = new PhotonCamera(config.cameraName);

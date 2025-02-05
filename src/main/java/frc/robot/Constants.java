@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import static edu.wpi.first.units.Units.*;
 
 public final class Constants {
+    public static final boolean tuningEnabled = false;
     private static final Mode simMode = Mode.SIM;
     private static final RobotType realBot = RobotType.COMP_BOT;
     private static final RobotType simBot = RobotType.SIM_BOT;

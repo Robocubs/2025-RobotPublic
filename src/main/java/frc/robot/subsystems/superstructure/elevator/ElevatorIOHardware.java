@@ -24,16 +24,29 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Force;
 import edu.wpi.first.units.measure.LinearVelocity;
 import frc.robot.Constants;
+import frc.robot.util.tuning.LoggedTunableBoolean;
+import frc.robot.util.tuning.LoggedTunableNumber;
+import frc.robot.util.tuning.LoggedTunableValue;
 
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.superstructure.elevator.ElevatorConstants.*;
+import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 public class ElevatorIOHardware implements ElevatorIO {
-    public static final double kT = DCMotor.getKrakenX60Foc(2).KtNMPerAmp * reduction;
-    public static final double kG = 9.81 * loadMass.in(Kilograms) * sprocketRadius.in(Meters) / kT;
+    private static final double kT = DCMotor.getKrakenX60Foc(2).KtNMPerAmp * reduction * numMotors;
+    private static final LoggedTunableNumber kG = new LoggedTunableNumber(
+            "Elevator/KG",
+            9.81 * loadMass.in(Kilograms) * sprocketRadius.in(Meters) / kT * Math.sin(elevatorAngle.in(Radians)));
+    private static final LoggedTunableNumber positionKP = new LoggedTunableNumber("Elevator/PositionKP", 500.0);
+    private static final LoggedTunableNumber positionKD = new LoggedTunableNumber("Elevator/PositionKD", 30.0);
+    private static final LoggedTunableNumber velocityKP = new LoggedTunableNumber("Elevator/VelocityKP", 0.0);
+    private static final LoggedTunableNumber velocityKD = new LoggedTunableNumber("Elevator/VelocityKD", 0.0);
+    private static final LoggedTunableBoolean useMotionMagic =
+            new LoggedTunableBoolean("Elevator/UseMotionMagic", true);
 
     protected final TalonFX masterMotor;
     protected final TalonFX followerMotor;
+    private final TalonFXConfiguration motorConfig;
     private final StatusSignal<Angle> angleSignal;
     private final StatusSignal<AngularVelocity> velocitySignal;
     private final StatusSignal<Current> masterCurrentSignal;
@@ -45,7 +58,7 @@ public class ElevatorIOHardware implements ElevatorIO {
     private final VelocityTorqueCurrentFOC velocityControlRequest = new VelocityTorqueCurrentFOC(0.0).withSlot(2);
 
     public ElevatorIOHardware() {
-        var config = new TalonFXConfiguration()
+        motorConfig = new TalonFXConfiguration()
                 .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(reduction))
                 .withMotionMagic(new MotionMagicConfigs()
                         .withMotionMagicCruiseVelocity(toMotorVelocity(maximumVelocity))
@@ -56,20 +69,20 @@ public class ElevatorIOHardware implements ElevatorIO {
                         .withMotionMagicExpo_kV(3.56)
                         .withMotionMagicExpo_kA(0.05))
                 .withSlot0(new Slot0Configs()
-                        .withKG(kG)
+                        .withKG(kG.get())
                         .withGravityType(GravityTypeValue.Elevator_Static)
-                        .withKP(100.0)
-                        .withKD(1.0))
+                        .withKP(positionKP.get())
+                        .withKD(positionKD.get()))
                 .withSlot1(new Slot1Configs()
-                        .withKG(kG)
+                        .withKG(kG.get())
                         .withGravityType(GravityTypeValue.Elevator_Static)
-                        .withKP(100.0)
-                        .withKD(1.0))
+                        .withKP(positionKP.get())
+                        .withKD(positionKD.get()))
                 .withSlot2(new Slot2Configs()
-                        .withKG(kG)
+                        .withKG(kG.get())
                         .withGravityType(GravityTypeValue.Elevator_Static)
-                        .withKP(0.0)
-                        .withKD(0.0))
+                        .withKP(velocityKP.get())
+                        .withKD(velocityKD.get()))
                 .withSoftwareLimitSwitch(new SoftwareLimitSwitchConfigs()
                         .withForwardSoftLimitEnable(true)
                         .withForwardSoftLimitThreshold(toMotorPosition(maximumHeight)))
@@ -78,11 +91,11 @@ public class ElevatorIOHardware implements ElevatorIO {
                         .withPeakForwardTorqueCurrent(Amps.of(120)));
 
         masterMotor = new TalonFX(20);
-        masterMotor.getConfigurator().apply(config);
+        tryUntilOk(() -> masterMotor.getConfigurator().apply(motorConfig));
 
         followerMotor = new TalonFX(21);
-        followerMotor.getConfigurator().apply(config);
-        followerMotor.setControl(new Follower(masterMotor.getDeviceID(), false));
+        tryUntilOk(() -> masterMotor.getConfigurator().apply(motorConfig));
+        tryUntilOk(() -> followerMotor.setControl(new Follower(masterMotor.getDeviceID(), false)));
 
         angleSignal = masterMotor.getPosition();
         velocitySignal = masterMotor.getVelocity();
@@ -107,11 +120,36 @@ public class ElevatorIOHardware implements ElevatorIO {
                 MetersPerSecond.of(velocitySignal.getValue().in(RadiansPerSecond) * sprocketRadius.baseUnitMagnitude());
         inputs.masterCurrent = masterCurrentSignal.getValue();
         inputs.followerCurrent = followerCurrentSignal.getValue();
+
+        LoggedTunableValue.ifChanged(
+                0,
+                () -> {
+                    motorConfig.Slot0.kG = kG.get();
+                    motorConfig.Slot0.kP = positionKP.get();
+                    motorConfig.Slot0.kD = positionKD.get();
+                    motorConfig.Slot1.kG = kG.get();
+                    motorConfig.Slot1.kP = positionKP.get();
+                    motorConfig.Slot1.kD = positionKD.get();
+                    motorConfig.Slot2.kG = kG.get();
+                    motorConfig.Slot2.kP = velocityKP.get();
+                    motorConfig.Slot2.kD = velocityKD.get();
+                    tryUntilOk(() -> masterMotor.getConfigurator().apply(motorConfig));
+                    tryUntilOk(() -> followerMotor.getConfigurator().apply(motorConfig));
+                },
+                kG,
+                positionKP,
+                positionKD,
+                velocityKP,
+                velocityKD);
     }
 
     @Override
     public void setPosition(Distance position) {
-        masterMotor.setControl(motionMagicControlRequest.withPosition(toMotorPosition(position)));
+        if (useMotionMagic.get()) {
+            masterMotor.setControl(motionMagicControlRequest.withPosition(toMotorPosition(position)));
+        } else {
+            setPosition(position, Newtons.zero());
+        }
     }
 
     @Override
@@ -122,10 +160,10 @@ public class ElevatorIOHardware implements ElevatorIO {
     }
 
     @Override
-    public void setVelocity(LinearVelocity velocity, Force forceFeedforward) {
+    public void setVelocity(LinearVelocity velocity, Force feedforward) {
         masterMotor.setControl(velocityControlRequest
                 .withVelocity(toMotorVelocity(velocity))
-                .withFeedForward(toTorqueCurrentAmps(forceFeedforward)));
+                .withFeedForward(toTorqueCurrentAmps(feedforward)));
     }
 
     @Override

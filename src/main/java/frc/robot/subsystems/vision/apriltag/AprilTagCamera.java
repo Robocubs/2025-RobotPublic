@@ -12,6 +12,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import frc.robot.FieldConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.vision.VisionMeasurement;
 import org.littletonrobotics.junction.Logger;
@@ -56,7 +57,7 @@ public class AprilTagCamera {
                 var multiTargetResult = pipelineResult.multiTargetResult.get();
                 var observedPose = multiTargetResult
                         .cameraPose
-                        .relativeTo(aprilTagLayout.getOrigin())
+                        .relativeTo(FieldConstants.fieldLayout.getOrigin())
                         .plus(config.cameraToRobot);
 
                 if (isValidPose(observedPose)) {
@@ -66,7 +67,7 @@ public class AprilTagCamera {
                             observedPose,
                             getStdDevs(multiTargetResult.targetIds, multiTargetResult.cameraPose)));
                     IntStream.of(multiTargetResult.targetIds)
-                            .mapToObj(aprilTagLayout::getTagPose)
+                            .mapToObj(FieldConstants.fieldLayout::getTagPose)
                             .filter(Optional::isPresent)
                             .map(Optional::get)
                             .forEach(usedTargetPoses::add);
@@ -87,9 +88,9 @@ public class AprilTagCamera {
                 }
             }
 
-            aprilTagLayout.getTagPose(lowestAmbiguityTarget.id).ifPresent(usedTargetPoses::add);
+            FieldConstants.fieldLayout.getTagPose(lowestAmbiguityTarget.id).ifPresent(usedTargetPoses::add);
 
-            var targetPose = aprilTagLayout.getTagPose(lowestAmbiguityTarget.id);
+            var targetPose = FieldConstants.fieldLayout.getTagPose(lowestAmbiguityTarget.id);
             if (targetPose.isEmpty()) {
                 continue;
             }
@@ -125,8 +126,8 @@ public class AprilTagCamera {
     private boolean isValidPose(Pose3d pose) {
         return pose.getX() > fieldBorderMargin
                 && pose.getY() > fieldBorderMargin
-                && pose.getX() < aprilTagLayout.getFieldLength() - fieldBorderMargin
-                && pose.getY() < aprilTagLayout.getFieldWidth() - fieldBorderMargin
+                && pose.getX() < FieldConstants.fieldLayout.getFieldLength() - fieldBorderMargin
+                && pose.getY() < FieldConstants.fieldLayout.getFieldWidth() - fieldBorderMargin
                 && pose.getZ() > -zMargin
                 && pose.getZ() < zMargin;
     }
@@ -134,7 +135,7 @@ public class AprilTagCamera {
     private Vector<N3> getStdDevs(int[] targetIds, Pose3d cameraPose) {
         var distance = IntStream.of(targetIds)
                 .boxed()
-                .map(aprilTagLayout::getTagPose)
+                .map(FieldConstants.fieldLayout::getTagPose)
                 .filter(Optional::isPresent)
                 .mapToDouble(targetPose -> targetPose.get().getTranslation().getDistance(cameraPose.getTranslation()))
                 .average()

@@ -18,6 +18,7 @@ import frc.robot.subsystems.drive.DriveIOHardware;
 import frc.robot.subsystems.drive.DriveIOSim;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.arm.ArmIO;
+import frc.robot.subsystems.superstructure.arm.ArmIOSim;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
 import frc.robot.subsystems.vision.Vision;
@@ -60,7 +61,7 @@ public class RobotContainer {
                                 new AprilTagIOSim(VisionConstants.backAprilTagConfig, robotState)
                             },
                             robotState);
-                    superstructure = new Superstructure(new ElevatorIOSim(), null, robotState);
+                    superstructure = new Superstructure(new ElevatorIOSim(), new ArmIOSim(), robotState);
                     break;
             }
         }

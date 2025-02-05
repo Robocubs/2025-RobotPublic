@@ -5,6 +5,7 @@ import java.util.Optional;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Force;
 import edu.wpi.first.units.measure.LinearVelocity;
+import frc.robot.Constants;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -33,6 +34,10 @@ public class Elevator {
         return inputs.position;
     }
 
+    public boolean isNear(Distance height) {
+        return this.inputs.position.isNear(height, positionTolerance);
+    }
+
     public void setHeight(Distance height) {
         holdPosition = Optional.empty();
         targetHeight = height;
@@ -45,9 +50,10 @@ public class Elevator {
         io.setPosition(height, feedforward);
     }
 
-    public void setVelocity(LinearVelocity velocity, Force forceFeedforward) {
+    public void setVelocity(LinearVelocity velocity, Force feedforward) {
         holdPosition = Optional.empty();
-        io.setVelocity(velocity, forceFeedforward);
+        targetHeight = inputs.position.plus(velocity.times(Constants.mainLoopPeriod));
+        io.setVelocity(velocity, feedforward);
     }
 
     public void stop() {
@@ -60,6 +66,7 @@ public class Elevator {
             holdPosition = Optional.of(inputs.position);
         }
 
+        targetHeight = holdPosition.get();
         io.setPosition(holdPosition.get());
     }
 }

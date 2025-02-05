@@ -1,0 +1,115 @@
+{
+  "interiorPoints": 50,
+  "origin": [
+    0.133,
+    0.034
+  ],
+  "elevatorToArm": [
+    0.167,
+    0.216,
+    -1.571
+  ],
+  "maxPositionAcceleration": 30.0,
+  "elevator": {
+    "minHeight": 0.0,
+    "maxHeight": 3.0,
+    "maxAcceleration": 30.0,
+    "maxJerk": 500.0,
+    "maxVoltage": 10.0,
+    "stage1Mass": 2.0,
+    "stage2Mass": 2.0,
+    "stage3Mass": 1.0,
+    "loadMass": 6.8,
+    "angle": 1.484,
+    "reduction": 3.0,
+    "chainRadius": 0.022225
+  },
+  "arm": {
+    "length": 0.451,
+    "minAngle": -1.047,
+    "maxAngle": 1.745,
+    "maxAcceleration": 30.0,
+    "maxJerk": 300.0,
+    "maxVoltage": 10.0,
+    "mass": 3.0,
+    "reduction": 100.0,
+    "cgRadius": 0.35
+  },
+  "constraints": {
+    "minX": {
+      "type": "minX",
+      "args": [
+        0.133
+      ]
+    },
+    "maxX": {
+      "type": "maxX",
+      "args": [
+        0.794
+      ]
+    },
+    "minY": {
+      "type": "minY",
+      "args": [
+        0.02
+      ]
+    },
+    "maxY": {
+      "type": "maxY",
+      "args": [
+        3.0
+      ]
+    },
+    "l2Cap": {
+      "type": "circle",
+      "args": [
+        0.505,
+        0.788,
+        0.15
+      ]
+    },
+    "l3Cap": {
+      "type": "circle",
+      "args": [
+        0.505,
+        1.192,
+        0.15
+      ]
+    },
+    "l4Cap": {
+      "type": "circle",
+      "args": [
+        0.78,
+        1.825,
+        0.15
+      ]
+    },
+    "robotBase": {
+      "type": "rectangle",
+      "args": [
+        0.0,
+        0.0,
+        0.514,
+        0.248
+      ]
+    },
+    "l23Gap": {
+      "type": "rectangle",
+      "args": [
+        0.505,
+        0.713,
+        0.832,
+        1.267
+      ]
+    },
+    "l34Gap": {
+      "type": "rectangle",
+      "args": [
+        0.705,
+        1.267,
+        0.832,
+        1.825
+      ]
+    }
+  }
+}

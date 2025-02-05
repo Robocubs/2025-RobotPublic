@@ -7,7 +7,6 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 
 import static edu.wpi.first.units.Units.*;
-import static edu.wpi.first.units.Units.Kilograms;
 import static frc.robot.subsystems.superstructure.elevator.ElevatorConstants.*;
 
 public class ElevatorIOSim extends ElevatorIOHardware {
@@ -35,7 +34,7 @@ public class ElevatorIOSim extends ElevatorIOHardware {
         var followerSimState = followerMotor.getSimState();
 
         simNotifier = new Notifier(() -> {
-            final var currentTime = Utils.getCurrentTimeSeconds();
+            var currentTime = Utils.getCurrentTimeSeconds();
             var deltaTime = currentTime - lastSimTime;
             lastSimTime = currentTime;
 

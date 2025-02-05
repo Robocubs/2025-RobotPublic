@@ -45,7 +45,7 @@ public class LoggedAutoRoutine {
                             Commands.print("Finished " + name)));
         }
 
-        Logger.recordOutput("Auto/Path", GeometryUtil.autoFlipX(pathBuilder.build()));
+        Logger.recordOutput("Auto/Path", GeometryUtil.autoFlip(pathBuilder.build()));
 
         return routine;
     }
@@ -78,14 +78,14 @@ public class LoggedAutoRoutine {
     }
 
     public LoggedAutoRoutine driveToPose(Pose2d pose) {
-        commands.add(drive.toPose(() -> GeometryUtil.autoFlipX(pose), true));
+        commands.add(drive.toPose(() -> GeometryUtil.autoFlip(pose), true));
         pathBuilder.add(pose);
         return this;
     }
 
     public LoggedAutoRoutine pointModulesWaitSeconds(Translation2d target, double seconds) {
         commands.add(Commands.deadline(
-                        Commands.waitSeconds(seconds), drive.pointModulesAt(() -> GeometryUtil.autoFlipX(target)))
+                        Commands.waitSeconds(seconds), drive.pointModulesAt(() -> GeometryUtil.autoFlip(target)))
                 .withName("PointModulesAndWait"));
         return this;
     }
