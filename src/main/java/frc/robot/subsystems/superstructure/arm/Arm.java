@@ -2,10 +2,10 @@ package frc.robot.subsystems.superstructure.arm;
 
 import java.util.Optional;
 
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Torque;
+import frc.robot.Constants;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -16,7 +16,7 @@ public class Arm {
     private final ArmIO io;
     private final ArmIOInputsAutoLogged inputs = new ArmIOInputsAutoLogged();
 
-    private Optional<Rotation2d> holdAngle = Optional.empty();
+    private Optional<Angle> holdAngle = Optional.empty();
 
     @AutoLogOutput
     private Angle targetAngle = Radians.zero();
@@ -31,40 +31,43 @@ public class Arm {
     }
 
     public Angle getAngle() {
-        // TODO: Return the measured encoder angle from the inputs
-        return Radians.zero();
+        return inputs.angle;
     }
 
     public boolean isNear(Angle angle) {
-        // TODO: Return whether the measured encoder angle is within tolerance of the angle
-        return false;
+        return this.inputs.angle.isNear(angle, angleTolerance);
     }
 
     public void setAngle(Angle angle) {
-        // TODO: Command the io to set the angle
+        holdAngle = Optional.empty();
+        targetAngle = angle;
+        io.setAngle(angle);
     }
 
     public void setAngle(Angle angle, Torque feedforward) {
-        // TODO: Command the io to set the angle with feedforward torque value
-        // Use new angle as the target angle
+        holdAngle = Optional.empty();
+        targetAngle = angle;
+        io.setAngle(angle, feedforward);
     }
 
     public void setVelocity(AngularVelocity velocity, Torque feedforward) {
-        // TODO: Command the io to set the velocity with feedforward torque value
-        // Calculate the target angle based on the current angle and the velocity
+        holdAngle = Optional.empty();
+        targetAngle = inputs.angle.plus(velocity.times(Constants.mainLoopPeriod));
+        io.setVelocity(velocity, feedforward);
     }
 
     public void stop() {
-        // TODO: Stop the arm from moving
-        // Set the goal to stop
+        holdAngle = Optional.empty();
+        io.stop();
     }
 
     public void hold() {
-        /*
-         * TODO: Set the hold angle if it is no already set.
-         * Command the io to go to the hold angle.
-         * Make sure that this angle does not change if there is already a hold angle.
-         * All other set methods (and stop) should clear the hold angle.
-         */
+        if (holdAngle.isEmpty()) {
+            holdAngle = Optional.of(inputs.angle);
+            io.setAngle(inputs.angle);
+        }
+
+        targetAngle = holdAngle.get();
+        io.setAngle(holdAngle.get());
     }
 }
