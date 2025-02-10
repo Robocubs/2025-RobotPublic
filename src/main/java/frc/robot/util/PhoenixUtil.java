@@ -4,7 +4,7 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.StatusCode;
 
-public class PhoenixUtil {
+public final class PhoenixUtil {
     private static final int defaultMaxAttempts = 5;
 
     public static void tryUntilOk(Supplier<StatusCode> command) {

@@ -10,8 +10,7 @@ import frc.robot.RobotState;
 
 import static edu.wpi.first.units.Units.Meters;
 
-public class GeometryUtil {
-
+public final class GeometryUtil {
     public static Rotation2d flip(Rotation2d rotation) {
         return rotation.minus(Rotation2d.kPi);
     }

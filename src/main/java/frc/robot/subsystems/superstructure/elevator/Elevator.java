@@ -31,11 +31,11 @@ public class Elevator {
     }
 
     public Distance getHeight() {
-        return inputs.position;
+        return inputs.masterPosition;
     }
 
     public boolean isNear(Distance height) {
-        return this.inputs.position.isNear(height, positionTolerance);
+        return this.inputs.masterPosition.isNear(height, positionTolerance);
     }
 
     public void setHeight(Distance height) {
@@ -52,7 +52,7 @@ public class Elevator {
 
     public void setVelocity(LinearVelocity velocity, Force feedforward) {
         holdPosition = Optional.empty();
-        targetHeight = inputs.position.plus(velocity.times(Constants.mainLoopPeriod));
+        targetHeight = inputs.masterPosition.plus(velocity.times(Constants.mainLoopPeriod));
         io.setVelocity(velocity, feedforward);
     }
 
@@ -63,7 +63,7 @@ public class Elevator {
 
     public void hold() {
         if (holdPosition.isEmpty()) {
-            holdPosition = Optional.of(inputs.position);
+            holdPosition = Optional.of(inputs.masterPosition);
         }
 
         targetHeight = holdPosition.get();

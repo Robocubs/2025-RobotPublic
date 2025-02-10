@@ -11,7 +11,7 @@ import edu.wpi.first.units.measure.Velocity;
 
 import static edu.wpi.first.units.Units.*;
 
-public class ArmConstants {
+public final class ArmConstants {
     public static final int numMotors = 1;
     public static final double reduction = 9.0 * 9.0 * 52.0 / 28.0;
     public static final Mass mass = Pounds.of(6.44);
@@ -26,4 +26,6 @@ public class ArmConstants {
     public static final AngularVelocity maximumVelocity = RotationsPerSecond.of(0.5);
     public static final AngularAcceleration maximumAcceleration = maximumVelocity.div(Seconds.of(0.5));
     public static final Velocity<AngularAccelerationUnit> maximumJerk = maximumAcceleration.div(Seconds.of(0.1));
+
+    public static final Angle safeTravelAngle = Degrees.of(90);
 }

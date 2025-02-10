@@ -4,6 +4,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Force;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import org.littletonrobotics.junction.AutoLog;
 
 import static edu.wpi.first.units.Units.*;
@@ -11,10 +12,17 @@ import static edu.wpi.first.units.Units.*;
 public interface ElevatorIO {
     @AutoLog
     public class ElevatorIOInputs {
-        public Distance position = Meters.zero();
-        public LinearVelocity velocity = MetersPerSecond.zero();
-        public Current masterCurrent = Amps.zero();
-        public Current followerCurrent = Amps.zero();
+        public Distance masterPosition = Meters.zero();
+        public LinearVelocity masterVelocity = MetersPerSecond.zero();
+        public Voltage masterVoltage = Volts.zero();
+        public Current masterSupplyCurrent = Amps.zero();
+        public Current masterTorqueCurrent = Amps.zero();
+
+        public Distance followerPosition = Meters.zero();
+        public LinearVelocity followerVelocity = MetersPerSecond.zero();
+        public Voltage followerVoltage = Volts.zero();
+        public Current followerSupplyCurrent = Amps.zero();
+        public Current followerTorqueCurrent = Amps.zero();
     }
 
     public default void updateInputs(ElevatorIOInputs inputs) {}

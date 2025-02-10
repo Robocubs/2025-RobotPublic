@@ -23,6 +23,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Force;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants;
 import frc.robot.util.tuning.LoggedTunableBoolean;
 import frc.robot.util.tuning.LoggedTunableNumber;
@@ -33,7 +34,7 @@ import static frc.robot.subsystems.superstructure.elevator.ElevatorConstants.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 public class ElevatorIOHardware implements ElevatorIO {
-    private static final double kT = DCMotor.getKrakenX60Foc(2).KtNMPerAmp * reduction * numMotors;
+    private static final double kT = DCMotor.getKrakenX60Foc(numMotors).withReduction(reduction).KtNMPerAmp * numMotors;
     private static final LoggedTunableNumber kG = new LoggedTunableNumber(
             "Elevator/KG",
             9.81 * loadMass.in(Kilograms) * sprocketRadius.in(Meters) / kT * Math.sin(elevatorAngle.in(Radians)));
@@ -47,10 +48,16 @@ public class ElevatorIOHardware implements ElevatorIO {
     protected final TalonFX masterMotor;
     protected final TalonFX followerMotor;
     private final TalonFXConfiguration motorConfig;
-    private final StatusSignal<Angle> angleSignal;
-    private final StatusSignal<AngularVelocity> velocitySignal;
-    private final StatusSignal<Current> masterCurrentSignal;
-    private final StatusSignal<Current> followerCurrentSignal;
+    private final StatusSignal<Angle> masterAngleSignal;
+    private final StatusSignal<AngularVelocity> masterVelocitySignal;
+    private final StatusSignal<Voltage> masterVoltageSignal;
+    private final StatusSignal<Current> masterSupplyCurrentSignal;
+    private final StatusSignal<Current> masterTorqueCurrentSignal;
+    private final StatusSignal<Angle> followerAngleSignal;
+    private final StatusSignal<AngularVelocity> followerVelocitySignal;
+    private final StatusSignal<Voltage> followerVoltageSignal;
+    private final StatusSignal<Current> followerSupplyCurrentSignal;
+    private final StatusSignal<Current> followerTorqueCurrentSignal;
 
     private final MotionMagicTorqueCurrentFOC motionMagicControlRequest =
             new MotionMagicTorqueCurrentFOC(0.0).withSlot(0);
@@ -97,29 +104,56 @@ public class ElevatorIOHardware implements ElevatorIO {
         tryUntilOk(() -> masterMotor.getConfigurator().apply(motorConfig));
         tryUntilOk(() -> followerMotor.setControl(new Follower(masterMotor.getDeviceID(), false)));
 
-        angleSignal = masterMotor.getPosition();
-        velocitySignal = masterMotor.getVelocity();
-        masterCurrentSignal = masterMotor.getTorqueCurrent();
-        followerCurrentSignal = followerMotor.getTorqueCurrent();
+        masterAngleSignal = masterMotor.getPosition();
+        masterVelocitySignal = masterMotor.getVelocity();
+        masterVoltageSignal = masterMotor.getMotorVoltage();
+        masterSupplyCurrentSignal = masterMotor.getSupplyCurrent();
+        masterTorqueCurrentSignal = masterMotor.getTorqueCurrent();
+        followerAngleSignal = followerMotor.getPosition();
+        followerVelocitySignal = followerMotor.getVelocity();
+        followerVoltageSignal = followerMotor.getMotorVoltage();
+        followerSupplyCurrentSignal = followerMotor.getSupplyCurrent();
+        followerTorqueCurrentSignal = followerMotor.getTorqueCurrent();
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 Constants.mainLoopPeriod.in(Milliseconds),
-                angleSignal,
-                velocitySignal,
-                masterCurrentSignal,
-                followerCurrentSignal);
+                masterAngleSignal,
+                masterVelocitySignal,
+                masterVoltageSignal,
+                masterSupplyCurrentSignal,
+                masterTorqueCurrentSignal,
+                followerAngleSignal,
+                followerVelocitySignal,
+                followerVoltageSignal,
+                followerSupplyCurrentSignal,
+                followerTorqueCurrentSignal);
         masterMotor.optimizeBusUtilization();
         followerMotor.optimizeBusUtilization();
     }
 
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
-        BaseStatusSignal.refreshAll(angleSignal, velocitySignal, masterCurrentSignal, followerCurrentSignal);
-        inputs.position = Meters.of(angleSignal.getValue().in(Radians) * sprocketRadius.in(Meters));
-        inputs.velocity =
-                MetersPerSecond.of(velocitySignal.getValue().in(RadiansPerSecond) * sprocketRadius.baseUnitMagnitude());
-        inputs.masterCurrent = masterCurrentSignal.getValue();
-        inputs.followerCurrent = followerCurrentSignal.getValue();
+        BaseStatusSignal.refreshAll(
+                masterAngleSignal,
+                masterVelocitySignal,
+                masterVoltageSignal,
+                masterSupplyCurrentSignal,
+                masterTorqueCurrentSignal,
+                followerAngleSignal,
+                followerVelocitySignal,
+                followerVoltageSignal,
+                followerSupplyCurrentSignal,
+                followerTorqueCurrentSignal);
+        inputs.masterPosition = fromMotorPosition(masterAngleSignal.getValue());
+        inputs.masterVelocity = fromMotorVelocity(masterVelocitySignal.getValue());
+        inputs.masterVoltage = masterVoltageSignal.getValue();
+        inputs.masterSupplyCurrent = masterSupplyCurrentSignal.getValue();
+        inputs.masterTorqueCurrent = masterTorqueCurrentSignal.getValue();
+        inputs.followerPosition = fromMotorPosition(followerAngleSignal.getValue());
+        inputs.followerVelocity = fromMotorVelocity(followerVelocitySignal.getValue());
+        inputs.followerVoltage = followerVoltageSignal.getValue();
+        inputs.followerSupplyCurrent = followerSupplyCurrentSignal.getValue();
+        inputs.followerTorqueCurrent = followerTorqueCurrentSignal.getValue();
 
         LoggedTunableValue.ifChanged(
                 0,
@@ -181,5 +215,13 @@ public class ElevatorIOHardware implements ElevatorIO {
 
     private static double toTorqueCurrentAmps(Force force) {
         return force.in(Newtons) * sprocketRadius.in(Meters) / kT;
+    }
+
+    private static Distance fromMotorPosition(Angle position) {
+        return Meters.of(position.in(Radians) * sprocketRadius.in(Meters));
+    }
+
+    private static LinearVelocity fromMotorVelocity(AngularVelocity velocity) {
+        return MetersPerSecond.of(velocity.in(RadiansPerSecond) * sprocketRadius.in(Meters));
     }
 }

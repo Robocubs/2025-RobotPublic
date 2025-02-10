@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.RobotBase;
 
@@ -26,4 +27,7 @@ public final class Constants {
     }
 
     public static final Time mainLoopPeriod = Milliseconds.of(20);
+
+    public static final Mass coralMass = Pounds.of((1.1 + 1.8) / 2);
+    public static final Mass algaeMass = Pounds.of(1.5);
 }

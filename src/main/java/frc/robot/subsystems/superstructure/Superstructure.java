@@ -1,7 +1,5 @@
 package frc.robot.subsystems.superstructure;
 
-import java.util.function.Supplier;
-
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
@@ -12,9 +10,14 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotState;
 import frc.robot.subsystems.superstructure.arm.Arm;
 import frc.robot.subsystems.superstructure.arm.ArmIO;
+import frc.robot.subsystems.superstructure.controllers.SimpleController;
+import frc.robot.subsystems.superstructure.controllers.SuperstructureController;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
+import frc.robot.subsystems.superstructure.rollers.Rollers;
+import frc.robot.subsystems.superstructure.rollers.RollersIO;
+import lombok.Getter;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
@@ -27,7 +30,9 @@ public class Superstructure extends SubsystemBase {
 
     private final Elevator elevator;
     private final Arm arm;
+    private final Rollers rollers;
     private final RobotState robotState;
+    private final SuperstructureController controller = new SimpleController(this);
 
     @AutoLogOutput
     private final LoggedMechanism2d mechanism;
@@ -36,45 +41,13 @@ public class Superstructure extends SubsystemBase {
     private final LoggedMechanismLigament2d armLigament;
 
     @AutoLogOutput
-    private Goal goal = Goal.STOP;
+    @Getter
+    private SuperstructureState state = SuperstructureState.START;
 
-    public static enum Goal {
-        // Elevator height 0 is fully retracted
-        // Arm angle 0 is horizontal to ground
-        STOP(),
-        HOLD(),
-        STOW(Inches.zero(), Degrees.of(90)),
-        L1_LONG(Inches.zero(), Degrees.of(90)),
-        L1_WIDE(Inches.of(1.894), Degrees.of(70)),
-        L2(Inches.of(9.523), Degrees.of(87.021)),
-        L3(Inches.of(24.939), Degrees.of(92.848)),
-        L4(Inches.of(59.689), Degrees.of(42.819)),
-        BARGE(Inches.of(81.161), Degrees.of(105)),
-        L2_ALGAE(Inches.of(34.0), Degrees.of(80)),
-        L3_ALGAE(Inches.of(17.5), Degrees.of(75)),
-        ALGAE_INTAKE(Inches.of(0.187), Degrees.of(25.0)),
-        CORAL_INTAKE_1(Inches.of(11.288), Degrees.of(-55.752)),
-        CORAL_INTAKE_2(Inches.of(8.198), Degrees.of(-60.801)),
-        FUNNEL(Inches.of(1.838), Degrees.of(83.364)),
-        PROCESSOR(Inches.zero(), Degrees.of(90));
-
-        public final Distance elevatorHeight;
-        public final Angle armAngle;
-
-        private Goal() {
-            this.elevatorHeight = Inches.zero();
-            this.armAngle = Degrees.zero();
-        }
-
-        private Goal(Distance elevatorHeight, Angle armAngle) {
-            this.elevatorHeight = elevatorHeight;
-            this.armAngle = armAngle;
-        }
-    }
-
-    public Superstructure(ElevatorIO elevatorIO, ArmIO armIO, RobotState robotState) {
+    public Superstructure(ElevatorIO elevatorIO, ArmIO armIO, RollersIO rollersIO, RobotState robotState) {
         elevator = new Elevator(elevatorIO);
         arm = new Arm(armIO);
+        rollers = new Rollers(rollersIO, arm::getAngle);
         this.robotState = robotState;
 
         mechanism = new LoggedMechanism2d(1.0, 3.0);
@@ -94,50 +67,69 @@ public class Superstructure extends SubsystemBase {
     public void periodic() {
         elevator.periodic();
         arm.periodic();
+        rollers.periodic();
 
         elevatorLigament.setLength(elevator.getHeight().in(Meters));
         armLigament.setAngle(arm.getAngle().in(Degrees) + armAngleOffsetDegrees);
     }
 
-    @AutoLogOutput
-    public boolean atGoal() {
-        // TODO: Return whether the elevator and arm are both at the goal
+    public Distance getElevatorHeight() {
+        // TODO: Return the elevator height
+        return Inches.zero();
+    }
+
+    public Angle getArmAngle() {
+        // TODO: Return the arm angle
+        return Degrees.zero();
+    }
+
+    public boolean isNear(SuperstructurePose pose) {
+        // TODO: Return whether the elevator and arm are both at the pose
         return false;
     }
 
-    public void setGoal(Goal goal) {
-        // TODO: Set the goal for the elevator and arm
+    public boolean isNear(SuperstructureState state) {
+        // TODO: Return whether the elevator and arm are both at the state's pose
+        return false;
     }
 
-    public Command moveToGoal(Supplier<Goal> goal) {
+    @AutoLogOutput
+    public boolean atStatePose() {
+        // TODO: Return whether the elevator and arm are both at the state's pose
+        return false;
+    }
+
+    public void setState(SuperstructureState state) {
         /*
-         * TODO: Implement the following logic:
-         * 1. If the superstructure is not at the goal, but the arm is extended, retract the arm while holding elevator position
-         * 2. Move the elevator to the goal position
-         * 3. Move to the final goal
+         * If the state is stop, command the elevator, arm, and rollers to stop
+         * If the state is hold, command the elevator, arm, and rollers to hold
          *
-         * Examples:
-         * - Moving from L2_INTAKE to L3_INTAKE
-         *   1. Set elevator to hold position and arm to STOW
-         *   2. Set elevator to L3
-         *   3. Set arm to REEF_INTAKE
-         * - Moving from STOW to FLOOR_INTAKE
-         *   1. Set elevator to hold position and arm to STOW
-         *   2. Set elevator to L3
-         *   3. Set arm to REEF_INTAKE
+         * Otherwise,
+         * 1. Set the elevator height and arm angle to the state's pose
+         * 2. Set the rollers to the state's roller state
          */
-        return print("Moving superstructure to " + goal.get()).withName("SuperstructureSetGoal");
+    }
+
+    public Command runState(SuperstructureState state) {
+        /*
+         * TODO: Implement the following logic
+         * 1. If the goal is stop, return the stop
+         * 2. If the goal is hold, return the hold
+         * 3. Otherwise, set the goal and return the command from the controller
+         *
+         * Notes: The goal needs to be set by the command, which could be a runOnce
+         * The controller can be used to get the command for moving to the goal
+         */
+        return print("Running state " + state).withName("SuperstructureRunState");
     }
 
     public Command hold() {
-        // TODO: Hold the current position of the elevator and arm
-        // Set the goal to hold
+        // TODO: Set the state to hold with a runOnce command
         return print("Holding superstructure").withName("SuperstructureHold");
     }
 
     public Command stop() {
-        // TODO: Stop elevator and arm
-        // Set the goal to stop
+        // TODO: Set the state to stop with a runOnce command
         return print("Stopping superstructure").withName("SuperstructureStop");
     }
 }

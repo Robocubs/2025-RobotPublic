@@ -22,6 +22,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Torque;
+import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants;
 import frc.robot.util.CustomDCMotor;
 import frc.robot.util.tuning.LoggedTunableBoolean;
@@ -33,7 +34,8 @@ import static frc.robot.subsystems.superstructure.arm.ArmConstants.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 public class ArmIOHardware implements ArmIO {
-    private static final double kT = CustomDCMotor.getKrakenX44(1).KtNMPerAmp * reduction * numMotors;
+    private static final double kT =
+            CustomDCMotor.getKrakenX44(numMotors).withReduction(reduction).KtNMPerAmp * numMotors;
     private static final LoggedTunableNumber kG =
             new LoggedTunableNumber("Arm/KG", 9.81 * mass.in(Kilograms) * cg.in(Meters) / kT);
     // a * kA = i = T / kT = I * (2 pi a) / kT // kA = I * 2 pi / kT
@@ -51,7 +53,9 @@ public class ArmIOHardware implements ArmIO {
     private final StatusSignal<Angle> angleSignal;
     private final StatusSignal<Angle> positionSignal;
     private final StatusSignal<AngularVelocity> velocitySignal;
-    private final StatusSignal<Current> currentSignal;
+    private final StatusSignal<Voltage> voltageSignal;
+    private final StatusSignal<Current> supplyCurrentSignal;
+    private final StatusSignal<Current> torqueCurrentSignal;
 
     private final MotionMagicTorqueCurrentFOC motionMagicControlRequest =
             new MotionMagicTorqueCurrentFOC(0.0).withSlot(0);
@@ -106,21 +110,32 @@ public class ArmIOHardware implements ArmIO {
         angleSignal = cancoder.getAbsolutePosition();
         positionSignal = motor.getPosition();
         velocitySignal = motor.getVelocity();
-        currentSignal = motor.getTorqueCurrent();
+        voltageSignal = motor.getMotorVoltage();
+        supplyCurrentSignal = motor.getSupplyCurrent();
+        torqueCurrentSignal = motor.getTorqueCurrent();
 
         BaseStatusSignal.setUpdateFrequencyForAll(
-                Constants.mainLoopPeriod.in(Milliseconds), angleSignal, positionSignal, velocitySignal, currentSignal);
+                Constants.mainLoopPeriod.in(Milliseconds),
+                angleSignal,
+                positionSignal,
+                velocitySignal,
+                voltageSignal,
+                supplyCurrentSignal,
+                torqueCurrentSignal);
         cancoder.optimizeBusUtilization();
         motor.optimizeBusUtilization();
     }
 
     @Override
     public void updateInputs(ArmIOInputs inputs) {
-        BaseStatusSignal.refreshAll(angleSignal, positionSignal, velocitySignal, currentSignal);
+        BaseStatusSignal.refreshAll(
+                angleSignal, positionSignal, velocitySignal, voltageSignal, supplyCurrentSignal, torqueCurrentSignal);
         inputs.angle = angleSignal.getValue();
         inputs.position = positionSignal.getValue();
         inputs.velocity = velocitySignal.getValue();
-        inputs.current = currentSignal.getValue();
+        inputs.voltage = voltageSignal.getValue();
+        inputs.supplyCurrent = supplyCurrentSignal.getValue();
+        inputs.torqueCurrent = torqueCurrentSignal.getValue();
 
         LoggedTunableValue.ifChanged(
                 0,
