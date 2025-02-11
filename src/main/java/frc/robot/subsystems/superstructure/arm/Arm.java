@@ -38,6 +38,11 @@ public class Arm {
         return this.inputs.angle.isNear(angle, angleTolerance);
     }
 
+    @AutoLogOutput
+    public boolean atTarget() {
+        return isNear(targetAngle);
+    }
+
     public void setAngle(Angle angle) {
         holdAngle = Optional.empty();
         targetAngle = angle;
@@ -64,7 +69,6 @@ public class Arm {
     public void hold() {
         if (holdAngle.isEmpty()) {
             holdAngle = Optional.of(inputs.angle);
-            io.setAngle(inputs.angle);
         }
 
         targetAngle = holdAngle.get();

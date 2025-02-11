@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotState;
 import frc.robot.subsystems.superstructure.arm.Arm;
 import frc.robot.subsystems.superstructure.arm.ArmIO;
-import frc.robot.subsystems.superstructure.controllers.SimpleController;
+import frc.robot.subsystems.superstructure.controllers.GraphController;
 import frc.robot.subsystems.superstructure.controllers.SuperstructureController;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
@@ -32,7 +32,7 @@ public class Superstructure extends SubsystemBase {
     private final Arm arm;
     private final Rollers rollers;
     private final RobotState robotState;
-    private final SuperstructureController controller = new SimpleController(this);
+    private final SuperstructureController controller = new GraphController(this);
 
     @AutoLogOutput
     private final LoggedMechanism2d mechanism;
@@ -101,8 +101,11 @@ public class Superstructure extends SubsystemBase {
 
     public void setState(SuperstructureState state) {
         /*
-         * If the state is stop, command the elevator, arm, and rollers to stop
-         * If the state is hold, command the elevator, arm, and rollers to hold
+         * Always set the roller state to the state data's roller state
+         *
+         * If the state is stop, command the elevator and arm to stop
+         * If the state is hold, command the elevator and arm to hold
+         * If the state is retract arm, command the elevator to hold and the arm to retract
          *
          * Otherwise,
          * 1. Set the elevator height and arm angle to the state's pose
@@ -113,9 +116,10 @@ public class Superstructure extends SubsystemBase {
     public Command runState(SuperstructureState state) {
         /*
          * TODO: Implement the following logic
-         * 1. If the goal is stop, return the stop
-         * 2. If the goal is hold, return the hold
-         * 3. Otherwise, set the goal and return the command from the controller
+         * 1. If the goal is STOP, return stop command
+         * 2. If the goal is HOLD, return hold command
+         * 3. If the goal is RETRACT_ARM, return retractArm command
+         * 4. Otherwise, set the goal and return the command from the controller
          *
          * Notes: The goal needs to be set by the command, which could be a runOnce
          * The controller can be used to get the command for moving to the goal
@@ -124,12 +128,17 @@ public class Superstructure extends SubsystemBase {
     }
 
     public Command hold() {
-        // TODO: Set the state to hold with a runOnce command
+        // TODO: Set the state to HOLD with a runOnce command
         return print("Holding superstructure").withName("SuperstructureHold");
     }
 
     public Command stop() {
-        // TODO: Set the state to stop with a runOnce command
+        // TODO: Set the state to STOP with a runOnce command
         return print("Stopping superstructure").withName("SuperstructureStop");
+    }
+
+    public Command retractArm() {
+        // TODO: Set the state to RETRACT_ARM with a runOnce command
+        return print("Stopping superstructure").withName("SuperstructureRetractArm");
     }
 }

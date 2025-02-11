@@ -12,7 +12,7 @@ import static edu.wpi.first.units.Units.*;
 
 public final class ElevatorConstants {
     public static final int numMotors = 2;
-    public static final double reduction = 2.0;
+    public static final double reduction = 7.75 / 3.0;
     public static final Angle elevatorAngle = Degrees.of(85);
     public static final Distance sprocketRadius = Inches.of(0.875);
     public static final Mass loadMass = Pounds.of(23.5);

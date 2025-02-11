@@ -26,7 +26,7 @@ public class ElevatorIOSim extends ElevatorIOHardware {
                 loadMass.in(Kilograms),
                 sprocketRadius.in(Meters),
                 0.0,
-                maximumHeight.in(Meters) * reduction,
+                maximumHeight.in(Meters),
                 true,
                 0.0);
 
@@ -41,8 +41,9 @@ public class ElevatorIOSim extends ElevatorIOHardware {
             motorSim.setInputVoltage(masterSimState.getMotorVoltage());
             motorSim.update(deltaTime);
 
-            var position = Radians.of(motorSim.getPositionMeters() / sprocketRadius.in(Meters));
-            var velocity = RadiansPerSecond.of(motorSim.getVelocityMetersPerSecond() / sprocketRadius.in(Meters));
+            var position = Radians.of(motorSim.getPositionMeters() / sprocketRadius.in(Meters) * reduction);
+            var velocity =
+                    RadiansPerSecond.of(motorSim.getVelocityMetersPerSecond() / sprocketRadius.in(Meters) * reduction);
 
             masterSimState.setRawRotorPosition(position);
             masterSimState.setRotorVelocity(velocity);

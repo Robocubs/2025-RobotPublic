@@ -38,6 +38,11 @@ public class Elevator {
         return this.inputs.masterPosition.isNear(height, positionTolerance);
     }
 
+    @AutoLogOutput
+    public boolean atTarget() {
+        return isNear(targetHeight);
+    }
+
     public void setHeight(Distance height) {
         holdPosition = Optional.empty();
         targetHeight = height;

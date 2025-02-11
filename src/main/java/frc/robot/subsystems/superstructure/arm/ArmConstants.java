@@ -13,7 +13,7 @@ import static edu.wpi.first.units.Units.*;
 
 public final class ArmConstants {
     public static final int numMotors = 1;
-    public static final double reduction = 9.0 * 9.0 * 52.0 / 28.0;
+    public static final double reduction = 9.0 * 5.0 * 52.0 / 28.0;
     public static final Mass mass = Pounds.of(6.44);
     public static final Distance length = Inches.of(17.323);
     public static final Distance cg = Inches.of(10.941);
@@ -21,11 +21,11 @@ public final class ArmConstants {
             Pounds.mult(InchesPerSecond).mult(Inches).mult(RadiansPerSecond).of(1100.53);
 
     public static final Angle angleTolerance = Degrees.of(1);
-    public static final Angle maximumAngle = Degrees.of(270);
+    public static final Angle maximumAngle = Degrees.of(95);
     public static final Angle minimumAngle = Degrees.of(-90);
-    public static final AngularVelocity maximumVelocity = RotationsPerSecond.of(0.5);
-    public static final AngularAcceleration maximumAcceleration = maximumVelocity.div(Seconds.of(0.5));
-    public static final Velocity<AngularAccelerationUnit> maximumJerk = maximumAcceleration.div(Seconds.of(0.1));
+    public static final AngularVelocity maximumVelocity = RotationsPerSecond.of(1.0);
+    public static final AngularAcceleration maximumAcceleration = maximumVelocity.div(Seconds.of(1.0));
+    public static final Velocity<AngularAccelerationUnit> maximumJerk = maximumAcceleration.div(Seconds.of(0.5));
 
-    public static final Angle safeTravelAngle = Degrees.of(90);
+    public static final Angle safeTravelAngle = Degrees.of(85);
 }

@@ -11,10 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder(toBuilder = true)
 @Getter
 public class SuperstructureStateData {
-    public static SuperstructureStateData none() {
-        return new SuperstructureStateData();
-    }
-
     @Builder.Default
     private final SuperstructurePose pose = new SuperstructurePose();
 

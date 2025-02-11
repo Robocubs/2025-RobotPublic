@@ -46,15 +46,15 @@ public class ArmIOSim extends ArmIOHardware {
             motorSim.setInputVoltage(motorSimState.getMotorVoltage());
             motorSim.update(deltaTime);
 
-            var angle = Radians.of(motorSim.getAngleRads());
-            var velocity = RadiansPerSecond.of(motorSim.getVelocityRadPerSec());
+            var angle = Radians.of(motorSim.getAngleRads() * reduction);
+            var velocity = RadiansPerSecond.of(motorSim.getVelocityRadPerSec() * reduction);
 
-            cancoderSimState.setRawPosition(angle);
-            cancoderSimState.setVelocity(velocity);
+            cancoderSimState.setRawPosition(angle.div(reduction));
+            cancoderSimState.setVelocity(velocity.div(reduction));
             cancoderSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
 
-            motorSimState.setRawRotorPosition(angle.times(reduction));
-            motorSimState.setRotorVelocity(velocity.times(reduction));
+            motorSimState.setRawRotorPosition(angle);
+            motorSimState.setRotorVelocity(velocity);
             motorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
         });
         simNotifier.startPeriodic(kSimLoopPeriod);

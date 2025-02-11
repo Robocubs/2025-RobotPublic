@@ -1,6 +1,7 @@
 package frc.robot.subsystems.superstructure.controllers;
 
 import java.util.Map;
+import java.util.function.Supplier;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -38,22 +39,22 @@ public class SimpleController implements SuperstructureController {
     }
 
     @Override
-    public Command getCommand(SuperstructureState state) {
-        var retractFromPreviousState = runState(retractingStateMoves.get(superstructure.getState()))
-                .onlyIf(() -> retractingStateMoves.containsKey(superstructure.getState()));
+    public Command getCommand(SuperstructureState start, SuperstructureState goal) {
+        var retractFromPreviousState =
+                runState(() -> retractingStateMoves.get(start)).onlyIf(() -> retractingStateMoves.containsKey(start));
         var moveToRetractedState =
-                runState(retractingStateMoves.get(state)).onlyIf(() -> retractingStateMoves.containsKey(state));
+                runState(() -> retractingStateMoves.get(goal)).onlyIf(() -> retractingStateMoves.containsKey(goal));
         var moveToScoringState =
-                runState(scoringStateMoves.get(state)).onlyIf(() -> scoringStateMoves.containsKey(state));
+                runState(() -> scoringStateMoves.get(goal)).onlyIf(() -> scoringStateMoves.containsKey(goal));
 
         return Commands.sequence(retractFromPreviousState, moveToRetractedState, moveToScoringState)
-                .onlyIf(() -> !canImmediatelyRunState(state))
-                .andThen(runState(state));
+                .onlyIf(() -> !canImmediatelyRunState(start, goal))
+                .andThen(runState(() -> goal));
     }
 
-    private boolean canImmediatelyRunState(SuperstructureState state) {
-        var currentState = superstructure.getState();
-        if (state == currentState) {
+    private boolean canImmediatelyRunState(SuperstructureState start, SuperstructureState goal) {
+        var currentState = start;
+        if (goal == start) {
             return true;
         }
 
@@ -67,10 +68,9 @@ public class SimpleController implements SuperstructureController {
         return false;
     }
 
-    private Command runState(SuperstructureState state) {
+    private Command runState(Supplier<SuperstructureState> state) {
         return superstructure
-                .runOnce(() -> superstructure.setState(state))
-                .andThen(Commands.idle(superstructure))
-                .until(() -> superstructure.atStatePose());
+                .runOnce(() -> superstructure.setState(state.get()))
+                .andThen(Commands.idle(superstructure).until(() -> superstructure.atStatePose()));
     }
 }

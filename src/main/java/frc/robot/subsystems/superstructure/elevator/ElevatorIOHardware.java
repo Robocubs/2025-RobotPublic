@@ -2,8 +2,10 @@ package frc.robot.subsystems.superstructure.elevator;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.Slot2Configs;
@@ -16,6 +18,7 @@ import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -39,11 +42,11 @@ public class ElevatorIOHardware implements ElevatorIO {
             "Elevator/KG",
             9.81 * loadMass.in(Kilograms) * sprocketRadius.in(Meters) / kT * Math.sin(elevatorAngle.in(Radians)));
     private static final LoggedTunableNumber positionKP = new LoggedTunableNumber("Elevator/PositionKP", 500.0);
-    private static final LoggedTunableNumber positionKD = new LoggedTunableNumber("Elevator/PositionKD", 30.0);
+    private static final LoggedTunableNumber positionKD = new LoggedTunableNumber("Elevator/PositionKD", 40.0);
     private static final LoggedTunableNumber velocityKP = new LoggedTunableNumber("Elevator/VelocityKP", 0.0);
     private static final LoggedTunableNumber velocityKD = new LoggedTunableNumber("Elevator/VelocityKD", 0.0);
     private static final LoggedTunableBoolean useMotionMagic =
-            new LoggedTunableBoolean("Elevator/UseMotionMagic", true);
+            new LoggedTunableBoolean("Elevator/UseMotionMagic", false);
 
     protected final TalonFX masterMotor;
     protected final TalonFX followerMotor;
@@ -66,6 +69,7 @@ public class ElevatorIOHardware implements ElevatorIO {
 
     public ElevatorIOHardware() {
         motorConfig = new TalonFXConfiguration()
+                .withMotorOutput(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake))
                 .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(reduction))
                 .withMotionMagic(new MotionMagicConfigs()
                         .withMotionMagicCruiseVelocity(toMotorVelocity(maximumVelocity))
@@ -95,7 +99,10 @@ public class ElevatorIOHardware implements ElevatorIO {
                         .withForwardSoftLimitThreshold(toMotorPosition(maximumHeight)))
                 .withTorqueCurrent(new TorqueCurrentConfigs()
                         .withPeakForwardTorqueCurrent(Amps.of(120))
-                        .withPeakForwardTorqueCurrent(Amps.of(120)));
+                        .withPeakForwardTorqueCurrent(Amps.of(120)))
+                .withCurrentLimits(new CurrentLimitsConfigs()
+                        .withSupplyCurrentLimit(Amps.of(40))
+                        .withSupplyCurrentLimit(Amps.of(40)));
 
         masterMotor = new TalonFX(20);
         tryUntilOk(() -> masterMotor.getConfigurator().apply(motorConfig));

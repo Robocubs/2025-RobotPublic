@@ -17,6 +17,7 @@ import frc.robot.subsystems.drive.DriveIO;
 import frc.robot.subsystems.drive.DriveIOHardware;
 import frc.robot.subsystems.drive.DriveIOSim;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.arm.ArmIO;
 import frc.robot.subsystems.superstructure.arm.ArmIOSim;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
@@ -108,6 +109,12 @@ public class RobotContainer {
                 .whileTrue(drive.pointModules(
                         () -> new Rotation2d(driverController.getLeftY(), driverController.getLeftX())));
         driverController.x().whileTrue(drive.toPose(() -> new Pose2d(8.33, 4, Rotation2d.kCCW_90deg), false));
+
+        driverController.rightBumper().onTrue(superstructure.runState(SuperstructureState.FEED));
+        driverController.povUp().onTrue(superstructure.runState(SuperstructureState.L4_CORAL_SCORE));
+        driverController.povLeft().onTrue(superstructure.runState(SuperstructureState.L3_CORAL_SCORE));
+        driverController.povRight().onTrue(superstructure.runState(SuperstructureState.L2_CORAL_SCORE));
+        driverController.povDown().onTrue(superstructure.runState(SuperstructureState.CORAL_INTAKE_2));
     }
 
     private void configureAutoRoutines() {
