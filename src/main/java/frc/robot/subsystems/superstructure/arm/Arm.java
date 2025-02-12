@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Torque;
+import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -49,13 +49,13 @@ public class Arm {
         io.setAngle(angle);
     }
 
-    public void setAngle(Angle angle, Torque feedforward) {
+    public void setAngle(Angle angle, Voltage feedforward) {
         holdAngle = Optional.empty();
         targetAngle = angle;
         io.setAngle(angle, feedforward);
     }
 
-    public void setVelocity(AngularVelocity velocity, Torque feedforward) {
+    public void setVelocity(AngularVelocity velocity, Voltage feedforward) {
         holdAngle = Optional.empty();
         targetAngle = inputs.angle.plus(velocity.times(Constants.mainLoopPeriod));
         io.setVelocity(velocity, feedforward);

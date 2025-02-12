@@ -69,8 +69,6 @@ public class SimpleController implements SuperstructureController {
     }
 
     private Command runState(Supplier<SuperstructureState> state) {
-        return superstructure
-                .runOnce(() -> superstructure.setState(state.get()))
-                .andThen(Commands.idle(superstructure).until(() -> superstructure.atStatePose()));
+        return superstructure.run(() -> superstructure.setState(state.get())).until(() -> superstructure.atStatePose());
     }
 }

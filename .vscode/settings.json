@@ -40,7 +40,8 @@
     "org.mockito.Mockito.*",
     "org.mockito.ArgumentMatchers.*",
     "org.mockito.Answers.*",
-    "edu.wpi.first.units.Units.*"
+    "edu.wpi.first.units.Units.*",
+    "frc.robot.util.PhoenixUtil.tryUntilOk"
   ],
   "java.completion.filteredTypes": [
     "java.awt.*",
@@ -63,7 +64,8 @@
     "java.util.logging.*",
     "java.lang.System.Logger",
     "edu.wpi.first.wpilibj.RobotState",
-    "com.google.flatbuffers.*"
+    "com.google.flatbuffers.*",
+    "org.jheaps.*"
   ],
   "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m -Xlog:disable"
 }

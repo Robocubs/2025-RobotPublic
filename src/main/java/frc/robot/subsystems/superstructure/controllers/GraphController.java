@@ -163,9 +163,7 @@ public class GraphController implements SuperstructureController {
     }
 
     private Command runState(SuperstructureState state) {
-        return superstructure
-                .runOnce(() -> superstructure.setState(state))
-                .andThen(Commands.idle(superstructure).until(() -> superstructure.isNear(state)));
+        return superstructure.run(() -> superstructure.setState(state)).until(() -> superstructure.isNear(state));
     }
 
     @AllArgsConstructor

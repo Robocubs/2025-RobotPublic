@@ -4,7 +4,6 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.Torque;
 import edu.wpi.first.units.measure.Voltage;
 import org.littletonrobotics.junction.AutoLog;
 
@@ -16,13 +15,13 @@ public interface RollersIO {
         public Angle coralPosition = Radians.zero();
         public AngularVelocity coralVelocity = RadiansPerSecond.zero();
         public Voltage coralVoltage = Volts.zero();
-        public Current coralInputCurrent = Amps.zero();
+        public Current coralSupplyCurrent = Amps.zero();
         public Current coralTorqueCurrent = Amps.zero();
 
         public Angle hybridPosition = Radians.zero();
         public AngularVelocity hybridVelocity = RadiansPerSecond.zero();
         public Voltage hybridVoltage = Volts.zero();
-        public Current hybridInputCurrent = Amps.zero();
+        public Current hybridSupplyCurrent = Amps.zero();
         public Current hybridTorqueCurrent = Amps.zero();
 
         public Distance coralDetectorDistance = Meters.zero();
@@ -31,15 +30,15 @@ public interface RollersIO {
 
     public default void updateInputs(RollersIOInputs inputs) {}
 
-    public default void setCoralVelocity(AngularVelocity coralVelocity, AngularVelocity hybridVelocity) {}
+    public default void setCoralVelocity(AngularVelocity velocity) {}
 
-    public default void setCoralPosition(Angle position, Torque feedforward) {}
+    public default void setCoralPosition(Angle position) {}
 
     public default void stopCoral() {}
 
-    public default void setHybridVelocity(AngularVelocity coralVelocity, AngularVelocity hybridVelocity) {}
+    public default void setHybridVelocity(AngularVelocity velocity) {}
 
-    public default void setHybridPosition(Angle position, Torque feedforward) {}
+    public default void setHybridPosition(Angle position) {}
 
     public default void stopHybrid() {}
 }

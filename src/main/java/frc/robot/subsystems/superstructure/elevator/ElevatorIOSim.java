@@ -1,26 +1,17 @@
 package frc.robot.subsystems.superstructure.elevator;
 
-import com.ctre.phoenix6.Utils;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
+import frc.robot.util.simulation.SimNotifier;
 
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.superstructure.elevator.ElevatorConstants.*;
 
 public class ElevatorIOSim extends ElevatorIOHardware {
-    private static final double kSimLoopPeriod = 0.005;
-
-    private final ElevatorSim motorSim;
-    private final Notifier simNotifier;
-    private double lastSimTime;
-
     public ElevatorIOSim() {
-        lastSimTime = Utils.getCurrentTimeSeconds();
-
-        var gearbox = DCMotor.getKrakenX60Foc(2);
-        motorSim = new ElevatorSim(
+        var gearbox = DCMotor.getKrakenX60Foc(numMotors);
+        var motorSim = new ElevatorSim(
                 gearbox,
                 reduction,
                 loadMass.in(Kilograms),
@@ -33,13 +24,9 @@ public class ElevatorIOSim extends ElevatorIOHardware {
         var masterSimState = masterMotor.getSimState();
         var followerSimState = followerMotor.getSimState();
 
-        simNotifier = new Notifier(() -> {
-            var currentTime = Utils.getCurrentTimeSeconds();
-            var deltaTime = currentTime - lastSimTime;
-            lastSimTime = currentTime;
-
+        SimNotifier.register(deltaTime -> {
             motorSim.setInputVoltage(masterSimState.getMotorVoltage());
-            motorSim.update(deltaTime);
+            motorSim.update(deltaTime.in(Seconds));
 
             var position = Radians.of(motorSim.getPositionMeters() / sprocketRadius.in(Meters) * reduction);
             var velocity =
@@ -53,6 +40,5 @@ public class ElevatorIOSim extends ElevatorIOHardware {
             followerSimState.setRotorVelocity(velocity);
             followerSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
         });
-        simNotifier.startPeriodic(kSimLoopPeriod);
     }
 }

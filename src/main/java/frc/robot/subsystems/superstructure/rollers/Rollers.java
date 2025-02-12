@@ -4,8 +4,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Torque;
-import frc.robot.Constants;
 import frc.robot.util.booleans.LatchedBoolean;
 import frc.robot.util.booleans.ThresholdLatchedBoolean;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -113,29 +111,5 @@ public class Rollers {
 
     public void stop() {
         // TODO: implement
-    }
-
-    private Torque coralRollerFeedForward() {
-        return NewtonMeters.of(9.81
-                * Constants.coralMass.in(Kilograms)
-                * Math.cos(armAngle.get().in(Radians) + coralAngleRelativeToArm.in(Radians) - Math.PI / 2)
-                / coralRollerReduction
-                / 2.0);
-    }
-
-    private Torque hybridRollerCoralFeedForward() {
-        return NewtonMeters.of(9.81
-                * Constants.coralMass.in(Kilograms)
-                * Math.cos(armAngle.get().in(Radians) + coralAngleRelativeToArm.in(Radians) - Math.PI / 2)
-                / hybridRollerReduction
-                / 2.0);
-    }
-
-    private Torque hybridRollerAlgaeFeedForward() {
-        return NewtonMeters.of(9.81
-                * Constants.algaeMass.in(Kilograms)
-                * Math.cos(armAngle.get().in(Radians) + algaeAngleRelativeToArm.in(Radians) - Math.PI / 2)
-                / hybridRollerReduction
-                / 2.0);
     }
 }

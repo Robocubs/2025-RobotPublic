@@ -18,6 +18,7 @@ import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
@@ -51,6 +52,7 @@ public class ElevatorIOHardware implements ElevatorIO {
     protected final TalonFX masterMotor;
     protected final TalonFX followerMotor;
     private final TalonFXConfiguration motorConfig;
+
     private final StatusSignal<Angle> masterAngleSignal;
     private final StatusSignal<AngularVelocity> masterVelocitySignal;
     private final StatusSignal<Voltage> masterVoltageSignal;
@@ -69,7 +71,9 @@ public class ElevatorIOHardware implements ElevatorIO {
 
     public ElevatorIOHardware() {
         motorConfig = new TalonFXConfiguration()
-                .withMotorOutput(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake))
+                .withMotorOutput(new MotorOutputConfigs()
+                        .withNeutralMode(NeutralModeValue.Brake)
+                        .withInverted(InvertedValue.CounterClockwise_Positive))
                 .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(reduction))
                 .withMotionMagic(new MotionMagicConfigs()
                         .withMotionMagicCruiseVelocity(toMotorVelocity(maximumVelocity))
@@ -101,13 +105,13 @@ public class ElevatorIOHardware implements ElevatorIO {
                         .withPeakForwardTorqueCurrent(Amps.of(120))
                         .withPeakForwardTorqueCurrent(Amps.of(120)))
                 .withCurrentLimits(new CurrentLimitsConfigs()
-                        .withSupplyCurrentLimit(Amps.of(40))
+                        .withStatorCurrentLimit(Amps.of(120))
                         .withSupplyCurrentLimit(Amps.of(40)));
 
-        masterMotor = new TalonFX(20);
+        masterMotor = new TalonFX(20, Constants.canivoreBusName);
         tryUntilOk(() -> masterMotor.getConfigurator().apply(motorConfig));
 
-        followerMotor = new TalonFX(21);
+        followerMotor = new TalonFX(21, Constants.canivoreBusName);
         tryUntilOk(() -> masterMotor.getConfigurator().apply(motorConfig));
         tryUntilOk(() -> followerMotor.setControl(new Follower(masterMotor.getDeviceID(), false)));
 
@@ -123,7 +127,7 @@ public class ElevatorIOHardware implements ElevatorIO {
         followerTorqueCurrentSignal = followerMotor.getTorqueCurrent();
 
         BaseStatusSignal.setUpdateFrequencyForAll(
-                Constants.mainLoopPeriod.in(Milliseconds),
+                Constants.mainLoopFrequency,
                 masterAngleSignal,
                 masterVelocitySignal,
                 masterVoltageSignal,

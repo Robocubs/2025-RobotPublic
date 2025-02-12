@@ -23,6 +23,7 @@ import frc.robot.subsystems.superstructure.arm.ArmIOSim;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
 import frc.robot.subsystems.superstructure.rollers.RollersIO;
+import frc.robot.subsystems.superstructure.rollers.RollersIOSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.apriltag.AprilTagIO;
@@ -64,13 +65,16 @@ public class RobotContainer {
                             },
                             robotState);
                     superstructure =
-                            new Superstructure(new ElevatorIOSim(), new ArmIOSim(), new RollersIO() {}, robotState);
+                            new Superstructure(new ElevatorIOSim(), new ArmIOSim(), new RollersIOSim(), robotState);
                     break;
             }
         }
 
         if (drive == null) {
             drive = new Drive(new DriveIO() {}, robotState);
+        }
+
+        if (superstructure == null) {
             superstructure = new Superstructure(new ElevatorIO() {}, new ArmIO() {}, new RollersIO() {}, robotState);
         }
 

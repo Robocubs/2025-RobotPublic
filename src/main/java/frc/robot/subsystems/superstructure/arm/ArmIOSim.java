@@ -1,27 +1,18 @@
 package frc.robot.subsystems.superstructure.arm;
 
-import com.ctre.phoenix6.Utils;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import frc.robot.util.CustomDCMotor;
+import frc.robot.util.simulation.SimNotifier;
 
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.superstructure.arm.ArmConstants.*;
 
 public class ArmIOSim extends ArmIOHardware {
-    private static final double kSimLoopPeriod = 0.005;
-
-    private final SingleJointedArmSim motorSim;
-    private final Notifier simNotifier;
-    private double lastSimTime;
-
     public ArmIOSim() {
-        lastSimTime = Utils.getCurrentTimeSeconds();
-
-        // var gearbox = CustomDCMotor.getKrakenX44(1);
-        var gearbox = DCMotor.getKrakenX60Foc(1);
-        motorSim = new SingleJointedArmSim(
+        var initialAngle = Degrees.of(90);
+        var gearbox = CustomDCMotor.getKrakenX44(numMotors);
+        var motorSim = new SingleJointedArmSim(
                 gearbox,
                 reduction,
                 moi.in(KilogramSquareMeters),
@@ -29,34 +20,30 @@ public class ArmIOSim extends ArmIOHardware {
                 minimumAngle.in(Radians),
                 maximumAngle.in(Radians),
                 true,
-                Degrees.of(90).in(Radians));
-        motorSim.setState(Degrees.of(95).in(Radians), 0);
+                initialAngle.in(Radians),
+                0.001,
+                0.0);
 
         var cancoderSimState = cancoder.getSimState();
-        cancoderSimState.setRawPosition(Degrees.of(90));
+        cancoderSimState.setRawPosition(initialAngle.div(reduction));
 
         var motorSimState = motor.getSimState();
-        motorSimState.setRawRotorPosition(Degrees.of(90).times(reduction));
+        motorSimState.setRawRotorPosition(initialAngle);
 
-        simNotifier = new Notifier(() -> {
-            var currentTime = Utils.getCurrentTimeSeconds();
-            var deltaTime = currentTime - lastSimTime;
-            lastSimTime = currentTime;
-
+        SimNotifier.register(deltaTime -> {
             motorSim.setInputVoltage(motorSimState.getMotorVoltage());
-            motorSim.update(deltaTime);
+            motorSim.update(deltaTime.in(Seconds));
 
-            var angle = Radians.of(motorSim.getAngleRads() * reduction);
-            var velocity = RadiansPerSecond.of(motorSim.getVelocityRadPerSec() * reduction);
+            var angle = Radians.of(motorSim.getAngleRads());
+            var velocity = RadiansPerSecond.of(motorSim.getVelocityRadPerSec());
 
-            cancoderSimState.setRawPosition(angle.div(reduction));
-            cancoderSimState.setVelocity(velocity.div(reduction));
+            cancoderSimState.setRawPosition(angle);
+            cancoderSimState.setVelocity(velocity);
             cancoderSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
 
-            motorSimState.setRawRotorPosition(angle);
-            motorSimState.setRotorVelocity(velocity);
+            motorSimState.setRawRotorPosition(angle.times(reduction));
+            motorSimState.setRotorVelocity(velocity.times(reduction));
             motorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
         });
-        simNotifier.startPeriodic(kSimLoopPeriod);
     }
 }
