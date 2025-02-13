@@ -12,8 +12,8 @@ public interface ArmIO {
     @AutoLog
     public class ArmIOInputs {
         public Angle angle = Radians.zero();
-        public Angle position = Radians.zero();
-        public AngularVelocity velocity = RadiansPerSecond.zero();
+        public Angle rotorPosition = Radians.zero();
+        public AngularVelocity rotorVelocity = RadiansPerSecond.zero();
         public Voltage voltage = Volts.zero();
         public Current supplyCurrent = Amps.zero();
         public Current statorCurrent = Amps.zero();

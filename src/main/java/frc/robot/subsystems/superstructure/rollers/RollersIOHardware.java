@@ -75,7 +75,8 @@ public class RollersIOHardware implements RollersIO {
                         new Slot1Configs().withKP(coralVelocityKP.getAsDouble()).withKD(coralVelocityKD.getAsDouble()))
                 .withCurrentLimits(new CurrentLimitsConfigs()
                         .withStatorCurrentLimit(Amps.of(120))
-                        .withSupplyCurrentLimit(Amps.of(30)));
+                        .withSupplyCurrentLimit(Amps.of(30))
+                        .withSupplyCurrentLowerLimit(30));
         coralMotor = new TalonFX(33, Constants.canivoreBusName);
         tryUntilOk(() -> coralMotor.getConfigurator().apply(coralMotorConfig));
 
@@ -92,7 +93,8 @@ public class RollersIOHardware implements RollersIO {
                         .withKD(hybridVelocityKD.getAsDouble()))
                 .withCurrentLimits(new CurrentLimitsConfigs()
                         .withStatorCurrentLimit(Amps.of(120))
-                        .withSupplyCurrentLimit(Amps.of(30)));
+                        .withSupplyCurrentLimit(Amps.of(30))
+                        .withSupplyCurrentLowerLimit(30));
         hybridMotor = new TalonFX(34, Constants.canivoreBusName);
         tryUntilOk(() -> hybridMotor.getConfigurator().apply(hybridMotorConfig));
 

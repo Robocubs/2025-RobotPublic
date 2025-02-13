@@ -114,6 +114,7 @@ public class RobotContainer {
                         () -> new Rotation2d(driverController.getLeftY(), driverController.getLeftX())));
         driverController.x().whileTrue(drive.toPose(() -> new Pose2d(8.33, 4, Rotation2d.kCCW_90deg), false));
 
+        driverController.leftBumper().onTrue(superstructure.runState(SuperstructureState.BARGE));
         driverController.rightBumper().onTrue(superstructure.runState(SuperstructureState.FEED));
         driverController.povUp().onTrue(superstructure.runState(SuperstructureState.L4_CORAL_SCORE));
         driverController.povLeft().onTrue(superstructure.runState(SuperstructureState.L3_CORAL_SCORE));

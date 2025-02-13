@@ -26,7 +26,7 @@ public final class ArmConstants {
     public static final InvertedValue motorInvertedValue = InvertedValue.CounterClockwise_Positive;
 
     public static final Angle angleTolerance = Degrees.of(2);
-    public static final Angle maximumAngle = Degrees.of(95);
+    public static final Angle maximumAngle = Degrees.of(105);
     public static final Angle minimumAngle = Degrees.of(-90);
     public static final AngularVelocity maximumVelocity = RotationsPerSecond.of(1.0);
     public static final AngularAcceleration maximumAcceleration = maximumVelocity.div(Seconds.of(0.2));

@@ -24,8 +24,10 @@ public class ArmIOSim extends ArmIOHardware {
                 0.001,
                 0.0);
 
-        var cancoderSimState = cancoder.getSimState();
-        cancoderSimState.setRawPosition(initialAngle.div(reduction));
+        if (cancoder != null) {
+            var cancoderSimState = cancoder.getSimState();
+            cancoderSimState.setRawPosition(initialAngle);
+        }
 
         var motorSimState = motor.getSimState();
         motorSimState.setRawRotorPosition(initialAngle);
@@ -37,9 +39,12 @@ public class ArmIOSim extends ArmIOHardware {
             var angle = Radians.of(motorSim.getAngleRads());
             var velocity = RadiansPerSecond.of(motorSim.getVelocityRadPerSec());
 
-            cancoderSimState.setRawPosition(angle);
-            cancoderSimState.setVelocity(velocity);
-            cancoderSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+            if (cancoder != null) {
+                var cancoderSimState = cancoder.getSimState();
+                cancoderSimState.setRawPosition(angle);
+                cancoderSimState.setVelocity(velocity);
+                cancoderSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+            }
 
             motorSimState.setRawRotorPosition(angle.times(reduction));
             motorSimState.setRotorVelocity(velocity.times(reduction));

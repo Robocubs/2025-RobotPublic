@@ -106,7 +106,8 @@ public class ElevatorIOHardware implements ElevatorIO {
                         .withPeakForwardTorqueCurrent(Amps.of(120)))
                 .withCurrentLimits(new CurrentLimitsConfigs()
                         .withStatorCurrentLimit(Amps.of(120))
-                        .withSupplyCurrentLimit(Amps.of(40)));
+                        .withSupplyCurrentLimit(60)
+                        .withSupplyCurrentLowerLimit(Amps.of(40)));
 
         masterMotor = new TalonFX(20, Constants.canivoreBusName);
         tryUntilOk(() -> masterMotor.getConfigurator().apply(motorConfig));
