@@ -9,11 +9,15 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public enum SuperstructureState {
     // Special states
-    START(SuperstructureStateData.builder().rollerState(Rollers.State.STOPPED).build()),
+    START(SuperstructureStateData.builder().rollerState(Rollers.State.HOLD).build()),
     STOP(SuperstructureStateData.builder().rollerState(Rollers.State.STOPPED).build()),
     HOLD(SuperstructureStateData.builder().rollerState(Rollers.State.HOLD).build()),
     RETRACT_ARM(SuperstructureStateData.builder()
             .pose(SuperstructurePose.Preset.STOW.getRetractPose())
+            .build()),
+    ZERO_ELEVATOR(SuperstructureStateData.builder()
+            .pose(Preset.STOW.getPose())
+            .rollerState(Rollers.State.HOLD)
             .build()),
 
     // Preset states

@@ -103,9 +103,11 @@ public class Superstructure extends SubsystemBase {
         /*
          * Always set the roller state to the state data's roller state
          *
+         * If the state is start, command the elevator and arm to hold
          * If the state is stop, command the elevator and arm to stop
          * If the state is hold, command the elevator and arm to hold
-         * If the state is retract arm, command the elevator to hold and the arm to retract
+         * If the state is retract arm, command the elevator to hold and the arm to the state's pose
+         * If the state is zero elevator, do not command the elevator but command the arm to the state's pose
          *
          * Otherwise,
          * 1. Set the elevator height and arm angle to the state's pose
@@ -140,5 +142,12 @@ public class Superstructure extends SubsystemBase {
     public Command retractArm() {
         // TODO: Set the state to RETRACT_ARM with a runOnce command
         return print("Stopping superstructure").withName("SuperstructureRetractArm");
+    }
+
+    public Command zeroElevator() {
+        return runOnce(() -> setState(SuperstructureState.ZERO_ELEVATOR))
+                .andThen(elevator.zero())
+                .finallyDo(() -> setState(SuperstructureState.STOW))
+                .withName("SuperstructureZeroElevator");
     }
 }

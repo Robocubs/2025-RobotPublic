@@ -33,5 +33,9 @@ public interface ElevatorIO {
 
     public default void setVelocity(LinearVelocity velocity, Force feedforward) {}
 
+    public default void setVoltageOutput(Voltage voltage) {}
+
+    public default void zeroPosition() {}
+
     public default void stop() {}
 }

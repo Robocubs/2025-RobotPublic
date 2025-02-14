@@ -5,6 +5,8 @@ import java.util.Optional;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Force;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -73,5 +75,15 @@ public class Elevator {
 
         targetHeight = holdPosition.get();
         io.setPosition(holdPosition.get());
+    }
+
+    public Command zero() {
+        var voltage = Volts.of(-1.0);
+        var maxCurrent = Amps.of(-60);
+        return Commands.run(() -> io.setVoltageOutput(voltage))
+                .until(() -> inputs.masterTorqueCurrent.lt(maxCurrent))
+                .andThen(() -> io.stop())
+                .andThen(Commands.run(() -> io.zeroPosition())
+                        .until(() -> inputs.masterPosition.isEquivalent(Meters.zero())));
     }
 }

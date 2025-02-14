@@ -120,6 +120,7 @@ public class RobotContainer {
         driverController.povLeft().onTrue(superstructure.runState(SuperstructureState.L3_CORAL_SCORE));
         driverController.povRight().onTrue(superstructure.runState(SuperstructureState.L2_CORAL_SCORE));
         driverController.povDown().onTrue(superstructure.runState(SuperstructureState.CORAL_INTAKE_2));
+        driverController.back().onTrue(superstructure.zeroElevator());
     }
 
     private void configureAutoRoutines() {

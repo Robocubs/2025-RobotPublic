@@ -16,6 +16,7 @@ import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -68,6 +69,7 @@ public class ElevatorIOHardware implements ElevatorIO {
             new MotionMagicTorqueCurrentFOC(0.0).withSlot(0);
     private final PositionTorqueCurrentFOC positionControlRequest = new PositionTorqueCurrentFOC(0.0).withSlot(1);
     private final VelocityTorqueCurrentFOC velocityControlRequest = new VelocityTorqueCurrentFOC(0.0).withSlot(2);
+    private final VoltageOut voltageControlRequest = new VoltageOut(0.0);
 
     public ElevatorIOHardware() {
         motorConfig = new TalonFXConfiguration()
@@ -210,6 +212,17 @@ public class ElevatorIOHardware implements ElevatorIO {
         masterMotor.setControl(velocityControlRequest
                 .withVelocity(toMotorVelocity(velocity))
                 .withFeedForward(toTorqueCurrentAmps(feedforward)));
+    }
+
+    @Override
+    public void setVoltageOutput(Voltage voltage) {
+        masterMotor.setControl(voltageControlRequest.withOutput(voltage));
+    }
+
+    @Override
+    public void zeroPosition() {
+        masterMotor.setPosition(0, 0);
+        followerMotor.setPosition(0, 0);
     }
 
     @Override
