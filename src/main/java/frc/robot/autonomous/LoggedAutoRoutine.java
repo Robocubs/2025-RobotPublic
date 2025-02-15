@@ -60,7 +60,7 @@ public class LoggedAutoRoutine {
     }
 
     public LoggedAutoRoutine velocitySeconds(ChassisSpeeds chassisSpeeds, double seconds) {
-        commands.add(drive.withSpeeds(chassisSpeeds).withTimeout(seconds));
+        commands.add(drive.withSpeeds(() -> chassisSpeeds).withTimeout(seconds));
         return this;
     }
 

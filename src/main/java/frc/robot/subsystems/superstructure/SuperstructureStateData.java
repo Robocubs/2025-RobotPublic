@@ -3,6 +3,7 @@ package frc.robot.subsystems.superstructure;
 import frc.robot.subsystems.superstructure.rollers.Rollers;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -11,9 +12,6 @@ import lombok.NoArgsConstructor;
 @Builder(toBuilder = true)
 @Getter
 public class SuperstructureStateData {
-    @Builder.Default
-    private final SuperstructurePose pose = new SuperstructurePose();
-
-    @Builder.Default
-    private final Rollers.State rollerState = Rollers.State.HOLD;
+    private final @Default SuperstructurePose pose = new SuperstructurePose();
+    private final @Default Rollers.State rollerState = Rollers.State.HOLD;
 }

@@ -186,7 +186,6 @@ spotless {
         removeUnusedImports()
         palantirJavaFormat()
         importOrder('java|javax', '', '\\#')
-        formatAnnotations()
     }
     groovyGradle {
         target fileTree('.') {

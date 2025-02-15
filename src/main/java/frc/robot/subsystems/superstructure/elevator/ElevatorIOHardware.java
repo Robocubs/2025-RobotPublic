@@ -15,6 +15,7 @@ import com.ctre.phoenix6.configs.TorqueCurrentConfigs;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -65,11 +66,12 @@ public class ElevatorIOHardware implements ElevatorIO {
     private final StatusSignal<Current> followerSupplyCurrentSignal;
     private final StatusSignal<Current> followerTorqueCurrentSignal;
 
+    private final VoltageOut voltageControlRequest = new VoltageOut(0.0);
+    private final TorqueCurrentFOC torqueCurrentControlRequest = new TorqueCurrentFOC(0.0);
     private final MotionMagicTorqueCurrentFOC motionMagicControlRequest =
             new MotionMagicTorqueCurrentFOC(0.0).withSlot(0);
     private final PositionTorqueCurrentFOC positionControlRequest = new PositionTorqueCurrentFOC(0.0).withSlot(1);
     private final VelocityTorqueCurrentFOC velocityControlRequest = new VelocityTorqueCurrentFOC(0.0).withSlot(2);
-    private final VoltageOut voltageControlRequest = new VoltageOut(0.0);
 
     public ElevatorIOHardware() {
         motorConfig = new TalonFXConfiguration()
@@ -192,6 +194,16 @@ public class ElevatorIOHardware implements ElevatorIO {
     }
 
     @Override
+    public void setVoltage(Voltage voltage) {
+        masterMotor.setControl(voltageControlRequest.withOutput(voltage));
+    }
+
+    @Override
+    public void setTorqueCurrent(Current current) {
+        masterMotor.setControl(torqueCurrentControlRequest.withOutput(current));
+    }
+
+    @Override
     public void setPosition(Distance position) {
         if (useMotionMagic.get()) {
             masterMotor.setControl(motionMagicControlRequest.withPosition(toMotorPosition(position)));
@@ -212,11 +224,6 @@ public class ElevatorIOHardware implements ElevatorIO {
         masterMotor.setControl(velocityControlRequest
                 .withVelocity(toMotorVelocity(velocity))
                 .withFeedForward(toTorqueCurrentAmps(feedforward)));
-    }
-
-    @Override
-    public void setVoltageOutput(Voltage voltage) {
-        masterMotor.setControl(voltageControlRequest.withOutput(voltage));
     }
 
     @Override

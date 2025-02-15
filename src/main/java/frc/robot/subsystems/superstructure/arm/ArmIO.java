@@ -22,6 +22,8 @@ public interface ArmIO {
 
     public default void updateInputs(ArmIOInputs inputs) {}
 
+    public default void setVoltage(Voltage voltage) {}
+
     public default void setAngle(Angle angle) {}
 
     public default void setAngle(Angle angle, Voltage feedforward) {}

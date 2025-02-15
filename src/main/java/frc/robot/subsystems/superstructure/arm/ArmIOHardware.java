@@ -21,6 +21,7 @@ import com.ctre.phoenix6.configs.TorqueCurrentConfigs;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.CANdi;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -80,7 +81,8 @@ public class ArmIOHardware implements ArmIO {
     private final StatusSignal<Current> statorCurrentSignal;
     private final StatusSignal<Double> closedLoopReferenceSignal;
 
-    private final MotionMagicVoltage motionMagic = new MotionMagicVoltage(0.0).withSlot(0);
+    private final VoltageOut voltageControlRequest = new VoltageOut(0.0);
+    private final MotionMagicVoltage motionMagicControlRequest = new MotionMagicVoltage(0.0).withSlot(0);
     private final PositionVoltage positionControlRequest = new PositionVoltage(0.0).withSlot(1);
     private final VelocityVoltage velocityControlRequest = new VelocityVoltage(0.0).withSlot(2);
 
@@ -278,9 +280,14 @@ public class ArmIOHardware implements ArmIO {
     }
 
     @Override
+    public void setVoltage(Voltage voltage) {
+        motor.setControl(voltageControlRequest.withOutput(voltage));
+    }
+
+    @Override
     public void setAngle(Angle angle) {
         if (useMotionMagic.get()) {
-            motor.setControl(motionMagic.withPosition(angle));
+            motor.setControl(motionMagicControlRequest.withPosition(angle));
         } else {
             setAngle(angle, Volts.zero());
         }

@@ -17,9 +17,7 @@ public class Arm {
     private final ArmIOInputsAutoLogged inputs = new ArmIOInputsAutoLogged();
 
     private Optional<Angle> holdAngle = Optional.empty();
-
-    @AutoLogOutput
-    private Angle targetAngle = Radians.zero();
+    private @AutoLogOutput Angle targetAngle = Radians.zero();
 
     public Arm(ArmIO io) {
         this.io = io;
@@ -73,5 +71,10 @@ public class Arm {
 
         targetAngle = holdAngle.get();
         io.setAngle(holdAngle.get());
+    }
+
+    public void runCharacterization(Voltage volts) {
+        holdAngle = Optional.empty();
+        io.setVoltage(volts);
     }
 }

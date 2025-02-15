@@ -10,6 +10,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -17,12 +19,12 @@ import frc.robot.RobotState;
 import frc.robot.commands.DriveToPose;
 import frc.robot.commands.DriveWithJoysticks;
 import frc.robot.subsystems.drive.controllers.PathController;
+import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
 
 import static frc.robot.subsystems.drive.DriveConstants.*;
 
 public class Drive extends SubsystemBase {
-    // Swerve drive requests
     private final SwerveRequest.SwerveDriveBrake brakeRequest = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt pointRequest = new SwerveRequest.PointWheelsAt();
     private final SwerveRequest.ApplyRobotSpeeds robotRequest = new SwerveRequest.ApplyRobotSpeeds();
@@ -32,8 +34,12 @@ public class Drive extends SubsystemBase {
     private final RobotState robotState;
     private final PathController choreoTrajectoryController = new PathController();
 
-    private Pose2d odometryPose = Pose2d.kZero;
-    private double odometryPoseLastReset = 0.0;
+    private @Getter Pose2d odometryPose = Pose2d.kZero;
+    private @Getter double odometryPoseLastReset = 0.0;
+    private @Getter SwerveModuleState[] moduleStates =
+            Stream.generate(() -> new SwerveModuleState()).limit(4).toArray(SwerveModuleState[]::new);
+    private @Getter SwerveModulePosition[] modulePositions =
+            Stream.generate(() -> new SwerveModulePosition()).limit(4).toArray(SwerveModulePosition[]::new);
 
     public Drive(DriveIO io, RobotState robotState) {
         this.io = io;
@@ -57,15 +63,9 @@ public class Drive extends SubsystemBase {
         if (inputs.inputs.length > 0) {
             var lastInput = inputs.inputs[inputs.inputs.length - 1];
             odometryPose = lastInput.pose;
+            moduleStates = lastInput.moduleStates;
+            modulePositions = lastInput.modulePositions;
         }
-    }
-
-    public Pose2d getOdometryPose() {
-        return odometryPose;
-    }
-
-    public double getOdometryPoseLastReset() {
-        return odometryPoseLastReset;
     }
 
     public void setRequest(SwerveRequest request) {
@@ -90,8 +90,9 @@ public class Drive extends SubsystemBase {
                 .withName("DriveResetRotation");
     }
 
-    public Command withSpeeds(ChassisSpeeds chassisSpeeds) {
-        return run(() -> io.setControl(robotRequest.withSpeeds(chassisSpeeds))).withName("DriveWithSpeeds");
+    public Command withSpeeds(Supplier<ChassisSpeeds> chassisSpeeds) {
+        return run(() -> io.setControl(robotRequest.withSpeeds(chassisSpeeds.get())))
+                .withName("DriveWithSpeeds");
     }
 
     public Command withJoysticks(DoubleSupplier throttle, DoubleSupplier strafe, DoubleSupplier rotation) {

@@ -26,8 +26,7 @@ public class Rollers {
     private Optional<Angle> autoIntakeCoralPosition = Optional.empty();
     private Optional<Angle> autoIntakeAlgaePosition = Optional.empty();
 
-    @AutoLogOutput
-    private State state = State.STOPPED;
+    private @AutoLogOutput State state = State.STOPPED;
 
     public static enum State {
         STOPPED,

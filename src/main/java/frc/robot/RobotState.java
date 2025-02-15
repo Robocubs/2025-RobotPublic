@@ -39,7 +39,7 @@ public class RobotState {
         return !isBlue();
     }
 
-    @AutoLogOutput(key = "RobotState/Pose")
+    @AutoLogOutput
     public Pose2d getPose() {
         return poseEstimator.getEstimatedPosition();
     }
@@ -48,17 +48,17 @@ public class RobotState {
         return poseEstimator.sampleAt(timestamp);
     }
 
-    @AutoLogOutput(key = "RobotState/Heading")
+    @AutoLogOutput
     public Rotation2d getHeading() {
         return poseEstimator.getEstimatedPosition().getRotation();
     }
 
-    @AutoLogOutput(key = "RobotState/RobotVelocity")
+    @AutoLogOutput
     public ChassisSpeeds getRobotVelocity() {
         return fieldVelocity;
     }
 
-    @AutoLogOutput(key = "RobotState/FieldVelocity")
+    @AutoLogOutput
     public ChassisSpeeds getFieldVelocity() {
         return fieldVelocity;
     }

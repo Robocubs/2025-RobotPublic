@@ -27,13 +27,15 @@ public interface ElevatorIO {
 
     public default void updateInputs(ElevatorIOInputs inputs) {}
 
+    public default void setVoltage(Voltage voltage) {}
+
+    public default void setTorqueCurrent(Current current) {}
+
     public default void setPosition(Distance position) {}
 
     public default void setPosition(Distance position, Force feedforward) {}
 
     public default void setVelocity(LinearVelocity velocity, Force feedforward) {}
-
-    public default void setVoltageOutput(Voltage voltage) {}
 
     public default void zeroPosition() {}
 

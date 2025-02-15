@@ -12,6 +12,8 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Mode;
 import frc.robot.autonomous.AutoRoutines;
+import frc.robot.commands.characterization.DriveCharacterization;
+import frc.robot.commands.characterization.SuperstructureCharacterization;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIO;
 import frc.robot.subsystems.drive.DriveIOHardware;
@@ -130,6 +132,15 @@ public class RobotContainer {
 
         SmartDashboard.putData("Auto Chooser", autoChooser);
         autoChooser.select("Demo");
+
+        if (Constants.characterizationEnabled) {
+            autoChooser.addCmd("Drive Wheel Characterization", () -> DriveCharacterization.wheelRadius(drive));
+            DriveCharacterization.translationSysId(drive).addAutos(autoChooser, "Drive Translation");
+            DriveCharacterization.steerSysId(drive).addAutos(autoChooser, "Drive Steer");
+            DriveCharacterization.rotationSysId(drive).addAutos(autoChooser, "Drive Rotation");
+            SuperstructureCharacterization.elevatorSysId(superstructure).addAutos(autoChooser, "Elevator");
+            SuperstructureCharacterization.armSysId(superstructure).addAutos(autoChooser, "Arm");
+        }
     }
 
     public Command getAutonomousCommand() {

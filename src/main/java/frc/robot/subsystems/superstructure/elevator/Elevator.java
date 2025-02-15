@@ -2,6 +2,7 @@ package frc.robot.subsystems.superstructure.elevator;
 
 import java.util.Optional;
 
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Force;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -77,10 +78,15 @@ public class Elevator {
         io.setPosition(holdPosition.get());
     }
 
+    public void runCharacterization(Current current) {
+        holdPosition = Optional.empty();
+        io.setTorqueCurrent(current);
+    }
+
     public Command zero() {
         var voltage = Volts.of(-1.0);
         var maxCurrent = Amps.of(-60);
-        return Commands.run(() -> io.setVoltageOutput(voltage))
+        return Commands.run(() -> io.setVoltage(voltage))
                 .until(() -> inputs.masterTorqueCurrent.lt(maxCurrent))
                 .andThen(() -> io.stop())
                 .andThen(Commands.run(() -> io.zeroPosition())
