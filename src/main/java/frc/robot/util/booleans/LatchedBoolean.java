@@ -21,6 +21,10 @@ public class LatchedBoolean {
         return value;
     }
 
+    public boolean get() {
+        return latchedValue;
+    }
+
     public void resetLatch() {
         latched = false;
     }

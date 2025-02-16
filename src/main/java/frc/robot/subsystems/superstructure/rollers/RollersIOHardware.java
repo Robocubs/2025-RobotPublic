@@ -21,6 +21,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants;
 import frc.robot.util.tuning.LoggedTunableNumber;
+import frc.robot.util.tuning.LoggedTunableValue;
 
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.superstructure.rollers.RollersConstants.*;
@@ -132,29 +133,85 @@ public class RollersIOHardware implements RollersIO {
 
     @Override
     public void updateInputs(RollersIOInputs inputs) {
-        /*
-         * TODO: Implement
-         * 1. Refresh input signals
-         * 2. Update input fields
-         * 3. Check for changes to tunable numbers
-         */
+        BaseStatusSignal.refreshAll(
+                coralPositionSignal,
+                coralVelocitySignal,
+                coralVoltageSignal,
+                coralSupplyCurrentSignal,
+                hybridPositionSignal,
+                hybridVelocitySignal,
+                hybridVoltageSignal,
+                hybridSupplyCurrentSignal,
+                coralDistanceSignal,
+                algaeDistanceSignal);
+
+        inputs.coralPosition = coralPositionSignal.getValue();
+        inputs.coralVelocity = coralVelocitySignal.getValue();
+        inputs.coralVoltage = coralVoltageSignal.getValue();
+        inputs.coralSupplyCurrent = coralSupplyCurrentSignal.getValue();
+        inputs.hybridPosition = hybridPositionSignal.getValue();
+        inputs.hybridVelocity = hybridVelocitySignal.getValue();
+        inputs.hybridVoltage = hybridVoltageSignal.getValue();
+        inputs.hybridSupplyCurrent = hybridSupplyCurrentSignal.getValue();
+        inputs.coralDetectorDistance = coralDistanceSignal.getValue();
+        inputs.algaeDetectorDistance = algaeDistanceSignal.getValue();
+
+        LoggedTunableValue.ifChanged(
+                0,
+                () -> {
+                    coralMotorConfig.Slot0.kP = coralPositionKP.get();
+                    coralMotorConfig.Slot0.kD = coralPositionKD.get();
+                    coralMotorConfig.Slot1.kP = coralVelocityKP.get();
+                    coralMotorConfig.Slot1.kD = coralVelocityKD.get();
+                    tryUntilOk(() -> coralMotor.getConfigurator().apply(coralMotorConfig));
+                },
+                coralPositionKP,
+                coralPositionKD,
+                coralVelocityKP,
+                coralVelocityKD);
+
+        LoggedTunableValue.ifChanged(
+                0,
+                () -> {
+                    hybridMotorConfig.Slot0.kP = hybridPositionKP.get();
+                    hybridMotorConfig.Slot0.kD = hybridPositionKD.get();
+                    hybridMotorConfig.Slot1.kP = hybridVelocityKP.get();
+                    hybridMotorConfig.Slot1.kD = hybridVelocityKD.get();
+                    tryUntilOk(() -> hybridMotor.getConfigurator().apply(hybridMotorConfig));
+                },
+                hybridPositionKP,
+                hybridPositionKD,
+                hybridVelocityKP,
+                hybridVelocityKD);
     }
 
     @Override
-    public void setCoralVelocity(AngularVelocity velocity) {}
+    public void setCoralVelocity(AngularVelocity velocity) {
+        coralMotor.setControl(coralVelocityControlRequest.withVelocity(velocity));
+    }
 
     @Override
-    public void setCoralPosition(Angle position) {}
+    public void setCoralPosition(Angle position) {
+        coralMotor.setControl(coralPositionControlRequest.withPosition(position));
+    }
 
     @Override
-    public void stopCoral() {}
+    public void stopCoral() {
+        coralMotor.stopMotor();
+    }
 
     @Override
-    public void setHybridVelocity(AngularVelocity velocity) {}
+    public void setHybridVelocity(AngularVelocity velocity) {
+        hybridMotor.setControl(hybridVelocityControlRequest.withVelocity(velocity));
+    }
 
     @Override
-    public void setHybridPosition(Angle position) {}
+    public void setHybridPosition(Angle position) {
+        hybridMotor.setControl(hybridPositionControlRequest.withPosition(position));
+    }
 
     @Override
-    public void stopHybrid() {}
+    public void stopHybrid() {
+        hybridMotor.stopMotor();
+    }
 }

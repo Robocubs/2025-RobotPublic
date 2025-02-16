@@ -34,4 +34,8 @@ public class ThresholdLatchedBoolean {
 
         return value;
     }
+
+    public boolean get() {
+        return value;
+    }
 }

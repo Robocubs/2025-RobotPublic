@@ -23,7 +23,9 @@ public class Rollers {
     private final LatchedBoolean wideCoralDetected = new LatchedBoolean(true);
 
     private Optional<Angle> autoFeedCoralPosition = Optional.empty();
-    private Optional<Angle> autoIntakeCoralPosition = Optional.empty();
+    private Optional<Angle> autoFeedHybridPosition = Optional.empty();
+    private Optional<Angle> autoIntakeCoralCoralPosition = Optional.empty();
+    private Optional<Angle> autoIntakeCoralHybridPosition = Optional.empty();
     private Optional<Angle> autoIntakeAlgaePosition = Optional.empty();
 
     private @AutoLogOutput State state = State.STOPPED;
@@ -48,67 +50,123 @@ public class Rollers {
         io.updateInputs(inputs);
         Logger.processInputs("Rollers", inputs);
 
-        /*
-         * TODO: Implement detection logic for each detector
-         * 1. Update detection booleans with the sensor distance
-         * 2. If detected is true and auto intake position is empty,
-         *    set the auto intake position to the current position plus/minus the auto intake distance
-         * 3. If detected is false,
-         *    set the auto intake position to empty
-         * 4. If the state is AUTO_INTAKE_CORAL and a coral is detected, set the wideCoralDetected to true
-         */
+        wideCoralDetected.update(inputs.coralDetectorDistance.lt(coralDetectionDistance));
+        longCoralDetected.update(inputs.coralDetectorDistance.in(Meters));
+        algaeDetected.update(inputs.algaeDetectorDistance.in(Meters));
 
-        /*
-         * TOOD: Implement state logic
-         *
-         * Auto states:
-         * 1. If the auto position is present, Command the io to go to the position
-         * 2. If the auto position is not present, Command the io to run the intake velocity
-         *
-         * Hold state:
-         * 1. If any auto position exists, hold that position
-         * 2. Otherwise, set the io to stop
-         */
+        if (wideCoralDetected.get()) {
+            if (!autoIntakeCoralCoralPosition.isPresent() || !autoIntakeCoralHybridPosition.isPresent()) {
+                autoIntakeCoralCoralPosition = Optional.of(inputs.coralPosition.plus(coralIntakeCoralRollerPosition));
+                autoIntakeCoralHybridPosition =
+                        Optional.of(inputs.hybridPosition.plus(coralIntakeHybridRollerPosition));
+            }
+        } else {
+            autoIntakeCoralCoralPosition = Optional.empty();
+            autoIntakeCoralHybridPosition = Optional.empty();
+        }
+
+        if (longCoralDetected.get()) {
+            if (!autoFeedCoralPosition.isPresent() || autoIntakeCoralHybridPosition.isPresent()) {
+                autoFeedCoralPosition = Optional.of(inputs.coralPosition.minus(coralFeedCoralRollerPosition));
+                autoFeedHybridPosition = Optional.of(inputs.hybridPosition.minus(coralFeedHybridRollerPosition));
+            }
+        } else {
+            autoFeedCoralPosition = Optional.empty();
+            autoFeedHybridPosition = Optional.empty();
+        }
+
+        if (algaeDetected.get()) {
+            if (!autoIntakeAlgaePosition.isPresent()) {
+                autoIntakeAlgaePosition = Optional.of(inputs.hybridPosition.plus(algaeIntakeHybridRollerPosition));
+            }
+        } else {
+            autoIntakeAlgaePosition = Optional.empty();
+        }
+
         switch (state) {
             case AUTO_FEED_CORAL:
+                if (autoFeedCoralPosition.isPresent() && autoFeedHybridPosition.isPresent()) {
+                    io.setCoralPosition(autoFeedCoralPosition.get());
+                    io.setHybridPosition(autoFeedHybridPosition.get());
+                } else {
+                    io.setCoralVelocity(coralFeedCoralRollerVelocity);
+                    io.setHybridVelocity(coralFeedHybridRollerVelocity);
+                }
                 break;
             case AUTO_INTAKE_CORAL:
+                if (autoIntakeCoralCoralPosition.isPresent() && autoIntakeCoralHybridPosition.isPresent()) {
+                    io.setCoralPosition(autoIntakeCoralCoralPosition.get());
+                    io.setHybridPosition(autoIntakeCoralHybridPosition.get());
+                } else {
+                    io.setCoralVelocity(coralIntakeCoralRollerVelocity);
+                    io.setHybridVelocity(coralIntakeHybridRollerVelocity);
+                }
                 break;
             case AUTO_INTAKE_ALGAE:
+                if (autoIntakeAlgaePosition.isPresent() && autoIntakeCoralHybridPosition.isPresent()) {
+                    io.stopCoral();
+                    io.setHybridPosition(autoIntakeAlgaePosition.get());
+                } else {
+                    io.setCoralVelocity(algaeIntakeCoralRollerVelocity);
+                    io.setHybridVelocity(algaeIntakeHybridRollerVelocity);
+                }
                 break;
             case CORAL_FORWARD:
+                io.setCoralVelocity(algaeIntakeCoralRollerVelocity);
                 break;
             case CORAL_REVERSE:
+                io.setCoralVelocity(algaeIntakeCoralRollerVelocity);
                 break;
             case ALGAE_FORWARD:
+                io.setCoralVelocity(algaeIntakeCoralRollerVelocity);
                 break;
             case HOLD:
+                if (autoFeedCoralPosition.isPresent()) {
+                    io.setCoralPosition(autoFeedCoralPosition.get());
+                } else if (autoIntakeCoralCoralPosition.isPresent()) {
+                    io.setCoralPosition(autoIntakeCoralCoralPosition.get());
+                } else if (autoIntakeAlgaePosition.isPresent()) {
+                    io.setCoralPosition(autoIntakeAlgaePosition.get());
+                } else {
+                    io.stopCoral();
+                }
                 break;
             case STOPPED:
+                io.stopCoral();
                 break;
             default:
+                io.stopCoral();
                 break;
         }
     }
 
     @AutoLogOutput
     public boolean longCoralDetected() {
-        // TODO: implement
-        return false;
+        return longCoralDetected.get();
+    }
+
+    @AutoLogOutput
+    public boolean wideCoralDetected() {
+        return wideCoralDetected.get();
     }
 
     @AutoLogOutput
     public boolean algaeDetected() {
-        // TODO: implement
-        return false;
+        return algaeDetected.get();
     }
 
     public void setState(State state) {
-        // TODO: implement
-        // If the state is not AUTO_INTAKE_CORAL or HOLD, reset the wideCoralDetected latched boolean
+        if (state == State.CORAL_FORWARD || state == State.AUTO_INTAKE_ALGAE) {
+            wideCoralDetected.resetLatch();
+        }
+        this.state = state;
     }
 
     public void stop() {
-        // TODO: implement
+        io.stopCoral();
+        autoFeedCoralPosition = Optional.empty();
+        autoIntakeCoralCoralPosition = Optional.empty();
+        autoIntakeAlgaePosition = Optional.empty();
+        state = State.STOPPED;
     }
 }
