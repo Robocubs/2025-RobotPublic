@@ -13,6 +13,7 @@ import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 import org.littletonrobotics.junction.Logger;
 
+import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.drive.DriveConstants.*;
 
 public class DriveWithJoysticks extends Command {
@@ -20,12 +21,12 @@ public class DriveWithJoysticks extends Command {
     private static final double rotationRateThreshold = Units.degreesToRadians(10);
 
     private final SwerveRequest.FieldCentric fieldCentric = new SwerveRequest.FieldCentric()
-            .withDeadband(maxSpeed * translationDeadband)
-            .withRotationalDeadband(maxAngularRate * rotationDeadband)
+            .withDeadband(maxSpeed.in(MetersPerSecond) * translationDeadband)
+            .withRotationalDeadband(maxAngularRate.in(RadiansPerSecond) * rotationDeadband)
             .withDriveRequestType(DriveRequestType.Velocity);
     private final SwerveRequest.FieldCentricFacingAngle fieldCentricFacingAngle =
             new SwerveRequest.FieldCentricFacingAngle()
-                    .withDeadband(maxSpeed * translationDeadband)
+                    .withDeadband(maxSpeed.in(MetersPerSecond) * translationDeadband)
                     .withDriveRequestType(DriveRequestType.Velocity);
 
     private final Drive drive;
@@ -61,9 +62,9 @@ public class DriveWithJoysticks extends Command {
 
     @Override
     public void execute() {
-        var throttle = this.throttle.getAsDouble() * maxSpeed * (RobotState.isBlue() ? 1.0 : -1.0);
-        var strafe = this.strafe.getAsDouble() * maxSpeed * (RobotState.isBlue() ? 1.0 : -1.0);
-        var rotation = this.rotation.getAsDouble() * maxAngularRate;
+        var throttle = this.throttle.getAsDouble() * maxSpeed.in(MetersPerSecond) * (RobotState.isBlue() ? 1.0 : -1.0);
+        var strafe = this.strafe.getAsDouble() * maxSpeed.in(MetersPerSecond) * (RobotState.isBlue() ? 1.0 : -1.0);
+        var rotation = this.rotation.getAsDouble() * maxAngularRate.in(RadiansPerSecond);
 
         var rotationDemandIsZero = MathUtil.isNear(0.0, rotation, fieldCentric.RotationalDeadband);
         if (!rotationDemandIsZero) {

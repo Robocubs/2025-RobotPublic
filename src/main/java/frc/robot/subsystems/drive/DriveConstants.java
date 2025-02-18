@@ -8,7 +8,12 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.AngularAcceleration;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.LinearAcceleration;
+import edu.wpi.first.units.measure.LinearVelocity;
+
+import static edu.wpi.first.units.Units.*;
 
 /** All Constants Measured in Meters and Radians (m/s, m/s^2, rad/s, rad/s^2) */
 public final class DriveConstants {
@@ -23,11 +28,13 @@ public final class DriveConstants {
     public static final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(moduleTranslations);
     public static final Matrix<N3, N1> odometryStdDevs = new Matrix<>(VecBuilder.fill(0.003, 0.003, 0.0002));
 
-    public static final double maxSpeed = TunerConstants.kSpeedAt12Volts.in(Units.MetersPerSecond);
-    public static final double maxAcceleration = maxSpeed * 3.0;
-    public static final double maxAngularRate =
-            Units.RotationsPerSecond.of(0.75).in(Units.RadiansPerSecond);
-    public static final double maxAngularAcceleration = maxAngularRate * 3.0;
+    public static final LinearVelocity maxSpeed = TunerConstants.kSpeedAt12Volts;
+    public static final LinearAcceleration maxAcceleration = maxSpeed.div(Seconds.of(0.33));
+    public static final AngularVelocity maxAngularRate = RotationsPerSecond.of(0.75);
+    public static final AngularAcceleration maxAngularAcceleration = maxAngularRate.div(Seconds.of(0.33));
+
+    public static final LinearVelocity maxSpeedExtended = MetersPerSecond.of(0.2);
+    public static final LinearAcceleration maxAccelerationExtended = maxSpeedExtended.div(Seconds.of(0.33));
 
     public static final double translationDeadband = 0.1;
     public static final double rotationDeadband = 0.1;

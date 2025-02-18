@@ -23,7 +23,7 @@ public class Arm {
         this.io = io;
     }
 
-    public void periodic() {
+    public void updateInputs() {
         io.updateInputs(inputs);
         Logger.processInputs("Arm", inputs);
     }

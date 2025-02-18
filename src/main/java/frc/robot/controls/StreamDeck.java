@@ -17,15 +17,16 @@ import org.littletonrobotics.junction.Logger;
 
 public class StreamDeck extends SubsystemBase {
     private final Map<StreamDeckButton, Button> buttons = new HashMap<>();
+    private final Map<StreamDeckButton, Alert> alerts = new HashMap<>();
 
-    private static record Button(BooleanDashboardInput pressed, BooleanSupplier selected, BooleanPublisher activePub) {}
+    private static record Button(LoggedNetworkButton pressed, BooleanSupplier selected, BooleanPublisher activePub) {}
 
     @Override
     public void periodic() {
         buttons.values().forEach(button -> button.activePub.set(button.selected.getAsBoolean()));
     }
 
-    public StreamDeck configureButton(Consumer<ButtonConfiguration> config) {
+    public StreamDeck configureButtons(Consumer<ButtonConfiguration> config) {
         var configuration = new ButtonConfiguration();
         config.accept(configuration);
 
@@ -37,7 +38,7 @@ public class StreamDeck extends SubsystemBase {
             table.getStringTopic("Icon").publish().set(button.icon);
             table.getStringTopic("Label").publish().set(button.label);
 
-            var dashboardBoolean = new BooleanDashboardInput(button.key, false);
+            var dashboardBoolean = new LoggedNetworkButton(button.key, false);
             buttons.put(
                     button,
                     new Button(
@@ -53,7 +54,11 @@ public class StreamDeck extends SubsystemBase {
 
     public Trigger button(StreamDeckButton button) {
         if (!buttons.containsKey(button)) {
-            Alert alert = new Alert("Stream Deck button trigger added for invalid button ", AlertType.kWarning);
+            if (!alerts.containsKey(button)) {
+                var alert = new Alert("Stream Deck button trigger added for invalid button ", AlertType.kWarning);
+                alerts.put(button, alert);
+                alert.set(true);
+            }
             return new Trigger(() -> false);
         }
 
@@ -65,18 +70,18 @@ public class StreamDeck extends SubsystemBase {
     }
 
     public static enum StreamDeckButton {
-        l4ScoreButton(0, 0, "l4CoralScoreButton", "Circle", "L4Coral"),
-        l3ScoreButton(1, 0, "l3CoralScoreButton", "Circle", "L3Coral"),
-        l2ScoreButton(2, 0, "l2CoralScoreButton", "Circle", "L2Coral"),
-        l1ScoreButton(2, 1, "l1CoralScoreButton", "Circle", "L1Coral"),
-        l1WideScoreButton(1, 1, "l1CoralWideScoreButton", "Circle", "L1Wide"),
-        coralIntake1Button(0, 1, "coralIntake1Button", "Circle", "Intake1"),
-        coralIntake2Button(0, 2, "coralIntake2Button", "Circle", "Intake2"),
-        feedButton(1, 2, "feedButton", "Circle", "Feed"),
-        stowButton(2, 2, "stowButton", "Circle", "Stow"),
-        bargeButton(0, 3, "bargeButton", "Circle", "Barge"),
-        l3AlgaeIntakeButton(1, 3, "l3AlgaeIntakeButton", "Circle", "L3Algae"),
-        l2AlgaeIntakeButton(2, 3, "l2AlgaeIntakeButton", "Circle", "L2Algae");
+        L4_CORAL(0, 0, "l4CoralScoreButton", "Circle", "L4"),
+        L3_CORAL(1, 0, "l3CoralScoreButton", "Circle", "L3"),
+        L2_CORAL(2, 0, "l2CoralScoreButton", "Circle", "L2"),
+        L1_CORAL(2, 1, "l1CoralScoreButton", "Circle", "L1"),
+        L3_ALGAE(0, 1, "l3AlgaeButton", "Circle", "L3 Algae"),
+        L2_ALGAE(1, 1, "l2AlgaeButton", "Circle", "L2 Algae"),
+        CORAL_INTAKE(2, 2, "coralIntakeButton", "Circle", "Coral In"),
+        ALGAE_INTAKE(2, 3, "algaeIntakeButton", "Circle", "Algae In"),
+        FEED(0, 2, "feedButton", "Circle", "Feed"),
+        STOW(1, 2, "stowButton", "Circle", "Stow"),
+        PROCESSOR(1, 3, "processorButton", "Circle", "Processor"),
+        BARGE(0, 3, "bargeButton", "Circle", "Barge");
 
         private final int index;
         private final String key;

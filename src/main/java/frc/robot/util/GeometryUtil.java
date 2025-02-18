@@ -1,5 +1,6 @@
 package frc.robot.util;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -11,6 +12,11 @@ import frc.robot.RobotState;
 import static edu.wpi.first.units.Units.*;
 
 public final class GeometryUtil {
+    public static boolean isNear(Rotation2d expected, Rotation2d actual, Rotation2d tolerance) {
+        return MathUtil.isNear(
+                0, MathUtil.angleModulus(expected.getRadians() - actual.getRadians()), tolerance.getRadians());
+    }
+
     public static Rotation2d flip(Rotation2d rotation) {
         return rotation.minus(Rotation2d.kPi);
     }

@@ -45,7 +45,9 @@ public class LoggedAutoRoutine {
                             Commands.print("Finished " + name)));
         }
 
-        Logger.recordOutput("Auto/Path", GeometryUtil.autoFlip(pathBuilder.build()));
+        var path = GeometryUtil.autoFlip(pathBuilder.build());
+        Logger.recordOutput("Auto/Path", path);
+        robotState.setPath(path);
 
         return routine;
     }

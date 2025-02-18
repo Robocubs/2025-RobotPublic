@@ -3,6 +3,7 @@ plugins {
     id "edu.wpi.first.GradleRIO" version "2025.2.1"
     id "com.peterabeles.gversion" version "1.10"
     id "com.diffplug.spotless" version "6.25.0"
+    id "com.github.node-gradle.node" version "7.0.1"
     id "com.google.protobuf" version "0.9.4"
     id "io.freefair.lombok" version "8.12.1"
 }
@@ -94,6 +95,8 @@ dependencies {
 
     implementation "javax.annotation:javax.annotation-api:1.3.2"
     implementation 'org.jgrapht:jgrapht-core:1.5.1'
+    implementation "org.slf4j:slf4j-simple:2.0.11"
+    implementation "io.javalin:javalin:6.4.0"
 
     def akitJson = new groovy.json.JsonSlurper().parseText(new File(projectDir.getAbsolutePath() + "/vendordeps/AdvantageKit.json").text)
     annotationProcessor "org.littletonrobotics.akit:akit-autolog:$akitJson.version"
@@ -181,7 +184,7 @@ spotless {
     java {
         target fileTree('.') {
             include '**/*.java'
-            exclude '.*/**', '**/build/**', '**/build-*/**', 'src/main/java/frc/robot/BuildConstants.java', 'bin/generated-sources/**', 'src/main/deploy/**'
+            exclude '.*/**', '**/build/**', '**/build-*/**', 'src/main/java/frc/robot/BuildConstants.java', 'bin/generated-sources/**', 'src/main/deploy/**', '**/node_modules/**'
         }
         removeUnusedImports()
         palantirJavaFormat()
@@ -190,7 +193,7 @@ spotless {
     groovyGradle {
         target fileTree('.') {
             include '**/*.gradle'
-            exclude '.*/**', '**/build/**', '**/build-*/**', 'src/main/deploy/**'
+            exclude '.*/**', '**/build/**', '**/build-*/**', 'src/main/deploy/**', '**/node_modules/**'
         }
         greclipse()
         indentWithSpaces(4)
@@ -200,24 +203,17 @@ spotless {
     format 'xml', {
         target fileTree('.') {
             include '**/*.xml'
-            exclude '.*/**', '**/build/**', '**/build-*/**', 'src/main/deploy/**'
+            exclude '.*/**', '**/build/**', '**/build-*/**', 'src/main/deploy/**', '**/node_modules/**'
         }
         eclipseWtp('xml')
         trimTrailingWhitespace()
         indentWithSpaces(2)
         endWithNewline()
     }
-    json {
-        target fileTree(".") {
-            include "**/*.json"
-            exclude "**/build/**", "**/build-*/**"
-        }
-        gson().indentWithSpaces(2)
-    }
     format 'misc', {
         target fileTree('.') {
             include '**/*.md', '**/.gitignore'
-            exclude '.*/**', '**/build/**', '**/build-*/**', 'src/main/deploy/**'
+            exclude '.*/**', '**/build/**', '**/build-*/**', 'src/main/deploy/**', '**/node_modules/**'
         }
         trimTrailingWhitespace()
         indentWithSpaces(2)
@@ -225,9 +221,73 @@ spotless {
     }
 }
 
+// NPM Bundles
+node {
+    download = true
+    version = '20.18.3'
+    npmInstallCommand = System.getenv('CI') ? 'ci' : 'install';
+}
+
+npmInstall {
+    args = System.getenv('CI') ? [] : [
+        '--workspaces',
+        '--include-workspace-root'
+    ]
+    inputs.files 'package.json', 'package-lock.json'
+}
+
+task npmRunLint(type: NpmTask) {
+    dependsOn npmInstall
+    args = ['run', 'lint']
+    inputs.files '.eslintrc.json', '.prettierrc', '.prettierignore'
+    inputs.dir fileTree('src/main/ts') {
+        exclude '**/dist/**', '**/node_modules/**'
+    }
+    outputs.upToDateWhen { true }
+}
+
+task npmRunLintCi(type: NpmTask) {
+    dependsOn npmInstall
+    args = ['run', 'lint:ci']
+}
+
+task npmRunBuild(type: NpmTask) {
+    dependsOn npmInstall
+    args = ['run', 'build:deploy']
+    inputs.dir fileTree('src/main/ts') {
+        exclude '**/dist/**', '**/node_modules/.vite/**'
+    }
+    outputs.dir 'src/main/deploy/web'
+}
+
+compileJava.dependsOn(npmRunBuild)
+
+// Prettier formatting
+task prettierApply(type: NpxTask) {
+    dependsOn(npmInstall)
+    command = 'prettier'
+    args = ['.', '--write']
+    inputs.files '.prettierrc', '.prettierignore'
+    inputs.dir fileTree('.') {
+        include '**/*.json', '**/*.js', '**/*.ts', '**/*.css', '**/*.html'
+        exclude '**/build/**', '**/build-*/**', 'src/main/deploy/**', '**/dist/**', '**/node_modules/**'
+    }
+    outputs.upToDateWhen { true }
+}
+
+compileJava.dependsOn(prettierApply)
+
+task prettierCheck(type: NpxTask) {
+    dependsOn(npmInstall)
+    command = 'prettier'
+    args = ['.', '--check']
+}
+
 // Task groups
 task lint() {
     dependsOn System.getenv('CI') ? spotlessCheck : spotlessApply
+    dependsOn System.getenv('CI') ? prettierCheck : prettierApply
+    dependsOn System.getenv('CI') ? npmRunLintCi : npmRunLint
 }
 
 //Protobuf generation

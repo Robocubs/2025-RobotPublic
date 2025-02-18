@@ -1,0 +1,35 @@
+{
+  "name": "@frc-team-1701/dashboard",
+  "private": true,
+  "version": "0.0.0",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . --fix",
+    "lint:ci": "eslint .",
+    "dev": "vite",
+    "build": "vite build",
+    "build:deploy": "cross-env DASHBOARD_BASE='dashboard' DASHBOARD_OUT_DIR='../../deploy/web/dashboard' vite build",
+    "watch": "vite build --watch",
+    "watch:deploy": "cross-env DASHBOARD_BASE='dashboard' DASHBOARD_OUT_DIR='../../deploy/web/dashboard' vite build --watch",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.6",
+    "@tailwindcss/vite": "^4.0.6",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.2",
+    "tailwindcss": "^4.0.6",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0"
+  },
+  "dependencies": {
+    "@frc-web-components/fwc": "^3.2.0",
+    "@lit/context": "^1.1.4",
+    "@lit/reactive-element": "^2.0.4",
+    "@webbitjs/store": "^5.8.0",
+    "@webbitjs/webbit": "^5.12.0",
+    "lit": "^3.2.1"
+  }
+}

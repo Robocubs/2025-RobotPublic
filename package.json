@@ -1,0 +1,27 @@
+{
+  "name": "@frc-team-1701/2025-robot-code",
+  "version": "0.0.0",
+  "license": "MIT",
+  "description": "",
+  "scripts": {
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:ci": "npm run lint:ci --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "build:deploy": "npm run build:deploy --workspaces --if-present"
+  },
+  "workspaces": [
+    "src/main/ts/dashboard"
+  ],
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "@types/node": "^22.13.4",
+    "cross-env": "^7.0.3",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.2.3",
+    "prettier": "^3.5.1",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.1"
+  }
+}

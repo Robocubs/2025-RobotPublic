@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.Time;
@@ -38,4 +39,9 @@ public final class Constants {
 
     public static final Mass coralMass = Pounds.of((1.1 + 1.8) / 2);
     public static final Mass algaeMass = Pounds.of(1.5);
+
+    public static final Distance robotLength = Inches.of(29.5 + 6.0);
+    public static final Distance robotWidth = Inches.of(29.5 + 6.0);
+    public static final Distance halfRobotLength = robotLength.div(2);
+    public static final Distance halfRobotWidth = robotWidth.div(2);
 }

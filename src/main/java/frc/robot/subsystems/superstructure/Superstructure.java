@@ -1,5 +1,7 @@
 package frc.robot.subsystems.superstructure;
 
+import java.util.function.BooleanSupplier;
+
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
@@ -12,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotState;
 import frc.robot.subsystems.superstructure.arm.Arm;
+import frc.robot.subsystems.superstructure.arm.ArmConstants;
 import frc.robot.subsystems.superstructure.arm.ArmIO;
 import frc.robot.subsystems.superstructure.controllers.GraphController;
 import frc.robot.subsystems.superstructure.controllers.SuperstructureController;
@@ -26,6 +29,9 @@ import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 
 import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.wpilibj2.command.Commands.deadline;
+import static edu.wpi.first.wpilibj2.command.Commands.sequence;
+import static frc.robot.subsystems.superstructure.SuperstructureConstants.*;
 
 public class Superstructure extends SubsystemBase {
     private static final double armAngleOffsetDegrees = 90 - ElevatorConstants.elevatorAngle.in(Degrees);
@@ -46,30 +52,42 @@ public class Superstructure extends SubsystemBase {
     public Superstructure(ElevatorIO elevatorIO, ArmIO armIO, RollersIO rollersIO, RobotState robotState) {
         elevator = new Elevator(elevatorIO);
         arm = new Arm(armIO);
-        rollers = new Rollers(rollersIO, arm::getAngle);
+        rollers = new Rollers(rollersIO);
         this.robotState = robotState;
 
         mechanism = new LoggedMechanism2d(1.0, 3.0);
 
-        // TODO: Load values from config file
-        var root = mechanism.getRoot("Superstructure", Units.inchesToMeters(4.254), Units.inchesToMeters(1.437));
+        var root = mechanism.getRoot("Superstructure", robotToElevator.getX(), robotToElevator.getZ());
         elevatorLigament = root.append(new LoggedMechanismLigament2d(
                 "Elevator", elevator.getHeight().in(Meters), ElevatorConstants.elevatorAngle.in(Degrees)));
         armLigament = elevatorLigament
-                .append(new LoggedMechanismLigament2d("Carriage", Units.inchesToMeters(8.5), 0))
-                .append(new LoggedMechanismLigament2d("ArmMount", Units.inchesToMeters(7.562), -90))
-                .append(new LoggedMechanismLigament2d("Arm", Units.inchesToMeters(17.757), 95));
+                .append(new LoggedMechanismLigament2d("Carriage", elevatorHeightToCarriage.getX(), 0))
+                .append(new LoggedMechanismLigament2d(
+                        "ArmMount",
+                        carriageToArmMount.getX(),
+                        Units.radiansToDegrees(
+                                -elevatorHeightToCarriage.getRotation().getY())))
+                .append(new LoggedMechanismLigament2d("Arm", ArmConstants.length.in(Meters), 95));
         armLigament.setColor(new Color8Bit(Color.kBlue));
     }
 
     @Override
     public void periodic() {
-        elevator.periodic();
-        arm.periodic();
-        rollers.periodic();
+        elevator.updateInputs();
+        arm.updateInputs();
+        rollers.updateInputs();
 
         elevatorLigament.setLength(elevator.getHeight().in(Meters));
         armLigament.setAngle(arm.getAngle().in(Degrees) + armAngleOffsetDegrees);
+
+        robotState.setGamePieceStates(
+                rollers.longCoralDetected(), rollers.wideCoralDetected(), rollers.algaeDetected());
+
+        robotState.updateSuperstructureState(
+                state,
+                atStatePose()
+                        ? state.getData().getPose()
+                        : new SuperstructurePose(elevator.getHeight(), arm.getAngle()));
     }
 
     public Distance getElevatorHeight() {
@@ -103,9 +121,13 @@ public class Superstructure extends SubsystemBase {
     }
 
     public void setState(SuperstructureState state) {
+        runStatePeriodic(state);
+    }
+
+    public void runStatePeriodic(SuperstructureState state) {
         this.state = state;
 
-        rollers.setState(state.getData().getRollerState());
+        rollers.runState(state.getData().getRollerState());
 
         switch (state) {
             case START:
@@ -134,40 +156,101 @@ public class Superstructure extends SubsystemBase {
         }
     }
 
-    public Command runState(SuperstructureState state) {
+    public Command transitionToState(SuperstructureState state) {
+        return transitionToState(state, false);
+    }
+
+    public Command transitionToState(SuperstructureState state, boolean maintainState) {
         switch (state) {
             case START:
                 Commands.print("START is not intended to be run")
                         .andThen(hold())
                         .withName("SuperstructureStart");
             case STOP:
-                return stop();
+                return stop(maintainState);
             case HOLD:
-                return hold();
+                return hold(maintainState);
             case RETRACT_ARM:
-                return retractArm();
+                return retractArm(maintainState);
             case ZERO_ELEVATOR:
                 return zeroElevator();
             default:
-                return defer(() -> controller.getCommand(this.state, state).withName("SuperstructureRunState"));
+                return defer(() -> controller.getCommand(this.state, state))
+                        .withName("SuperstructureRunState_" + state.name());
         }
     }
 
+    public Command maintainState() {
+        return run(() -> runStatePeriodic(state)).withName("SuperstructureMaintainState" + state.name());
+    }
+
     public Command hold() {
-        return runOnce(() -> setState(SuperstructureState.HOLD)).withName("SuperstructureHold");
+        return hold(false);
+    }
+
+    public Command hold(boolean maintainState) {
+        return (maintainState
+                        ? run(() -> runStatePeriodic(SuperstructureState.HOLD))
+                        : runOnce(() -> runStatePeriodic(SuperstructureState.HOLD)))
+                .withName("SuperstructureHold");
     }
 
     public Command stop() {
-        return runOnce(() -> setState(SuperstructureState.STOP)).withName("SuperstructureStop");
+        return hold(false);
+    }
+
+    public Command stop(boolean maintainState) {
+        return (maintainState
+                        ? run(() -> runStatePeriodic(SuperstructureState.STOP))
+                        : runOnce(() -> runStatePeriodic(SuperstructureState.STOP)))
+                .withName("SuperstructureStop");
     }
 
     public Command retractArm() {
-        return runOnce(() -> setState(SuperstructureState.RETRACT_ARM)).withName("SuperstructureRetractArm");
+        return retractArm(false);
+    }
+
+    public Command retractArm(boolean maintainState) {
+        return run(() -> runStatePeriodic(SuperstructureState.RETRACT_ARM))
+                .until(() -> !maintainState
+                        && arm.isNear(SuperstructureState.RETRACT_ARM
+                                .getData()
+                                .getPose()
+                                .armAngle()))
+                .withName("SuperstructureRetractArm");
+    }
+
+    public Command score(SuperstructureState prescoreState, SuperstructureState scoreState, BooleanSupplier release) {
+        // TODO: Ensure the coral doesn't get partially scored
+        return sequence(
+                        // Wait for the robot to be at the correct speed
+                        hold().andThen(maintainState())
+                                .until(() -> robotState.robotSpeedNominal(prescoreState))
+                                .unless(() -> robotState.robotSpeedNominal(prescoreState)),
+                        // Move to the scoring position and wait for release button
+                        transitionToState(prescoreState),
+                        maintainState().until(release),
+                        // Score the game piece
+                        transitionToState(scoreState),
+                        maintainState())
+                .withName("SuperstructureScore_" + scoreState.name());
+    }
+
+    public Command runState(SuperstructureState state) {
+        return sequence(
+                        // Wait for the robot to be at the correct speed
+                        hold(true)
+                                .until(() -> robotState.robotSpeedNominal(state))
+                                .unless(() -> robotState.robotSpeedNominal(state)),
+                        // Move to the scoring position and wait for release button
+                        transitionToState(state),
+                        maintainState())
+                .withName("SuperstructureScore_" + state.name());
     }
 
     public Command zeroElevator() {
-        return runOnce(() -> setState(SuperstructureState.ZERO_ELEVATOR))
-                .andThen(elevator.zero())
+        return deadline(elevator.zero(), run(() -> runStatePeriodic(SuperstructureState.ZERO_ELEVATOR)))
+                .beforeStarting(retractArm())
                 .finallyDo(() -> setState(SuperstructureState.STOW))
                 .withName("SuperstructureZeroElevator");
     }

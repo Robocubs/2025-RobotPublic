@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotState;
 import frc.robot.commands.DriveToPose;
 import frc.robot.commands.DriveWithJoysticks;
+import frc.robot.commands.DriveWithJoysticksEnhanced;
 import frc.robot.subsystems.drive.controllers.PathController;
 import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
@@ -97,6 +98,10 @@ public class Drive extends SubsystemBase {
 
     public Command withJoysticks(DoubleSupplier throttle, DoubleSupplier strafe, DoubleSupplier rotation) {
         return new DriveWithJoysticks(this, robotState, throttle, strafe, rotation);
+    }
+
+    public Command withJoysticksEnhanced(DoubleSupplier throttle, DoubleSupplier strafe, DoubleSupplier rotation) {
+        return new DriveWithJoysticksEnhanced(this, robotState, throttle, strafe, rotation);
     }
 
     public Command toPose(Supplier<Pose2d> poseSupplier, boolean finishAtGoal) {

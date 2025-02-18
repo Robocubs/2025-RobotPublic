@@ -12,6 +12,19 @@ import lombok.NoArgsConstructor;
 @Builder(toBuilder = true)
 @Getter
 public class SuperstructureStateData {
-    private final @Default SuperstructurePose pose = new SuperstructurePose();
     private final @Default Rollers.State rollerState = Rollers.State.HOLD;
+    private final @Default SuperstructurePose pose = new SuperstructurePose();
+    // private final @Default LinearVelocity maxRobotSpeed = DriveConstants.maxSpeed;
+
+    // @SuppressWarnings("unused")
+    // public static class SuperstructureStateDataBuilder {
+    //     private SuperstructurePose pose;
+    //     private LinearVelocity maxRobotSpeed;
+
+    //     public SuperstructureStateDataBuilder pose(SuperstructurePose pose) {
+    //         this.pose = pose;
+    //         this.maxRobotSpeed = RobotState.getMaxRobotSpeed(pose.elevatorHeight());
+    //         return this;
+    //     }
+    // }
 }

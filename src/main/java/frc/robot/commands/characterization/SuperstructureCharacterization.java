@@ -28,7 +28,7 @@ public class SuperstructureCharacterization {
                 .sysIdRoutine(routine)
                 .finishedForward(() -> superstructure.getElevatorHeight().gt(maxElevatorHeight))
                 .finishedReverse(() -> superstructure.getElevatorHeight().lt(minElevatorHeight))
-                .beforeStarting(() -> superstructure.setState(SuperstructureState.HOLD))
+                .beforeStarting(superstructure.retractArm())
                 .finallyDo(() -> superstructure.setState(SuperstructureState.HOLD))
                 .build();
     }
@@ -47,7 +47,7 @@ public class SuperstructureCharacterization {
                 .sysIdRoutine(routine)
                 .finishedForward(() -> superstructure.getArmAngle().gt(maxArmAngle))
                 .finishedReverse(() -> superstructure.getArmAngle().lt(minArmAngle))
-                .beforeStarting(() -> superstructure.setState(SuperstructureState.HOLD))
+                .beforeStarting(superstructure.hold())
                 .finallyDo(() -> superstructure.setState(SuperstructureState.HOLD))
                 .build();
     }

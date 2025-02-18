@@ -28,7 +28,7 @@ public class Elevator {
         this.io = io;
     }
 
-    public void periodic() {
+    public void updateInputs() {
         io.updateInputs(inputs);
         Logger.processInputs("Elevator", inputs);
     }
@@ -88,8 +88,10 @@ public class Elevator {
         var maxCurrent = Amps.of(-60);
         return Commands.run(() -> io.setVoltage(voltage))
                 .until(() -> inputs.masterTorqueCurrent.lt(maxCurrent))
-                .andThen(() -> io.stop())
-                .andThen(Commands.run(() -> io.zeroPosition())
-                        .until(() -> inputs.masterPosition.isEquivalent(Meters.zero())));
+                .andThen(Commands.run(() -> {
+                            io.stop();
+                            io.zeroPosition();
+                        })
+                        .until(() -> isNear(Meters.zero())));
     }
 }

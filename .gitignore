@@ -194,3 +194,8 @@ src/main/java/frc/robot/BuildConstants.java
 dist/
 __pycache__/
 .ruff_cahce/
+
+# Node
+node_modules
+dist
+src/main/deploy/web

@@ -1,5 +1,8 @@
 package frc.robot.subsystems.superstructure;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import frc.robot.subsystems.superstructure.arm.ArmConstants;
@@ -12,6 +15,19 @@ import static edu.wpi.first.units.Units.*;
 public record SuperstructurePose(Distance elevatorHeight, Angle armAngle) {
     public SuperstructurePose() {
         this(Inches.zero(), Degrees.of(90));
+    }
+
+    public Transform3d getRobotToEndEffector() {
+        return new Transform3d(
+                Pose3d.kZero,
+                Pose3d.kZero
+                        .transformBy(SuperstructureConstants.robotToElevator)
+                        .transformBy(new Transform3d(elevatorHeight.in(Meters), 0.0, 0.0, Rotation3d.kZero))
+                        .transformBy(SuperstructureConstants.elevatorHeightToCarriage)
+                        .transformBy(new Transform3d(
+                                SuperstructureConstants.carriageToArmMount,
+                                new Rotation3d(0.0, -armAngle.in(Radians), 0.0)))
+                        .transformBy(SuperstructureConstants.armMountToArmEnd));
     }
 
     @RequiredArgsConstructor

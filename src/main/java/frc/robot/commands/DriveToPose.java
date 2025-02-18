@@ -17,6 +17,7 @@ import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 import org.littletonrobotics.junction.Logger;
 
+import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.drive.DriveConstants.*;
 
 public class DriveToPose extends Command {
@@ -50,13 +51,16 @@ public class DriveToPose extends Command {
                 translationP,
                 translationI,
                 translationD,
-                new TrapezoidProfile.Constraints(maxSpeed * maxSpeedPercent, maxAcceleration * maxAccelerationPercent),
+                new TrapezoidProfile.Constraints(
+                        maxSpeed.in(MetersPerSecond) * maxSpeedPercent,
+                        maxAcceleration.in(MetersPerSecondPerSecond) * maxAccelerationPercent),
                 0.02);
         rotationController = new ProfiledPIDController(
                 rotationP,
                 rotationI,
                 rotationD,
-                new TrapezoidProfile.Constraints(maxAngularRate, maxAngularAcceleration),
+                new TrapezoidProfile.Constraints(
+                        maxAngularRate.in(RadiansPerSecond), maxAngularAcceleration.in(RadiansPerSecondPerSecond)),
                 0.02);
         rotationController.enableContinuousInput(-Math.PI, Math.PI);
 

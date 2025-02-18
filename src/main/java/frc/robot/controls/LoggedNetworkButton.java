@@ -13,7 +13,7 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkInput;
 
 import static edu.wpi.first.units.Units.Seconds;
 
-public class BooleanDashboardInput extends LoggedNetworkInput {
+public class LoggedNetworkButton extends LoggedNetworkInput {
     private final String key;
     private final BooleanSubscriber subscriber;
     private final boolean defaultValue;
@@ -29,11 +29,11 @@ public class BooleanDashboardInput extends LoggedNetworkInput {
         }
     };
 
-    public BooleanDashboardInput(String key) {
+    public LoggedNetworkButton(String key) {
         this(key, false);
     }
 
-    public BooleanDashboardInput(String key, boolean defaultValue) {
+    public LoggedNetworkButton(String key, boolean defaultValue) {
         this.key = key;
         this.defaultValue = defaultValue;
         this.value = defaultValue;
