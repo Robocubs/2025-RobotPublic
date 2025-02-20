@@ -173,12 +173,12 @@ public class ArmIOHardware implements ArmIO {
                         .withReverseSoftLimitEnable(true)
                         .withReverseSoftLimitThreshold(minimumAngle))
                 .withTorqueCurrent(new TorqueCurrentConfigs()
-                        .withPeakForwardTorqueCurrent(Amps.of(120))
-                        .withPeakReverseTorqueCurrent(Amps.of(120)))
+                        .withPeakForwardTorqueCurrent(Amps.of(100))
+                        .withPeakReverseTorqueCurrent(Amps.of(100)))
                 .withCurrentLimits(new CurrentLimitsConfigs()
-                        .withStatorCurrentLimit(Amps.of(120))
-                        .withSupplyCurrentLimit(Amps.of(50))
-                        .withSupplyCurrentLowerLimit(30));
+                        .withStatorCurrentLimit(Amps.of(100))
+                        .withSupplyCurrentLimit(Amps.of(60))
+                        .withSupplyCurrentLowerLimit(40));
 
         motor = new TalonFX(22, Constants.canivoreBusName);
         tryUntilOk(() -> motor.getConfigurator().apply(motorConfig));

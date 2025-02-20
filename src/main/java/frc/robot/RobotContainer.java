@@ -16,6 +16,8 @@ import frc.robot.commands.characterization.DriveCharacterization;
 import frc.robot.commands.characterization.SuperstructureCharacterization;
 import frc.robot.controls.StreamDeck;
 import frc.robot.controls.StreamDeck.StreamDeckButton;
+import frc.robot.subsystems.climb.Climb;
+import frc.robot.subsystems.climb.ClimbIO;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIO;
 import frc.robot.subsystems.drive.DriveIOHardware;
@@ -53,6 +55,7 @@ public class RobotContainer {
         Drive drive = null;
         Vision vision = null;
         Superstructure superstructure = null;
+        Climb climb = null;
 
         this.robotState = new RobotState();
 
@@ -85,6 +88,10 @@ public class RobotContainer {
 
         if (vision == null) {
             vision = new Vision(new AprilTagIO[] {}, robotState);
+        }
+
+        if (climb == null) {
+            climb = new Climb(new ClimbIO() {});
         }
 
         this.drive = drive;

@@ -55,12 +55,12 @@ public class ElevatorIOHardware implements ElevatorIO {
     protected final TalonFX followerMotor;
     private final TalonFXConfiguration motorConfig;
 
-    private final StatusSignal<Angle> masterAngleSignal;
+    private final StatusSignal<Angle> masterPositionSignal;
     private final StatusSignal<AngularVelocity> masterVelocitySignal;
     private final StatusSignal<Voltage> masterVoltageSignal;
     private final StatusSignal<Current> masterSupplyCurrentSignal;
     private final StatusSignal<Current> masterTorqueCurrentSignal;
-    private final StatusSignal<Angle> followerAngleSignal;
+    private final StatusSignal<Angle> followerPositionSignal;
     private final StatusSignal<AngularVelocity> followerVelocitySignal;
     private final StatusSignal<Voltage> followerVoltageSignal;
     private final StatusSignal<Current> followerSupplyCurrentSignal;
@@ -107,7 +107,7 @@ public class ElevatorIOHardware implements ElevatorIO {
                         .withForwardSoftLimitThreshold(toMotorPosition(maximumHeight)))
                 .withTorqueCurrent(new TorqueCurrentConfigs()
                         .withPeakForwardTorqueCurrent(Amps.of(120))
-                        .withPeakForwardTorqueCurrent(Amps.of(120)))
+                        .withPeakReverseTorqueCurrent(Amps.of(120)))
                 .withCurrentLimits(new CurrentLimitsConfigs()
                         .withStatorCurrentLimit(Amps.of(120))
                         .withSupplyCurrentLimit(60)
@@ -120,12 +120,12 @@ public class ElevatorIOHardware implements ElevatorIO {
         tryUntilOk(() -> masterMotor.getConfigurator().apply(motorConfig));
         tryUntilOk(() -> followerMotor.setControl(new Follower(masterMotor.getDeviceID(), false)));
 
-        masterAngleSignal = masterMotor.getPosition();
+        masterPositionSignal = masterMotor.getPosition();
         masterVelocitySignal = masterMotor.getVelocity();
         masterVoltageSignal = masterMotor.getMotorVoltage();
         masterSupplyCurrentSignal = masterMotor.getSupplyCurrent();
         masterTorqueCurrentSignal = masterMotor.getTorqueCurrent();
-        followerAngleSignal = followerMotor.getPosition();
+        followerPositionSignal = followerMotor.getPosition();
         followerVelocitySignal = followerMotor.getVelocity();
         followerVoltageSignal = followerMotor.getMotorVoltage();
         followerSupplyCurrentSignal = followerMotor.getSupplyCurrent();
@@ -133,12 +133,12 @@ public class ElevatorIOHardware implements ElevatorIO {
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 Constants.mainLoopFrequency,
-                masterAngleSignal,
+                masterPositionSignal,
                 masterVelocitySignal,
                 masterVoltageSignal,
                 masterSupplyCurrentSignal,
                 masterTorqueCurrentSignal,
-                followerAngleSignal,
+                followerPositionSignal,
                 followerVelocitySignal,
                 followerVoltageSignal,
                 followerSupplyCurrentSignal,
@@ -150,22 +150,22 @@ public class ElevatorIOHardware implements ElevatorIO {
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
         BaseStatusSignal.refreshAll(
-                masterAngleSignal,
+                masterPositionSignal,
                 masterVelocitySignal,
                 masterVoltageSignal,
                 masterSupplyCurrentSignal,
                 masterTorqueCurrentSignal,
-                followerAngleSignal,
+                followerPositionSignal,
                 followerVelocitySignal,
                 followerVoltageSignal,
                 followerSupplyCurrentSignal,
                 followerTorqueCurrentSignal);
-        inputs.masterPosition = fromMotorPosition(masterAngleSignal.getValue());
+        inputs.masterPosition = fromMotorPosition(masterPositionSignal.getValue());
         inputs.masterVelocity = fromMotorVelocity(masterVelocitySignal.getValue());
         inputs.masterVoltage = masterVoltageSignal.getValue();
         inputs.masterSupplyCurrent = masterSupplyCurrentSignal.getValue();
         inputs.masterTorqueCurrent = masterTorqueCurrentSignal.getValue();
-        inputs.followerPosition = fromMotorPosition(followerAngleSignal.getValue());
+        inputs.followerPosition = fromMotorPosition(followerPositionSignal.getValue());
         inputs.followerVelocity = fromMotorVelocity(followerVelocitySignal.getValue());
         inputs.followerVoltage = followerVoltageSignal.getValue();
         inputs.followerSupplyCurrent = followerSupplyCurrentSignal.getValue();
