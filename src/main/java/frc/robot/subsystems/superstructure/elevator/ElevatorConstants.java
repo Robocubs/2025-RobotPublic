@@ -17,9 +17,11 @@ public final class ElevatorConstants {
     public static final Distance sprocketRadius = Inches.of(0.875);
     public static final Mass loadMass = Pounds.of(23.5);
 
-    public static final Distance positionTolerance = Inches.of(0.5);
-    public static final Distance maximumHeight = Inches.of(85);
+    public static final Distance positionTolerance = Inches.of(1.0);
+    public static final Distance maximumHeight = Inches.of(80.5);
+    // public static final LinearVelocity maximumVelocity = FeetPerSecond.of(10);
     public static final LinearVelocity maximumVelocity = FeetPerSecond.of(10);
-    public static final LinearAcceleration maximumAcceleration = maximumVelocity.div(Seconds.of(0.1));
+    // public static final LinearAcceleration maximumAcceleration = maximumVelocity.div(Seconds.of(0.1));
+    public static final LinearAcceleration maximumAcceleration = maximumVelocity.div(Seconds.of(0.4));
     public static final Velocity<LinearAccelerationUnit> maximumJerk = maximumAcceleration.div(Seconds.of(0.1));
 }

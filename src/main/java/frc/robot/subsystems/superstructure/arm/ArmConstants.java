@@ -22,15 +22,16 @@ public final class ArmConstants {
     public static final MomentOfInertia moi =
             Pounds.mult(InchesPerSecond).mult(Inches).mult(RadiansPerSecond).of(1100.53);
 
-    public static final SensorDirectionValue cancoderSensorDirection = SensorDirectionValue.CounterClockwise_Positive;
+    public static final SensorDirectionValue cancoderSensorDirection = SensorDirectionValue.Clockwise_Positive;
     public static final InvertedValue motorInvertedValue = InvertedValue.CounterClockwise_Positive;
 
-    public static final Angle angleTolerance = Degrees.of(2);
-    public static final Angle maximumAngle = Degrees.of(105);
-    public static final Angle minimumAngle = Degrees.of(-90);
+    public static final Angle angleTolerance = Degrees.of(3);
+    public static final Angle maximumAngle = Degrees.of(95);
+    public static final Angle minimumAngle = Degrees.of(0);
+
     public static final AngularVelocity maximumVelocity = RotationsPerSecond.of(1.0);
     public static final AngularAcceleration maximumAcceleration = maximumVelocity.div(Seconds.of(0.2));
-    public static final Velocity<AngularAccelerationUnit> maximumJerk = maximumAcceleration.div(Seconds.of(0.01));
+    public static final Velocity<AngularAccelerationUnit> maximumJerk = maximumAcceleration.div(Seconds.of(0.05));
 
     public static final Angle safeTravelAngle = Degrees.of(85);
 }

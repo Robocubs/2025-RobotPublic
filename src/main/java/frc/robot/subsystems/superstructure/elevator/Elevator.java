@@ -37,6 +37,10 @@ public class Elevator {
         return inputs.masterPosition;
     }
 
+    public LinearVelocity getVelocity() {
+        return inputs.masterVelocity;
+    }
+
     public boolean isNear(Distance height) {
         return this.inputs.masterPosition.isNear(height, positionTolerance);
     }
@@ -55,7 +59,11 @@ public class Elevator {
     public void setHeight(Distance height, Force feedforward) {
         holdPosition = Optional.empty();
         targetHeight = height;
-        io.setPosition(height, feedforward);
+        if (height.isEquivalent(Meters.zero())) {
+            io.stop();
+        } else {
+            io.setPosition(height, feedforward);
+        }
     }
 
     public void setVelocity(LinearVelocity velocity, Force feedforward) {
@@ -83,15 +91,19 @@ public class Elevator {
         io.setTorqueCurrent(current);
     }
 
-    public Command zero() {
+    public Command setZeroPosition() {
+        return Commands.run(() -> {
+                    io.stop();
+                    io.zeroPosition();
+                })
+                .until(() -> isNear(Meters.zero()));
+    }
+
+    public Command zeroRoutine() {
         var voltage = Volts.of(-1.0);
         var maxCurrent = Amps.of(-60);
         return Commands.run(() -> io.setVoltage(voltage))
                 .until(() -> inputs.masterTorqueCurrent.lt(maxCurrent))
-                .andThen(Commands.run(() -> {
-                            io.stop();
-                            io.zeroPosition();
-                        })
-                        .until(() -> isNear(Meters.zero())));
+                .andThen(setZeroPosition());
     }
 }

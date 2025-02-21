@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.commands.logging.CommandLogger;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -74,6 +75,7 @@ public class Robot extends LoggedRobot {
 
         // Enable command logging
         SmartDashboard.putData(CommandScheduler.getInstance());
+        CommandLogger.getInstance();
 
         // Launch web server
         Javalin.create(config -> {
@@ -92,6 +94,7 @@ public class Robot extends LoggedRobot {
         Threads.setCurrentThreadPriority(true, 99);
 
         CommandScheduler.getInstance().run();
+        CommandLogger.getInstance().periodic();
 
         // Return to normal thread priority
         Threads.setCurrentThreadPriority(false, 10);

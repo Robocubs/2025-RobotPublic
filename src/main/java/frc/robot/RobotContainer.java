@@ -25,10 +25,13 @@ import frc.robot.subsystems.drive.DriveIOSim;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.arm.ArmIO;
+import frc.robot.subsystems.superstructure.arm.ArmIOHardware;
 import frc.robot.subsystems.superstructure.arm.ArmIOSim;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
+import frc.robot.subsystems.superstructure.elevator.ElevatorIOHardware;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
 import frc.robot.subsystems.superstructure.rollers.RollersIO;
+import frc.robot.subsystems.superstructure.rollers.RollersIOHardware;
 import frc.robot.subsystems.superstructure.rollers.RollersIOSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
@@ -38,13 +41,12 @@ import frc.robot.util.TriggeredAlert;
 
 public class RobotContainer {
     private final CommandXboxController driverController = new CommandXboxController(0);
-    private final RobotState RobotState = new RobotState();
     private final StreamDeck streamDeck = new StreamDeck();
     private final AutoChooser autoChooser = new AutoChooser();
 
     // Subsystems
-    private final RobotState robotState;
     private final Drive drive;
+    private final RobotState robotState;
     private final Superstructure superstructure;
 
     // State triggers
@@ -63,6 +65,8 @@ public class RobotContainer {
             switch (Constants.robot) {
                 case COMP_BOT:
                     drive = new Drive(new DriveIOHardware(), robotState);
+                    superstructure = new Superstructure(
+                            new ElevatorIOHardware() {}, new ArmIOHardware(), new RollersIOHardware(), robotState);
                     break;
                 case SIM_BOT:
                     drive = new Drive(new DriveIOSim(), robotState);
@@ -124,28 +128,28 @@ public class RobotContainer {
 
         driverController
                 .rightTrigger()
-                .and(() -> RobotState.isSelected(ReefMode.L4_CORAL))
+                .and(() -> robotState.isSelected(ReefMode.L4_CORAL))
                 .whileTrue(superstructure.score(
                         SuperstructureState.L4_CORAL,
                         SuperstructureState.L4_CORAL_SCORE,
                         driverController.rightBumper()));
         driverController
                 .rightTrigger()
-                .and(() -> RobotState.isSelected(ReefMode.L3_CORAL))
+                .and(() -> robotState.isSelected(ReefMode.L3_CORAL))
                 .whileTrue(superstructure.score(
                         SuperstructureState.L3_CORAL,
                         SuperstructureState.L3_CORAL_SCORE,
                         driverController.rightBumper()));
         driverController
                 .rightTrigger()
-                .and(() -> RobotState.isSelected(ReefMode.L2_CORAL))
+                .and(() -> robotState.isSelected(ReefMode.L2_CORAL))
                 .whileTrue(superstructure.score(
                         SuperstructureState.L2_CORAL,
                         SuperstructureState.L2_CORAL_SCORE,
                         driverController.rightBumper()));
         driverController
                 .rightTrigger()
-                .and(() -> RobotState.isSelected(ReefMode.L1_CORAL))
+                .and(() -> robotState.isSelected(ReefMode.L1_CORAL))
                 .whileTrue(superstructure.score(
                         SuperstructureState.L1_CORAL,
                         SuperstructureState.L1_CORAL_SCORE,
@@ -153,38 +157,38 @@ public class RobotContainer {
 
         driverController
                 .leftTrigger()
-                .and(() -> RobotState.isSelected(AlgaeMode.PROCESSOR))
+                .and(() -> robotState.isSelected(AlgaeMode.PROCESSOR))
                 .whileTrue(superstructure.runState(SuperstructureState.PROCESSOR_SCORE));
 
         driverController
                 .leftTrigger()
-                .and(() -> RobotState.isSelected(AlgaeMode.L3))
+                .and(() -> robotState.isSelected(AlgaeMode.L3))
                 .whileTrue(superstructure.runState(SuperstructureState.L3_ALGAE));
 
         driverController
                 .leftTrigger()
-                .and(() -> RobotState.isSelected(AlgaeMode.L2))
+                .and(() -> robotState.isSelected(AlgaeMode.L2))
                 .whileTrue(superstructure.runState(SuperstructureState.L2_ALGAE));
 
         driverController
                 .leftTrigger()
-                .and(() -> RobotState.isSelected(AlgaeMode.BARGE))
+                .and(() -> robotState.isSelected(AlgaeMode.BARGE))
                 .whileTrue(superstructure.score(
                         SuperstructureState.BARGE, SuperstructureState.BARGE_SCORE, driverController.rightBumper()));
 
         /* Stream Dech Buttons */
-        var l4CoralScore = RobotState.setReefSelection(ReefMode.L4_CORAL);
-        var l3CoralScore = RobotState.setReefSelection(ReefMode.L3_CORAL);
-        var l2CoralScore = RobotState.setReefSelection(ReefMode.L2_CORAL);
-        var l1CoralScore = RobotState.setReefSelection(ReefMode.L1_CORAL);
-        var l3Algae = RobotState.setAlgaeSelection(AlgaeMode.L3);
-        var l2Algae = RobotState.setAlgaeSelection(AlgaeMode.L2);
-        var coralIntake = superstructure.runState(SuperstructureState.CORAL_INTAKE_1);
+        var l4CoralScore = robotState.setReefSelection(ReefMode.L4_CORAL);
+        var l3CoralScore = robotState.setReefSelection(ReefMode.L3_CORAL);
+        var l2CoralScore = robotState.setReefSelection(ReefMode.L2_CORAL);
+        var l1CoralScore = robotState.setReefSelection(ReefMode.L1_CORAL);
+        var l3Algae = robotState.setAlgaeSelection(AlgaeMode.L3);
+        var l2Algae = robotState.setAlgaeSelection(AlgaeMode.L2);
+        var coralIntake = superstructure.runState(SuperstructureState.CORAL_INTAKE_2);
         var algaeIntake = superstructure.runState(SuperstructureState.ALGAE_INTAKE);
         var feed = superstructure.runState(SuperstructureState.FEED);
         var stow = superstructure.runState(SuperstructureState.STOW);
-        var processor = RobotState.setAlgaeSelection(AlgaeMode.PROCESSOR);
-        var barge = RobotState.setAlgaeSelection(AlgaeMode.BARGE);
+        var processor = robotState.setAlgaeSelection(AlgaeMode.PROCESSOR);
+        var barge = robotState.setAlgaeSelection(AlgaeMode.BARGE);
 
         // TODO: Make automatically switch between feed and stow when appropriate
         superstructure.setDefaultCommand(stow);
@@ -192,18 +196,18 @@ public class RobotContainer {
         disabled.onTrue(superstructure.stop().ignoringDisable(true));
 
         streamDeck.configureButtons(
-                config -> config.add(StreamDeckButton.L4_CORAL, () -> RobotState.isSelected(ReefMode.L4_CORAL))
-                        .add(StreamDeckButton.L3_CORAL, () -> RobotState.isSelected(ReefMode.L3_CORAL))
-                        .add(StreamDeckButton.L2_CORAL, () -> RobotState.isSelected(ReefMode.L2_CORAL))
-                        .add(StreamDeckButton.L1_CORAL, () -> RobotState.isSelected(ReefMode.L1_CORAL))
-                        .add(StreamDeckButton.L3_ALGAE, () -> RobotState.isSelected(AlgaeMode.L3))
-                        .add(StreamDeckButton.L2_ALGAE, () -> RobotState.isSelected(AlgaeMode.L2))
+                config -> config.add(StreamDeckButton.L4_CORAL, () -> robotState.isSelected(ReefMode.L4_CORAL))
+                        .add(StreamDeckButton.L3_CORAL, () -> robotState.isSelected(ReefMode.L3_CORAL))
+                        .add(StreamDeckButton.L2_CORAL, () -> robotState.isSelected(ReefMode.L2_CORAL))
+                        .add(StreamDeckButton.L1_CORAL, () -> robotState.isSelected(ReefMode.L1_CORAL))
+                        .add(StreamDeckButton.L3_ALGAE, () -> robotState.isSelected(AlgaeMode.L3))
+                        .add(StreamDeckButton.L2_ALGAE, () -> robotState.isSelected(AlgaeMode.L2))
                         .add(StreamDeckButton.CORAL_INTAKE, () -> coralIntake.isScheduled())
                         .add(StreamDeckButton.ALGAE_INTAKE, () -> algaeIntake.isScheduled())
                         .add(StreamDeckButton.FEED, () -> feed.isScheduled())
                         .add(StreamDeckButton.STOW, () -> stow.isScheduled())
-                        .add(StreamDeckButton.PROCESSOR, () -> RobotState.isSelected(AlgaeMode.PROCESSOR))
-                        .add(StreamDeckButton.BARGE, () -> RobotState.isSelected(AlgaeMode.BARGE)));
+                        .add(StreamDeckButton.PROCESSOR, () -> robotState.isSelected(AlgaeMode.PROCESSOR))
+                        .add(StreamDeckButton.BARGE, () -> robotState.isSelected(AlgaeMode.BARGE)));
 
         streamDeck.button(StreamDeckButton.L4_CORAL).onTrue(l4CoralScore);
         streamDeck.button(StreamDeckButton.L3_CORAL).onTrue(l3CoralScore);

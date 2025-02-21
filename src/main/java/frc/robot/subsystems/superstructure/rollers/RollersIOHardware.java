@@ -14,6 +14,7 @@ import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -28,16 +29,19 @@ import static frc.robot.subsystems.superstructure.rollers.RollersConstants.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 public class RollersIOHardware implements RollersIO {
-    private static final LoggedTunableNumber coralPositionKP = new LoggedTunableNumber("Rollers/CoralPositionKP", 0.0);
+    private static final LoggedTunableNumber coralPositionKP = new LoggedTunableNumber("Rollers/CoralPositionKP", 5.0);
     private static final LoggedTunableNumber coralPositionKD = new LoggedTunableNumber("Rollers/CoralPositionKD", 0.0);
-    private static final LoggedTunableNumber coralVelocityKP = new LoggedTunableNumber("Rollers/CoralVelocityKP", 0.0);
+    private static final LoggedTunableNumber coralVelocityKV = new LoggedTunableNumber("Rollers/CoralVelocityKV", 1.0);
+    private static final LoggedTunableNumber coralVelocityKP = new LoggedTunableNumber("Rollers/CoralVelocityKP", 3.0);
     private static final LoggedTunableNumber coralVelocityKD = new LoggedTunableNumber("Rollers/CoralVelocityKD", 0.0);
     private static final LoggedTunableNumber hybridPositionKP =
-            new LoggedTunableNumber("Rollers/HybridPositionKP", 0.0);
+            new LoggedTunableNumber("Rollers/HybridPositionKP", 5.0);
     private static final LoggedTunableNumber hybridPositionKD =
             new LoggedTunableNumber("Rollers/HybridPositionKD", 0.0);
+    private static final LoggedTunableNumber hybridVelocityKV =
+            new LoggedTunableNumber("Rollers/HybridVelocityKV", 0.53);
     private static final LoggedTunableNumber hybridVelocityKP =
-            new LoggedTunableNumber("Rollers/HybridVelocityKP", 0.0);
+            new LoggedTunableNumber("Rollers/HybridVelocityKP", 1.0);
     private static final LoggedTunableNumber hybridVelocityKD =
             new LoggedTunableNumber("Rollers/HybridVelocityKD", 0.0);
 
@@ -52,10 +56,12 @@ public class RollersIOHardware implements RollersIO {
     private final StatusSignal<AngularVelocity> coralVelocitySignal;
     private final StatusSignal<Voltage> coralVoltageSignal;
     private final StatusSignal<Current> coralSupplyCurrentSignal;
+    private final StatusSignal<Double> coralClosedLoopReferenceSignal;
     private final StatusSignal<Angle> hybridPositionSignal;
     private final StatusSignal<AngularVelocity> hybridVelocitySignal;
     private final StatusSignal<Voltage> hybridVoltageSignal;
     private final StatusSignal<Current> hybridSupplyCurrentSignal;
+    private final StatusSignal<Double> hybridClosedLoopReferenceSignal;
     private final StatusSignal<Distance> coralDistanceSignal;
     private final StatusSignal<Distance> algaeDistanceSignal;
 
@@ -70,46 +76,48 @@ public class RollersIOHardware implements RollersIO {
                         .withNeutralMode(NeutralModeValue.Brake)
                         .withInverted((InvertedValue.CounterClockwise_Positive)))
                 .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(coralRollerReduction))
-                .withSlot0(
-                        new Slot0Configs().withKP(coralPositionKP.getAsDouble()).withKD(coralPositionKD.getAsDouble()))
-                .withSlot1(
-                        new Slot1Configs().withKP(coralVelocityKP.getAsDouble()).withKD(coralVelocityKD.getAsDouble()))
+                .withSlot0(new Slot0Configs().withKP(coralPositionKP.get()).withKD(coralPositionKD.get()))
+                .withSlot1(new Slot1Configs()
+                        .withKV(coralVelocityKV.get())
+                        .withKP(coralVelocityKP.get())
+                        .withKD(coralVelocityKD.get()))
                 .withCurrentLimits(new CurrentLimitsConfigs()
                         .withStatorCurrentLimit(Amps.of(120))
                         .withSupplyCurrentLimit(Amps.of(30))
                         .withSupplyCurrentLowerLimit(30));
-        coralMotor = new TalonFX(33, Constants.canivoreBusName);
+        coralMotor = new TalonFX(34, Constants.canivoreBusName);
         tryUntilOk(() -> coralMotor.getConfigurator().apply(coralMotorConfig));
 
         hybridMotorConfig = new TalonFXConfiguration()
                 .withMotorOutput(new MotorOutputConfigs()
                         .withNeutralMode(NeutralModeValue.Brake)
-                        .withInverted((InvertedValue.CounterClockwise_Positive)))
+                        .withInverted((InvertedValue.Clockwise_Positive)))
                 .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(hybridRollerReduction))
-                .withSlot0(new Slot0Configs()
-                        .withKP(hybridPositionKP.getAsDouble())
-                        .withKD(hybridPositionKD.getAsDouble()))
+                .withSlot0(new Slot0Configs().withKP(hybridPositionKP.get()).withKD(hybridPositionKD.get()))
                 .withSlot1(new Slot1Configs()
-                        .withKP(hybridVelocityKP.getAsDouble())
-                        .withKD(hybridVelocityKD.getAsDouble()))
+                        .withKV(hybridVelocityKV.get())
+                        .withKP(hybridVelocityKP.get())
+                        .withKD(hybridVelocityKD.get()))
                 .withCurrentLimits(new CurrentLimitsConfigs()
                         .withStatorCurrentLimit(Amps.of(120))
                         .withSupplyCurrentLimit(Amps.of(30))
                         .withSupplyCurrentLowerLimit(30));
-        hybridMotor = new TalonFX(34, Constants.canivoreBusName);
+        hybridMotor = new TalonFX(33, Constants.canivoreBusName);
         tryUntilOk(() -> hybridMotor.getConfigurator().apply(hybridMotorConfig));
 
-        coralCanrange = new CANrange(0, Constants.canivoreBusName);
-        algaeCanrange = new CANrange(1, Constants.canivoreBusName);
+        coralCanrange = new CANrange(3, Constants.canivoreBusName);
+        algaeCanrange = new CANrange(2, Constants.canivoreBusName);
 
         coralPositionSignal = coralMotor.getPosition();
         coralVelocitySignal = coralMotor.getVelocity();
         coralVoltageSignal = coralMotor.getMotorVoltage();
         coralSupplyCurrentSignal = coralMotor.getSupplyCurrent();
+        coralClosedLoopReferenceSignal = coralMotor.getClosedLoopReference();
         hybridPositionSignal = hybridMotor.getPosition();
         hybridVelocitySignal = hybridMotor.getVelocity();
         hybridVoltageSignal = hybridMotor.getMotorVoltage();
         hybridSupplyCurrentSignal = hybridMotor.getSupplyCurrent();
+        hybridClosedLoopReferenceSignal = hybridMotor.getClosedLoopReference();
         coralDistanceSignal = coralCanrange.getDistance();
         algaeDistanceSignal = algaeCanrange.getDistance();
 
@@ -119,10 +127,12 @@ public class RollersIOHardware implements RollersIO {
                 coralVelocitySignal,
                 coralVoltageSignal,
                 coralSupplyCurrentSignal,
+                coralClosedLoopReferenceSignal,
                 hybridPositionSignal,
                 hybridVelocitySignal,
                 hybridVoltageSignal,
                 hybridSupplyCurrentSignal,
+                hybridClosedLoopReferenceSignal,
                 coralDistanceSignal,
                 algaeDistanceSignal);
         coralMotor.optimizeBusUtilization();
@@ -138,10 +148,12 @@ public class RollersIOHardware implements RollersIO {
                 coralVelocitySignal,
                 coralVoltageSignal,
                 coralSupplyCurrentSignal,
+                coralClosedLoopReferenceSignal,
                 hybridPositionSignal,
                 hybridVelocitySignal,
                 hybridVoltageSignal,
                 hybridSupplyCurrentSignal,
+                hybridClosedLoopReferenceSignal,
                 coralDistanceSignal,
                 algaeDistanceSignal);
 
@@ -149,10 +161,12 @@ public class RollersIOHardware implements RollersIO {
         inputs.coralVelocity = coralVelocitySignal.getValue();
         inputs.coralVoltage = coralVoltageSignal.getValue();
         inputs.coralSupplyCurrent = coralSupplyCurrentSignal.getValue();
+        inputs.coralClosedLoopReferenceSignal = Units.rotationsToRadians(coralClosedLoopReferenceSignal.getValue());
         inputs.hybridPosition = hybridPositionSignal.getValue();
         inputs.hybridVelocity = hybridVelocitySignal.getValue();
         inputs.hybridVoltage = hybridVoltageSignal.getValue();
         inputs.hybridSupplyCurrent = hybridSupplyCurrentSignal.getValue();
+        inputs.hybridClosedLoopReferenceSignal = Units.rotationsToRadians(hybridClosedLoopReferenceSignal.getValue());
         inputs.coralDetectorDistance = coralDistanceSignal.getValue();
         inputs.algaeDetectorDistance = algaeDistanceSignal.getValue();
 
@@ -161,12 +175,14 @@ public class RollersIOHardware implements RollersIO {
                 () -> {
                     coralMotorConfig.Slot0.kP = coralPositionKP.get();
                     coralMotorConfig.Slot0.kD = coralPositionKD.get();
+                    coralMotorConfig.Slot1.kV = coralVelocityKV.get();
                     coralMotorConfig.Slot1.kP = coralVelocityKP.get();
                     coralMotorConfig.Slot1.kD = coralVelocityKD.get();
                     tryUntilOk(() -> coralMotor.getConfigurator().apply(coralMotorConfig));
                 },
                 coralPositionKP,
                 coralPositionKD,
+                coralVelocityKV,
                 coralVelocityKP,
                 coralVelocityKD);
 
@@ -175,12 +191,14 @@ public class RollersIOHardware implements RollersIO {
                 () -> {
                     hybridMotorConfig.Slot0.kP = hybridPositionKP.get();
                     hybridMotorConfig.Slot0.kD = hybridPositionKD.get();
+                    hybridMotorConfig.Slot1.kV = hybridVelocityKV.get();
                     hybridMotorConfig.Slot1.kP = hybridVelocityKP.get();
                     hybridMotorConfig.Slot1.kD = hybridVelocityKD.get();
                     tryUntilOk(() -> hybridMotor.getConfigurator().apply(hybridMotorConfig));
                 },
                 hybridPositionKP,
                 hybridPositionKD,
+                hybridVelocityKV,
                 hybridVelocityKP,
                 hybridVelocityKD);
     }

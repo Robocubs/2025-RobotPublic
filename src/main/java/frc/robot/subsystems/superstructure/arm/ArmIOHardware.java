@@ -48,7 +48,7 @@ public class ArmIOHardware implements ArmIO {
     protected static final FeedbackSensorSourceValue feedbackSensorSource = Constants.robot == RobotType.SIM_BOT
             ? FeedbackSensorSourceValue.FusedCANcoder
             : FeedbackSensorSourceValue.FusedCANdiPWM1;
-    private static final LoggedTunableNumber encoderOffset = new LoggedTunableNumber("Arm/EncoderOffset", 0.25);
+    private static final LoggedTunableNumber encoderOffset = new LoggedTunableNumber("Arm/EncoderOffset", 2.867);
     private static final LoggedTunableNumber kG = new LoggedTunableNumber("Arm/KG", 0.4);
     private static final LoggedTunableNumber motionMagicMaxVelocity =
             new LoggedTunableNumber("Arm/MotionMagicMaxVelocity", maximumVelocity.in(RotationsPerSecond));
@@ -56,10 +56,10 @@ public class ArmIOHardware implements ArmIO {
             "Arm/MotionMagicMaxAcceleration", maximumAcceleration.in(RotationsPerSecondPerSecond));
     private static final LoggedTunableNumber motionMagicMaxJerk =
             new LoggedTunableNumber("Arm/MotionMagicMaxJerk", maximumJerk.in(RotationsPerSecondPerSecond.per(Second)));
-    private static final LoggedTunableNumber motionMagicKV = new LoggedTunableNumber("Arm/MotionMagicKV", 8.03);
-    private static final LoggedTunableNumber motionMagicKA = new LoggedTunableNumber("Arm/MotionMagicKA", 0.09);
-    private static final LoggedTunableNumber motionMagicKP = new LoggedTunableNumber("Arm/MotionMagicKP", 30.0);
-    private static final LoggedTunableNumber motionMagicKD = new LoggedTunableNumber("Arm/MotionMagicKD", 1.0);
+    private static final LoggedTunableNumber motionMagicKV = new LoggedTunableNumber("Arm/MotionMagicKV", 0);
+    private static final LoggedTunableNumber motionMagicKA = new LoggedTunableNumber("Arm/MotionMagicKA", 0);
+    private static final LoggedTunableNumber motionMagicKP = new LoggedTunableNumber("Arm/MotionMagicKP", 50);
+    private static final LoggedTunableNumber motionMagicKD = new LoggedTunableNumber("Arm/MotionMagicKD", 2);
     private static final LoggedTunableNumber positionKP = new LoggedTunableNumber("Arm/PositionKP", 0.0);
     private static final LoggedTunableNumber positionKD = new LoggedTunableNumber("Arm/PositionKD", 0.0);
     private static final LoggedTunableNumber velocityKP = new LoggedTunableNumber("Arm/VelocityKP", 0.0);
@@ -115,7 +115,9 @@ public class ArmIOHardware implements ArmIO {
                         || feedbackSensorSource == FeedbackSensorSourceValue.SyncCANdiPWM1
                         || feedbackSensorSource == FeedbackSensorSourceValue.RemoteCANdiPWM1)) {
             candiConfig = new CANdiConfiguration()
-                    .withPWM1(new PWM1Configs().withAbsoluteSensorOffset(Radians.of(encoderOffset.getAsDouble())));
+                    .withPWM1(new PWM1Configs()
+                            .withAbsoluteSensorOffset(Radians.of(encoderOffset.getAsDouble()))
+                            .withSensorDirection(true));
             candi = new CANdi(1, Constants.canivoreBusName);
             tryUntilOk(() -> candi.getConfigurator().apply(candiConfig));
 
@@ -173,14 +175,14 @@ public class ArmIOHardware implements ArmIO {
                         .withReverseSoftLimitEnable(true)
                         .withReverseSoftLimitThreshold(minimumAngle))
                 .withTorqueCurrent(new TorqueCurrentConfigs()
-                        .withPeakForwardTorqueCurrent(Amps.of(100))
-                        .withPeakReverseTorqueCurrent(Amps.of(100)))
+                        .withPeakForwardTorqueCurrent(Amps.of(60))
+                        .withPeakReverseTorqueCurrent(Amps.of(60)))
                 .withCurrentLimits(new CurrentLimitsConfigs()
-                        .withStatorCurrentLimit(Amps.of(100))
-                        .withSupplyCurrentLimit(Amps.of(60))
-                        .withSupplyCurrentLowerLimit(40));
+                        .withStatorCurrentLimit(Amps.of(60))
+                        .withSupplyCurrentLimit(Amps.of(40))
+                        .withSupplyCurrentLowerLimit(30));
 
-        motor = new TalonFX(22, Constants.canivoreBusName);
+        motor = new TalonFX(32, Constants.canivoreBusName);
         tryUntilOk(() -> motor.getConfigurator().apply(motorConfig));
 
         this.angleSignal = angleSignal.orElse(motor.getPosition());

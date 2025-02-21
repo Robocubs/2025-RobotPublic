@@ -6,12 +6,14 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.RobotState;
 import frc.robot.subsystems.superstructure.arm.Arm;
 import frc.robot.subsystems.superstructure.arm.ArmConstants;
@@ -30,11 +32,14 @@ import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 
 import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.deadline;
+import static edu.wpi.first.wpilibj2.command.Commands.idle;
 import static edu.wpi.first.wpilibj2.command.Commands.sequence;
+import static edu.wpi.first.wpilibj2.command.Commands.waitSeconds;
 import static frc.robot.subsystems.superstructure.SuperstructureConstants.*;
 
 public class Superstructure extends SubsystemBase {
     private static final double armAngleOffsetDegrees = 90 - ElevatorConstants.elevatorAngle.in(Degrees);
+    private static final LinearVelocity elevatorZeroMinVelocity = InchesPerSecond.of(-0.01);
 
     private final Elevator elevator;
     private final Arm arm;
@@ -48,6 +53,7 @@ public class Superstructure extends SubsystemBase {
     private final LoggedMechanismLigament2d armLigament;
 
     private @AutoLogOutput @Getter SuperstructureState state = SuperstructureState.START;
+    private @AutoLogOutput boolean elevatorZeroed = false;
 
     public Superstructure(ElevatorIO elevatorIO, ArmIO armIO, RollersIO rollersIO, RobotState robotState) {
         elevator = new Elevator(elevatorIO);
@@ -69,6 +75,16 @@ public class Superstructure extends SubsystemBase {
                                 -elevatorHeightToCarriage.getRotation().getY())))
                 .append(new LoggedMechanismLigament2d("Arm", ArmConstants.length.in(Meters), 95));
         armLigament.setColor(new Color8Bit(Color.kBlue));
+
+        var zeroElevator = sequence(
+                        waitSeconds(1.0),
+                        idle().until(() -> elevator.getVelocity().gt(elevatorZeroMinVelocity)),
+                        elevator.setZeroPosition(),
+                        runOnce(() -> elevatorZeroed = true))
+                .unless(() -> elevatorZeroed);
+        var disabled = sequence(stop(), zeroElevator).ignoringDisable(true).withName("SuperstructureDisbaled");
+        disabled.schedule();
+        RobotModeTriggers.disabled().whileTrue(disabled);
     }
 
     @Override
@@ -249,8 +265,11 @@ public class Superstructure extends SubsystemBase {
     }
 
     public Command zeroElevator() {
-        return deadline(elevator.zero(), run(() -> runStatePeriodic(SuperstructureState.ZERO_ELEVATOR)))
-                .beforeStarting(retractArm())
+        return sequence(
+                        retractArm(),
+                        deadline(
+                                elevator.zeroRoutine(), run(() -> runStatePeriodic(SuperstructureState.ZERO_ELEVATOR))),
+                        runOnce(() -> elevatorZeroed = true))
                 .finallyDo(() -> setState(SuperstructureState.STOW))
                 .withName("SuperstructureZeroElevator");
     }

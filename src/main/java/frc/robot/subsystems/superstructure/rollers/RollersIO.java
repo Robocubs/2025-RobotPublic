@@ -17,12 +17,14 @@ public interface RollersIO {
         public Voltage coralVoltage = Volts.zero();
         public Current coralSupplyCurrent = Amps.zero();
         public Current coralTorqueCurrent = Amps.zero();
+        public double coralClosedLoopReferenceSignal = 0.0;
 
         public Angle hybridPosition = Radians.zero();
         public AngularVelocity hybridVelocity = RadiansPerSecond.zero();
         public Voltage hybridVoltage = Volts.zero();
         public Current hybridSupplyCurrent = Amps.zero();
         public Current hybridTorqueCurrent = Amps.zero();
+        public double hybridClosedLoopReferenceSignal = 0.0;
 
         public Distance coralDetectorDistance = Meters.zero();
         public Distance algaeDetectorDistance = Meters.zero();

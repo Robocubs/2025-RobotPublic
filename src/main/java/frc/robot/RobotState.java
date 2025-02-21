@@ -28,6 +28,7 @@ import frc.robot.subsystems.vision.VisionMeasurement;
 import frc.robot.util.GeometryUtil;
 import lombok.Getter;
 import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -166,14 +167,19 @@ public class RobotState {
     }
 
     public boolean robotSpeedNominal(Distance elevatorHeight) {
-        // Always allow downward movements
+        boolean speedNominal;
+
         if (elevatorheight.lte(this.elevatorheight)) {
-            return true;
+            // Always allow downward movements
+            speedNominal = true;
+        } else {
+            // Otherwise, speed must be below max speed for pose
+            var maxSpeed = getMaxRobotSpeed(elevatorHeight);
+            speedNominal = robotSpeed.lt(maxSpeed) || robotSpeed.isNear(maxSpeed, nominalSpeedTolerance);
         }
 
-        // Otherwise, speed must be below max speed for pose
-        var maxSpeed = getMaxRobotSpeed(elevatorHeight);
-        return robotSpeed.lt(maxSpeed) || robotSpeed.isNear(maxSpeed, nominalSpeedTolerance);
+        Logger.recordOutput("RobotState/SpeedNominal", speedNominal);
+        return speedNominal;
     }
 
     public boolean hasLongCoral() {
