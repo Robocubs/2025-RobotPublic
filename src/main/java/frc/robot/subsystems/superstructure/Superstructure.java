@@ -23,6 +23,8 @@ import frc.robot.subsystems.superstructure.controllers.SuperstructureController;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
+import frc.robot.subsystems.superstructure.funnel.Funnel;
+import frc.robot.subsystems.superstructure.funnel.FunnelIO;
 import frc.robot.subsystems.superstructure.rollers.Rollers;
 import frc.robot.subsystems.superstructure.rollers.RollersIO;
 import lombok.Getter;
@@ -44,6 +46,7 @@ public class Superstructure extends SubsystemBase {
     private final Elevator elevator;
     private final Arm arm;
     private final Rollers rollers;
+    private final Funnel funnel;
     private final RobotState robotState;
     private final SuperstructureController controller = new GraphController(this);
 
@@ -55,10 +58,12 @@ public class Superstructure extends SubsystemBase {
     private @AutoLogOutput @Getter SuperstructureState state = SuperstructureState.START;
     private @AutoLogOutput boolean elevatorZeroed = false;
 
-    public Superstructure(ElevatorIO elevatorIO, ArmIO armIO, RollersIO rollersIO, RobotState robotState) {
+    public Superstructure(
+            ElevatorIO elevatorIO, ArmIO armIO, RollersIO rollersIO, FunnelIO funnelIO, RobotState robotState) {
         elevator = new Elevator(elevatorIO);
         arm = new Arm(armIO);
         rollers = new Rollers(rollersIO);
+        funnel = new Funnel(funnelIO);
         this.robotState = robotState;
 
         mechanism = new LoggedMechanism2d(1.0, 3.0);
@@ -143,7 +148,15 @@ public class Superstructure extends SubsystemBase {
     public void runStatePeriodic(SuperstructureState state) {
         this.state = state;
 
+        var rollerState = state.getData().getRollerState();
         rollers.runState(state.getData().getRollerState());
+        if (rollerState != Rollers.State.AUTO_FEED_CORAL || !isNear(SuperstructurePose.Preset.FEED.getPose())) {
+            funnel.stop();
+        } else if (rollers.longCoralDetected()) {
+            funnel.fastFeed();
+        } else {
+            funnel.feed();
+        }
 
         switch (state) {
             case START:

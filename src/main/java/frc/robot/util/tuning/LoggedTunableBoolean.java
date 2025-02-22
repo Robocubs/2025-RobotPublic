@@ -59,7 +59,11 @@ public class LoggedTunableBoolean extends LoggedTunableValue<Boolean> implements
         }
     }
 
+    /**
+     * Use {@link #get()} instead
+     */
     @Override
+    @Deprecated
     public boolean getAsBoolean() {
         return get();
     }

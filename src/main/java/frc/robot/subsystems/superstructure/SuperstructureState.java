@@ -22,6 +22,8 @@ public enum SuperstructureState {
 
     // Preset states
     STOW(SuperstructureStateData.builder().pose(Preset.STOW.getPose()).build()),
+    FEED_RETRACTED(
+            SuperstructureStateData.builder().pose(Preset.FEED.getRetractPose()).build()),
     FEED(SuperstructureStateData.builder()
             .pose(Preset.FEED.getPose())
             .rollerState(Rollers.State.AUTO_FEED_CORAL)

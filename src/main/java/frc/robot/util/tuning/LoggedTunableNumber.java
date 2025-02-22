@@ -63,7 +63,11 @@ public class LoggedTunableNumber extends LoggedTunableValue<Double> implements D
         }
     }
 
+    /**
+     * Use {@link #get()} instead
+     */
     @Override
+    @Deprecated
     public double getAsDouble() {
         return get();
     }

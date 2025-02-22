@@ -30,6 +30,8 @@ import frc.robot.subsystems.superstructure.arm.ArmIOSim;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOHardware;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
+import frc.robot.subsystems.superstructure.funnel.FunnelIO;
+import frc.robot.subsystems.superstructure.funnel.FunnelIOSim;
 import frc.robot.subsystems.superstructure.rollers.RollersIO;
 import frc.robot.subsystems.superstructure.rollers.RollersIOHardware;
 import frc.robot.subsystems.superstructure.rollers.RollersIOSim;
@@ -66,7 +68,11 @@ public class RobotContainer {
                 case COMP_BOT:
                     drive = new Drive(new DriveIOHardware(), robotState);
                     superstructure = new Superstructure(
-                            new ElevatorIOHardware() {}, new ArmIOHardware(), new RollersIOHardware(), robotState);
+                            new ElevatorIOHardware() {},
+                            new ArmIOHardware(),
+                            new RollersIOHardware(),
+                            new FunnelIO() {},
+                            robotState);
                     break;
                 case SIM_BOT:
                     drive = new Drive(new DriveIOSim(), robotState);
@@ -76,8 +82,8 @@ public class RobotContainer {
                                 new AprilTagIOSim(VisionConstants.backAprilTagConfig, robotState)
                             },
                             robotState);
-                    superstructure =
-                            new Superstructure(new ElevatorIOSim(), new ArmIOSim(), new RollersIOSim(), robotState);
+                    superstructure = new Superstructure(
+                            new ElevatorIOSim(), new ArmIOSim(), new RollersIOSim(), new FunnelIOSim(), robotState);
                     break;
             }
         }
@@ -87,7 +93,8 @@ public class RobotContainer {
         }
 
         if (superstructure == null) {
-            superstructure = new Superstructure(new ElevatorIO() {}, new ArmIO() {}, new RollersIO() {}, robotState);
+            superstructure = new Superstructure(
+                    new ElevatorIO() {}, new ArmIO() {}, new RollersIO() {}, new FunnelIO() {}, robotState);
         }
 
         if (vision == null) {
@@ -115,10 +122,13 @@ public class RobotContainer {
                                 driverController.getHID().getPort()));
         DriverStation.silenceJoystickConnectionWarning(true);
 
+        var rightTrigger = driverController.rightTrigger();
+        var leftTrigger = driverController.leftTrigger();
         drive.setDefaultCommand(drive.withJoysticksEnhanced(
                 () -> -driverController.getLeftY(),
                 () -> -driverController.getLeftX(),
-                () -> -driverController.getRightX()));
+                () -> -driverController.getRightX(),
+                () -> rightTrigger.getAsBoolean() || leftTrigger.getAsBoolean()));
 
         teleop.onTrue(drive.resetRotation(robotState::getHeading));
 

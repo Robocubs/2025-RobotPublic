@@ -1,6 +1,7 @@
 package frc.robot.commands;
 
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -21,19 +22,17 @@ public class DriveWithJoysticks extends Command {
     private static final double rotationRateThreshold = Units.degreesToRadians(10);
 
     private final SwerveRequest.FieldCentric fieldCentric = new SwerveRequest.FieldCentric()
-            .withDeadband(maxSpeed.in(MetersPerSecond) * translationDeadband)
             .withRotationalDeadband(maxAngularRate.in(RadiansPerSecond) * rotationDeadband)
             .withDriveRequestType(DriveRequestType.Velocity);
     private final SwerveRequest.FieldCentricFacingAngle fieldCentricFacingAngle =
-            new SwerveRequest.FieldCentricFacingAngle()
-                    .withDeadband(maxSpeed.in(MetersPerSecond) * translationDeadband)
-                    .withDriveRequestType(DriveRequestType.Velocity);
+            new SwerveRequest.FieldCentricFacingAngle().withDriveRequestType(DriveRequestType.Velocity);
 
     private final Drive drive;
     private final RobotState robotState;
     private final DoubleSupplier throttle;
     private final DoubleSupplier strafe;
     private final DoubleSupplier rotation;
+    private final BooleanSupplier fineControl;
 
     private Optional<Rotation2d> headingSetpoint = Optional.empty();
     private double joystickLastTouched = 0.0;
@@ -44,12 +43,14 @@ public class DriveWithJoysticks extends Command {
             RobotState robotState,
             DoubleSupplier throttle,
             DoubleSupplier strafe,
-            DoubleSupplier rotation) {
+            DoubleSupplier rotation,
+            BooleanSupplier maxSpeed) {
         this.drive = drive;
         this.robotState = robotState;
         this.throttle = throttle;
         this.strafe = strafe;
         this.rotation = rotation;
+        this.fineControl = maxSpeed;
 
         addRequirements(drive);
     }
@@ -62,8 +63,11 @@ public class DriveWithJoysticks extends Command {
 
     @Override
     public void execute() {
-        var throttle = this.throttle.getAsDouble() * maxSpeed.in(MetersPerSecond) * (RobotState.isBlue() ? 1.0 : -1.0);
-        var strafe = this.strafe.getAsDouble() * maxSpeed.in(MetersPerSecond) * (RobotState.isBlue() ? 1.0 : -1.0);
+        var maxSpeedFromState = robotState.getMaxSpeed().in(MetersPerSecond);
+        var maxSpeedFromControls = this.fineControl.getAsBoolean() ? maxSpeedFineControl : maxSpeed;
+        var maxSpeed = Math.min(maxSpeedFromState, maxSpeedFromControls.in(MetersPerSecond));
+        var throttle = this.throttle.getAsDouble() * maxSpeed * (RobotState.isBlue() ? 1.0 : -1.0);
+        var strafe = this.strafe.getAsDouble() * maxSpeed * (RobotState.isBlue() ? 1.0 : -1.0);
         var rotation = this.rotation.getAsDouble() * maxAngularRate.in(RadiansPerSecond);
 
         var rotationDemandIsZero = MathUtil.isNear(0.0, rotation, fieldCentric.RotationalDeadband);
@@ -87,13 +91,17 @@ public class DriveWithJoysticks extends Command {
             drive.setRequest(fieldCentricFacingAngle
                     .withVelocityX(throttle)
                     .withVelocityY(strafe)
+                    .withDeadband(maxSpeed * translationDeadband)
                     .withTargetDirection(headingSetpoint.get()));
 
             Logger.recordOutput("Commands/DriveWithJoystick/HeadingSetpoint", headingSetpoint.get());
         } else {
             headingSetpoint = Optional.empty();
-            drive.setRequest(
-                    fieldCentric.withVelocityX(throttle).withVelocityY(strafe).withRotationalRate(rotation));
+            drive.setRequest(fieldCentric
+                    .withVelocityX(throttle)
+                    .withVelocityY(strafe)
+                    .withDeadband(maxSpeed * translationDeadband)
+                    .withRotationalRate(rotation));
         }
     }
 }

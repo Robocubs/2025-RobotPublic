@@ -45,8 +45,8 @@ public record SuperstructurePose(Distance elevatorHeight, Angle armAngle) {
         ALGAE_INTAKE(Inches.zero(), Degrees.of(20.0)),
         CORAL_INTAKE_1(Inches.of(11.288), Degrees.of(-55.752)),
         CORAL_INTAKE_2(Inches.of(8.198), Degrees.of(-60.801)),
-        FEED(Inches.zero(), Degrees.of(83.364)),
-        PROCESSOR(Inches.zero(), Degrees.of(90));
+        FEED(Inches.zero(), Degrees.of(90)),
+        PROCESSOR(Inches.zero(), Degrees.of(80));
 
         private final SuperstructurePose pose;
         private final SuperstructurePose retractPose;

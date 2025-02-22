@@ -33,7 +33,7 @@ public class GraphController implements SuperstructureController {
 
         var freeStates = Set.of(
                 SuperstructureState.STOW,
-                SuperstructureState.FEED,
+                SuperstructureState.FEED_RETRACTED,
                 SuperstructureState.L1_CORAL_WIDE,
                 SuperstructureState.L1_CORAL,
                 SuperstructureState.L2_CORAL,
@@ -68,6 +68,7 @@ public class GraphController implements SuperstructureController {
 
         // To/from retracting states
         var retractingStateMoves = Map.ofEntries(
+                Map.entry(SuperstructureState.FEED, SuperstructureState.FEED_RETRACTED),
                 Map.entry(SuperstructureState.L4_CORAL, SuperstructureState.L4_CORAL_RETRACTED),
                 Map.entry(SuperstructureState.L4_CORAL_SCORE, SuperstructureState.L4_CORAL_RETRACTED),
                 Map.entry(SuperstructureState.BARGE, SuperstructureState.BARGE_RETRACTED),

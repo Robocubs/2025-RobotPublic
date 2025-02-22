@@ -6,6 +6,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.CANdiConfiguration;
+import com.ctre.phoenix6.configs.ClosedLoopGeneralConfigs;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MagnetSensorConfigs;
@@ -96,7 +97,7 @@ public class ArmIOHardware implements ArmIO {
                     .withMagnetSensor(new MagnetSensorConfigs()
                             .withMagnetOffset(Radians.zero())
                             .withSensorDirection(cancoderSensorDirection)
-                            .withMagnetOffset(Radians.of(encoderOffset.getAsDouble())));
+                            .withMagnetOffset(Radians.of(encoderOffset.get())));
             cancoder = new CANcoder(10, Constants.canivoreBusName);
             tryUntilOk(() -> cancoder.getConfigurator().apply(cancoderConfig));
 
@@ -116,7 +117,8 @@ public class ArmIOHardware implements ArmIO {
                         || feedbackSensorSource == FeedbackSensorSourceValue.RemoteCANdiPWM1)) {
             candiConfig = new CANdiConfiguration()
                     .withPWM1(new PWM1Configs()
-                            .withAbsoluteSensorOffset(Radians.of(encoderOffset.getAsDouble()))
+                            .withAbsoluteSensorOffset(Radians.of(encoderOffset.get()))
+                            .withAbsoluteSensorDiscontinuityPoint(angleTolerance)
                             .withSensorDirection(true));
             candi = new CANdi(1, Constants.canivoreBusName);
             tryUntilOk(() -> candi.getConfigurator().apply(candiConfig));
@@ -145,12 +147,13 @@ public class ArmIOHardware implements ArmIO {
                         .withNeutralMode(NeutralModeValue.Brake)
                         .withInverted(motorInvertedValue))
                 .withFeedback(feedbackConfigs)
+                .withClosedLoopGeneral(new ClosedLoopGeneralConfigs().withContinuousWrap(false))
                 .withMotionMagic(new MotionMagicConfigs()
-                        .withMotionMagicCruiseVelocity(motionMagicMaxVelocity.getAsDouble())
-                        .withMotionMagicAcceleration(motionMagicMaxAcceleration.getAsDouble())
-                        .withMotionMagicJerk(motionMagicMaxJerk.getAsDouble())
-                        .withMotionMagicExpo_kV(motionMagicKV.getAsDouble())
-                        .withMotionMagicExpo_kA(motionMagicKA.getAsDouble()))
+                        .withMotionMagicCruiseVelocity(motionMagicMaxVelocity.get())
+                        .withMotionMagicAcceleration(motionMagicMaxAcceleration.get())
+                        .withMotionMagicJerk(motionMagicMaxJerk.get())
+                        .withMotionMagicExpo_kV(motionMagicKV.get())
+                        .withMotionMagicExpo_kA(motionMagicKA.get()))
                 .withSlot0(new Slot0Configs()
                         .withKG(kG.get())
                         .withGravityType(GravityTypeValue.Arm_Cosine)
@@ -235,12 +238,12 @@ public class ArmIOHardware implements ArmIO {
                 0,
                 () -> {
                     if (candi != null) {
-                        candiConfig.PWM1.withAbsoluteSensorOffset(Radians.of(encoderOffset.getAsDouble()));
+                        candiConfig.PWM1.withAbsoluteSensorOffset(Radians.of(encoderOffset.get()));
                         tryUntilOk(() -> candi.getConfigurator().apply(candiConfig));
                     }
 
                     if (cancoder != null) {
-                        cancoderConfig.MagnetSensor.withMagnetOffset(Radians.of(encoderOffset.getAsDouble()));
+                        cancoderConfig.MagnetSensor.withMagnetOffset(Radians.of(encoderOffset.get()));
                         tryUntilOk(() -> cancoder.getConfigurator().apply(cancoderConfig));
                     }
                 },

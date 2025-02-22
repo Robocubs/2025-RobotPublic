@@ -36,6 +36,9 @@ public final class DriveConstants {
     public static final LinearVelocity maxSpeedExtended = MetersPerSecond.of(0.2);
     public static final LinearAcceleration maxAccelerationExtended = maxSpeedExtended.div(Seconds.of(0.33));
 
+    public static final LinearVelocity maxSpeedFineControl = MetersPerSecond.of(1.5);
+    public static final LinearAcceleration maxAccelerationFineControl = maxSpeedExtended.div(Seconds.of(0.33));
+
     public static final double translationDeadband = 0.1;
     public static final double rotationDeadband = 0.1;
 

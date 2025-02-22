@@ -1,6 +1,7 @@
 package frc.robot.commands;
 
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -40,6 +41,7 @@ public class DriveWithJoysticksEnhanced extends Command {
     private final DoubleSupplier throttle;
     private final DoubleSupplier strafe;
     private final DoubleSupplier rotation;
+    private final BooleanSupplier fineControl;
     private final PIDController translationController =
             new PIDController(translationKP.get(), 0.0, 0, Constants.mainLoopPeriod.in(Seconds));
 
@@ -52,12 +54,14 @@ public class DriveWithJoysticksEnhanced extends Command {
             RobotState robotState,
             DoubleSupplier throttle,
             DoubleSupplier strafe,
-            DoubleSupplier rotation) {
+            DoubleSupplier rotation,
+            BooleanSupplier fineControl) {
         this.drive = drive;
         this.robotState = robotState;
         this.throttle = throttle;
         this.strafe = strafe;
         this.rotation = rotation;
+        this.fineControl = fineControl;
 
         addRequirements(drive);
     }
@@ -73,7 +77,9 @@ public class DriveWithJoysticksEnhanced extends Command {
     public void execute() {
         var throttleValue = this.throttle.getAsDouble() * (RobotState.isBlue() ? 1.0 : -1.0);
         var strafeValue = this.strafe.getAsDouble() * (RobotState.isBlue() ? 1.0 : -1.0);
-        var maxAllowedSpeed = robotState.getMaxSpeed().in(MetersPerSecond);
+        var maxSpeedFromState = robotState.getMaxSpeed().in(MetersPerSecond);
+        var maxSpeedFromControls = this.fineControl.getAsBoolean() ? maxSpeedFineControl : maxSpeed;
+        var maxAllowedSpeed = Math.min(maxSpeedFromState, maxSpeedFromControls.in(MetersPerSecond));
 
         var inputLinearSpeed =
                 MathUtil.applyDeadband(Math.hypot(throttleValue, strafeValue), translationDeadband) * maxAllowedSpeed;
@@ -161,11 +167,8 @@ public class DriveWithJoysticksEnhanced extends Command {
             Logger.recordOutput("Commands/DriveWithJoystick/HeadingSetpoint", headingSetpoint.get());
         } else {
             headingSetpoint = Optional.empty();
-            drive.setRequest(fieldCentric
-                    .withDeadband(maxAllowedSpeed * translationDeadband)
-                    .withVelocityX(throttle)
-                    .withVelocityY(strafe)
-                    .withRotationalRate(rotation));
+            drive.setRequest(
+                    fieldCentric.withVelocityX(throttle).withVelocityY(strafe).withRotationalRate(rotation));
         }
     }
 }

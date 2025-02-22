@@ -1,5 +1,6 @@
 package frc.robot.subsystems.drive;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -96,12 +97,14 @@ public class Drive extends SubsystemBase {
                 .withName("DriveWithSpeeds");
     }
 
-    public Command withJoysticks(DoubleSupplier throttle, DoubleSupplier strafe, DoubleSupplier rotation) {
-        return new DriveWithJoysticks(this, robotState, throttle, strafe, rotation);
+    public Command withJoysticks(
+            DoubleSupplier throttle, DoubleSupplier strafe, DoubleSupplier rotation, BooleanSupplier fineControl) {
+        return new DriveWithJoysticks(this, robotState, throttle, strafe, rotation, fineControl);
     }
 
-    public Command withJoysticksEnhanced(DoubleSupplier throttle, DoubleSupplier strafe, DoubleSupplier rotation) {
-        return new DriveWithJoysticksEnhanced(this, robotState, throttle, strafe, rotation);
+    public Command withJoysticksEnhanced(
+            DoubleSupplier throttle, DoubleSupplier strafe, DoubleSupplier rotation, BooleanSupplier fineControl) {
+        return new DriveWithJoysticksEnhanced(this, robotState, throttle, strafe, rotation, fineControl);
     }
 
     public Command toPose(Supplier<Pose2d> poseSupplier, boolean finishAtGoal) {
