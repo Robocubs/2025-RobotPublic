@@ -18,13 +18,13 @@ public interface ElevatorIO {
         public Current masterSupplyCurrent = Amps.zero();
         public Current masterTorqueCurrent = Amps.zero();
 
-        public double closedLoopReference = 0.0;
-
         public Distance followerPosition = Meters.zero();
         public LinearVelocity followerVelocity = MetersPerSecond.zero();
         public Voltage followerVoltage = Volts.zero();
         public Current followerSupplyCurrent = Amps.zero();
         public Current followerTorqueCurrent = Amps.zero();
+
+        public double closedLoopReference = 0.0;
     }
 
     public default void updateInputs(ElevatorIOInputs inputs) {}

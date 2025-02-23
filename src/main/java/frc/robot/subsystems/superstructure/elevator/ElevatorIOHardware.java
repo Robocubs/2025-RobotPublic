@@ -64,12 +64,12 @@ public class ElevatorIOHardware implements ElevatorIO {
     private final StatusSignal<Voltage> masterVoltageSignal;
     private final StatusSignal<Current> masterSupplyCurrentSignal;
     private final StatusSignal<Current> masterTorqueCurrentSignal;
-    private final StatusSignal<Double> closedLoopReferenceSignal;
     private final StatusSignal<Angle> followerPositionSignal;
     private final StatusSignal<AngularVelocity> followerVelocitySignal;
     private final StatusSignal<Voltage> followerVoltageSignal;
     private final StatusSignal<Current> followerSupplyCurrentSignal;
     private final StatusSignal<Current> followerTorqueCurrentSignal;
+    private final StatusSignal<Double> closedLoopReferenceSignal;
 
     private final VoltageOut voltageControlRequest = new VoltageOut(0.0);
     private final TorqueCurrentFOC torqueCurrentControlRequest = new TorqueCurrentFOC(0.0);
@@ -131,12 +131,12 @@ public class ElevatorIOHardware implements ElevatorIO {
         masterVoltageSignal = masterMotor.getMotorVoltage();
         masterSupplyCurrentSignal = masterMotor.getSupplyCurrent();
         masterTorqueCurrentSignal = masterMotor.getTorqueCurrent();
-        closedLoopReferenceSignal = masterMotor.getClosedLoopReference();
         followerPositionSignal = followerMotor.getPosition();
         followerVelocitySignal = followerMotor.getVelocity();
         followerVoltageSignal = followerMotor.getMotorVoltage();
         followerSupplyCurrentSignal = followerMotor.getSupplyCurrent();
         followerTorqueCurrentSignal = followerMotor.getTorqueCurrent();
+        closedLoopReferenceSignal = masterMotor.getClosedLoopReference();
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 Constants.mainLoopFrequency,
@@ -145,12 +145,12 @@ public class ElevatorIOHardware implements ElevatorIO {
                 masterVoltageSignal,
                 masterSupplyCurrentSignal,
                 masterTorqueCurrentSignal,
-                closedLoopReferenceSignal,
                 followerPositionSignal,
                 followerVelocitySignal,
                 followerVoltageSignal,
                 followerSupplyCurrentSignal,
-                followerTorqueCurrentSignal);
+                followerTorqueCurrentSignal,
+                closedLoopReferenceSignal);
         masterMotor.optimizeBusUtilization();
         followerMotor.optimizeBusUtilization();
     }
@@ -163,23 +163,23 @@ public class ElevatorIOHardware implements ElevatorIO {
                 masterVoltageSignal,
                 masterSupplyCurrentSignal,
                 masterTorqueCurrentSignal,
-                closedLoopReferenceSignal,
                 followerPositionSignal,
                 followerVelocitySignal,
                 followerVoltageSignal,
                 followerSupplyCurrentSignal,
-                followerTorqueCurrentSignal);
+                followerTorqueCurrentSignal,
+                closedLoopReferenceSignal);
         inputs.masterPosition = fromMotorPosition(masterPositionSignal.getValue());
         inputs.masterVelocity = fromMotorVelocity(masterVelocitySignal.getValue());
         inputs.masterVoltage = masterVoltageSignal.getValue();
         inputs.masterSupplyCurrent = masterSupplyCurrentSignal.getValue();
         inputs.masterTorqueCurrent = masterTorqueCurrentSignal.getValue();
-        inputs.closedLoopReference = closedLoopReferenceSignal.getValue() * sprocketRadius.in(Meters);
         inputs.followerPosition = fromMotorPosition(followerPositionSignal.getValue());
         inputs.followerVelocity = fromMotorVelocity(followerVelocitySignal.getValue());
         inputs.followerVoltage = followerVoltageSignal.getValue();
         inputs.followerSupplyCurrent = followerSupplyCurrentSignal.getValue();
         inputs.followerTorqueCurrent = followerTorqueCurrentSignal.getValue();
+        inputs.closedLoopReference = closedLoopReferenceSignal.getValue() * sprocketRadius.in(Meters);
 
         LoggedTunableValue.ifChanged(
                 0,
