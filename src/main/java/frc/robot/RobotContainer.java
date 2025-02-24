@@ -16,8 +16,6 @@ import frc.robot.commands.characterization.DriveCharacterization;
 import frc.robot.commands.characterization.SuperstructureCharacterization;
 import frc.robot.controls.StreamDeck;
 import frc.robot.controls.StreamDeck.StreamDeckButton;
-import frc.robot.subsystems.climb.Climb;
-import frc.robot.subsystems.climb.ClimbIO;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIO;
 import frc.robot.subsystems.drive.DriveIOHardware;
@@ -50,6 +48,7 @@ public class RobotContainer {
     private final Drive drive;
     private final RobotState robotState;
     private final Superstructure superstructure;
+    // private final Climb climb;
 
     // State triggers
     private final Trigger teleop = RobotModeTriggers.teleop();
@@ -59,7 +58,7 @@ public class RobotContainer {
         Drive drive = null;
         Vision vision = null;
         Superstructure superstructure = null;
-        Climb climb = null;
+        // Climb climb = null;
 
         this.robotState = new RobotState();
 
@@ -73,6 +72,7 @@ public class RobotContainer {
                             new RollersIOHardware(),
                             new FunnelIO() {},
                             robotState);
+                    // climb = new Climb(new ClimbIOHardware());
                     break;
                 case SIM_BOT:
                     drive = new Drive(new DriveIOSim(), robotState);
@@ -84,7 +84,7 @@ public class RobotContainer {
                             robotState);
                     superstructure = new Superstructure(
                             new ElevatorIOSim(), new ArmIOSim(), new RollersIOSim(), new FunnelIOSim(), robotState);
-                    break;
+                    // climb = new Climb(new ClimbIOSim());
             }
         }
 
@@ -101,12 +101,13 @@ public class RobotContainer {
             vision = new Vision(new AprilTagIO[] {}, robotState);
         }
 
-        if (climb == null) {
-            climb = new Climb(new ClimbIO() {});
-        }
+        // if (climb == null) {
+        //     climb = new Climb(new ClimbIO() {});
+        // }
 
         this.drive = drive;
         this.superstructure = superstructure;
+        // this.climb = climb;
 
         configureBindings();
         configureAutoRoutines();
@@ -199,9 +200,13 @@ public class RobotContainer {
         var stow = superstructure.runState(SuperstructureState.STOW);
         var processor = robotState.setAlgaeSelection(AlgaeMode.PROCESSOR);
         var barge = robotState.setAlgaeSelection(AlgaeMode.BARGE);
+        // var climbDeploy = climb.deploy();
+        // var climbRetract = climb.retract();
+        // var climbZero = climb.zero();
 
         // TODO: Make automatically switch between feed and stow when appropriate
         superstructure.setDefaultCommand(stow);
+        // climb.setDefaultCommand(climb.stop());
         teleop.onTrue(superstructure.hold(true));
         disabled.onTrue(superstructure.stop().ignoringDisable(true));
 
@@ -218,6 +223,9 @@ public class RobotContainer {
                         .add(StreamDeckButton.STOW, () -> stow.isScheduled())
                         .add(StreamDeckButton.PROCESSOR, () -> robotState.isSelected(AlgaeMode.PROCESSOR))
                         .add(StreamDeckButton.BARGE, () -> robotState.isSelected(AlgaeMode.BARGE)));
+        // .add(StreamDeckButton.DEPLOY, () -> climbDeploy.isScheduled())
+        // .add(StreamDeckButton.RETRACT, () -> climbRetract.isScheduled())
+        // .add(StreamDeckButton.ZERO, () -> climbZero.isScheduled()));
 
         streamDeck.button(StreamDeckButton.L4_CORAL).onTrue(l4CoralScore);
         streamDeck.button(StreamDeckButton.L3_CORAL).onTrue(l3CoralScore);
@@ -231,6 +239,9 @@ public class RobotContainer {
         streamDeck.button(StreamDeckButton.STOW).onTrue(stow);
         streamDeck.button(StreamDeckButton.PROCESSOR).onTrue(processor);
         streamDeck.button(StreamDeckButton.BARGE).onTrue(barge);
+        // streamDeck.button(StreamDeckButton.DEPLOY).onTrue(climbDeploy);
+        // streamDeck.button(StreamDeckButton.RETRACT).onTrue(climbRetract);
+        // streamDeck.button(StreamDeckButton.ZERO).onTrue(climbZero);
     }
 
     private void configureAutoRoutines() {

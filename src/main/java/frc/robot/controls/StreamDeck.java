@@ -81,7 +81,10 @@ public class StreamDeck extends SubsystemBase {
         FEED(0, 2, "feedButton", "Circle", "Feed"),
         STOW(1, 2, "stowButton", "Circle", "Stow"),
         PROCESSOR(1, 3, "processorButton", "Circle", "Processor"),
-        BARGE(0, 3, "bargeButton", "Circle", "Barge");
+        BARGE(0, 3, "bargeButton", "Circle", "Barge"),
+        DEPLOY(0, 4, "deployClimbButton", "Circle", "Deploy"),
+        RETRACT(1, 4, "retractClimbButton", "Circle", "Retract"),
+        ZERO(2, 4, "zeroClimbButton", "Circle", "Zero");
 
         private final int index;
         private final String key;

@@ -14,7 +14,7 @@ public interface ClimbIO {
     public class ClimbIOInputs {
         public Angle position = Radians.zero();
         public AngularVelocity velocity = RadiansPerSecond.zero();
-        public Voltage votage = Volts.zero();
+        public Voltage voltage = Volts.zero();
         public Current supplyCurrent = Amps.zero();
         public Current torqueCurrent = Amps.zero();
     }
@@ -23,13 +23,17 @@ public interface ClimbIO {
 
     public default void setBrakeServoAngle(Angle angle) {}
 
+    public default void setReleaseServoSpeed(double speed) {}
+
+    public default void stopReleaseServo() {}
+
     public default void setVoltage(Voltage voltage) {}
 
     public default void setTorqueCurrent(Current current) {}
 
     public default void setPosition(Angle position, Torque feedforward) {}
 
-    public default void zeroPosition() {}
+    public default void setVelocity(AngularVelocity velocity, Torque feedforward) {}
 
     public default void stop() {}
 }
