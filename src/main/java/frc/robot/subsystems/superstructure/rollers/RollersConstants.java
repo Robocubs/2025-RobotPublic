@@ -35,9 +35,9 @@ public final class RollersConstants {
 
     public static final Distance coralDetectionDistance = Meters.of(0.4);
     public static final Distance algaeDetectionDistance = Meters.of(0.4);
-    public static final Distance detectionDistanceTolerance = Meters.of(0.03);
+    public static final Distance detectionDistanceTolerance = Meters.of(0.04);
 
-    public static final Distance coralFeedDistance = Inches.of(14);
+    public static final Distance coralFeedDistance = Meters.of(0.3);
     public static final Time coralFeedTime = Seconds.of(0.5);
     public static final Angle coralFeedCoralRollerPosition =
             Radians.of(coralFeedDistance.in(Meters) / coralRollerRadius.in(Meters));

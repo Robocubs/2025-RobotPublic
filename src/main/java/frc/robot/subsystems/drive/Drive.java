@@ -103,8 +103,14 @@ public class Drive extends SubsystemBase {
     }
 
     public Command withJoysticksEnhanced(
-            DoubleSupplier throttle, DoubleSupplier strafe, DoubleSupplier rotation, BooleanSupplier fineControl) {
-        return new DriveWithJoysticksEnhanced(this, robotState, throttle, strafe, rotation, fineControl);
+            DoubleSupplier throttle,
+            DoubleSupplier strafe,
+            DoubleSupplier rotation,
+            BooleanSupplier fineControl,
+            BooleanSupplier coralTrigger,
+            BooleanSupplier algaeTrigger) {
+        return new DriveWithJoysticksEnhanced(
+                this, robotState, throttle, strafe, rotation, fineControl, coralTrigger, algaeTrigger);
     }
 
     public Command toPose(Supplier<Pose2d> poseSupplier, boolean finishAtGoal) {

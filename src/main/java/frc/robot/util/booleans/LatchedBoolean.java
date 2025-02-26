@@ -1,28 +1,35 @@
 package frc.robot.util.booleans;
 
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
-
-@RequiredArgsConstructor
-@AllArgsConstructor
 public class LatchedBoolean {
     private final boolean latchedValue;
     private boolean latched = false;
+    private boolean value = false;
+
+    public LatchedBoolean(boolean latchedValue) {
+        this(latchedValue, !latchedValue);
+    }
+
+    public LatchedBoolean(boolean latchedValue, boolean initialValue) {
+        this.latchedValue = latchedValue;
+        value = !latchedValue;
+    }
 
     public boolean update(boolean value) {
+        if (value == latchedValue) {
+            this.value = latchedValue;
+            latched = true;
+        }
+
         if (latched) {
             return latchedValue;
         }
 
-        if (value == latchedValue) {
-            latched = true;
-        }
-
+        this.value = value;
         return value;
     }
 
     public boolean get() {
-        return latchedValue;
+        return value;
     }
 
     public void resetLatch() {

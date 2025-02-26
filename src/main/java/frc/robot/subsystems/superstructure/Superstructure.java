@@ -97,6 +97,7 @@ public class Superstructure extends SubsystemBase {
         elevator.updateInputs();
         arm.updateInputs();
         rollers.updateInputs();
+        funnel.updateInputs();
 
         elevatorLigament.setLength(elevator.getHeight().in(Meters));
         armLigament.setAngle(arm.getAngle().in(Degrees) + armAngleOffsetDegrees);
@@ -150,7 +151,9 @@ public class Superstructure extends SubsystemBase {
 
         var rollerState = state.getData().getRollerState();
         rollers.runState(state.getData().getRollerState());
-        if (rollerState != Rollers.State.AUTO_FEED_CORAL || !isNear(SuperstructurePose.Preset.FEED.getPose())) {
+        if (rollerState != Rollers.State.AUTO_FEED_CORAL
+                || !isNear(SuperstructurePose.Preset.FEED.getPose())
+                || rollers.atAutoFeedPosition()) {
             funnel.stop();
         } else if (rollers.longCoralDetected()) {
             funnel.fastFeed();

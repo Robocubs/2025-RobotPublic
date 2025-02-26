@@ -49,7 +49,7 @@ public class ArmIOHardware implements ArmIO {
     protected static final FeedbackSensorSourceValue feedbackSensorSource = Constants.robot == RobotType.SIM_BOT
             ? FeedbackSensorSourceValue.FusedCANcoder
             : FeedbackSensorSourceValue.FusedCANdiPWM1;
-    private static final LoggedTunableNumber encoderOffset = new LoggedTunableNumber("Arm/EncoderOffset", 2.867);
+    protected static final LoggedTunableNumber encoderOffset = new LoggedTunableNumber("Arm/EncoderOffset", 2.867);
     private static final LoggedTunableNumber kG = new LoggedTunableNumber("Arm/KG", 0.4);
     private static final LoggedTunableNumber motionMagicMaxVelocity =
             new LoggedTunableNumber("Arm/MotionMagicMaxVelocity", maximumVelocity.in(RotationsPerSecond));
@@ -95,9 +95,8 @@ public class ArmIOHardware implements ArmIO {
                 || feedbackSensorSource == FeedbackSensorSourceValue.RemoteCANcoder) {
             cancoderConfig = new CANcoderConfiguration()
                     .withMagnetSensor(new MagnetSensorConfigs()
-                            .withMagnetOffset(Radians.zero())
-                            .withSensorDirection(cancoderSensorDirection)
-                            .withMagnetOffset(Radians.of(encoderOffset.get())));
+                            .withMagnetOffset(Radians.of(encoderOffset.get()))
+                            .withSensorDirection(cancoderSensorDirection));
             cancoder = new CANcoder(10, Constants.canivoreBusName);
             tryUntilOk(() -> cancoder.getConfigurator().apply(cancoderConfig));
 

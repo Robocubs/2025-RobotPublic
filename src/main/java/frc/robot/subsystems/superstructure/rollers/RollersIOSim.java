@@ -5,6 +5,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import frc.robot.Constants;
+import frc.robot.SimState;
 import frc.robot.util.CustomDCMotor;
 import frc.robot.util.simulation.SimNotifier;
 
@@ -15,7 +16,7 @@ public class RollersIOSim extends RollersIOHardware {
     private Angle coralMotorPosition = Radians.zero();
     private Angle hybridMotorPosition = Radians.zero();
 
-    public RollersIOSim() {
+    public RollersIOSim(SimState simState) {
         var coralGearbox = CustomDCMotor.getKrakenX44(1);
         var coralMotorSim = new FlywheelSim(
                 LinearSystemId.createFlywheelSystem(
@@ -34,8 +35,12 @@ public class RollersIOSim extends RollersIOHardware {
 
         var coralMotorSimState = coralMotor.getSimState();
         var hybridMotorSimState = hybridMotor.getSimState();
+        var coralCanrageSimState = coralCanrange.getSimState();
+        var algaeCanrangeSimState = algaeCanrange.getSimState();
 
         SimNotifier.register(deltaTime -> {
+            var batteryVoltage = RobotController.getBatteryVoltage();
+
             coralMotorSim.setInputVoltage(coralMotorSimState.getMotorVoltage());
             coralMotorSim.update(deltaTime.in(Seconds));
 
@@ -44,7 +49,7 @@ public class RollersIOSim extends RollersIOHardware {
 
             coralMotorSimState.setRawRotorPosition(coralMotorPosition);
             coralMotorSimState.setRotorVelocity(coralMotorVelocity);
-            coralMotorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+            coralMotorSimState.setSupplyVoltage(batteryVoltage);
 
             hybridMotorSim.setInputVoltage(hybridMotorSimState.getMotorVoltage());
             hybridMotorSim.update(deltaTime.in(Seconds));
@@ -54,7 +59,12 @@ public class RollersIOSim extends RollersIOHardware {
 
             hybridMotorSimState.setRawRotorPosition(hybridMotorPosition);
             hybridMotorSimState.setRotorVelocity(hybridMotorVelocity);
-            hybridMotorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+            hybridMotorSimState.setSupplyVoltage(batteryVoltage);
+
+            coralCanrageSimState.setDistance(simState.getCoralSensorDistance());
+            coralCanrageSimState.setSupplyVoltage(batteryVoltage);
+            algaeCanrangeSimState.setDistance(simState.getAlgaeSensorDistance());
+            algaeCanrangeSimState.setSupplyVoltage(batteryVoltage);
         });
     }
 }

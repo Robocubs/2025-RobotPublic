@@ -1,5 +1,6 @@
 package frc.robot.subsystems.superstructure.elevator;
 
+import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.units.LinearAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
@@ -16,6 +17,7 @@ public final class ElevatorConstants {
     public static final Angle elevatorAngle = Degrees.of(85);
     public static final Distance sprocketRadius = Inches.of(0.875);
     public static final Mass loadMass = Pounds.of(23.5);
+    public static final InvertedValue motorInvertedValue = InvertedValue.Clockwise_Positive;
 
     public static final Distance positionTolerance = Inches.of(1.0);
     public static final Distance maximumHeight = Inches.of(80.5);

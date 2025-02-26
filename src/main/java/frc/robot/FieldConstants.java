@@ -1,5 +1,6 @@
 package frc.robot;
 
+import java.util.Arrays;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -31,7 +32,8 @@ public final class FieldConstants {
             .coralStationLeftPose(getTagPose(13))
             .coralStationRightPose(getTagPose(12))
             .reefBranchPoses(getReefBranchPoses(17, 18, 19, 20, 21, 22))
-            .reefAlgaePoses(getTagPoses(17, 18, 19, 20, 21, 22))
+            .reefAlgaeL2Poses(getTagPoses(17, 19, 21))
+            .reefAlgaeL3Poses(getTagPoses(18, 20, 22))
             .build();
 
     private static final AllianceFieldConstants redConstants = AllianceFieldConstants.builder()
@@ -40,7 +42,8 @@ public final class FieldConstants {
             .coralStationLeftPose(getTagPose(1))
             .coralStationRightPose(getTagPose(2))
             .reefBranchPoses(getReefBranchPoses(6, 7, 8, 9, 10, 11))
-            .reefAlgaePoses(getTagPoses(6, 7, 8, 9, 10, 11))
+            .reefAlgaeL2Poses(getTagPoses(6, 8, 10))
+            .reefAlgaeL3Poses(getTagPoses(7, 9, 11))
             .build();
 
     public static Translation2d reefCenterPoint() {
@@ -67,6 +70,14 @@ public final class FieldConstants {
         return RobotState.isBlue() ? blueConstants.reefAlgaePoses : redConstants.reefAlgaePoses;
     }
 
+    public static Pose2d[] reefAlgaeL2Poses() {
+        return RobotState.isBlue() ? blueConstants.reefAlgaeL2Poses : redConstants.reefAlgaeL2Poses;
+    }
+
+    public static Pose2d[] reefAlgaeL3Poses() {
+        return RobotState.isBlue() ? blueConstants.reefAlgaeL3Poses : redConstants.reefAlgaeL3Poses;
+    }
+
     public static Pose2d robotProcessorPose() {
         return RobotState.isBlue() ? blueConstants.robotProcessorPose : redConstants.robotProcessorPose;
     }
@@ -85,6 +96,14 @@ public final class FieldConstants {
 
     public static Pose2d[] robotReefAlgaePoses() {
         return RobotState.isBlue() ? blueConstants.robotReefAlgaePoses : redConstants.robotReefAlgaePoses;
+    }
+
+    public static Pose2d[] robotReefAlgaeL2Poses() {
+        return RobotState.isBlue() ? blueConstants.robotReefAlgaeL2Poses : redConstants.robotReefAlgaeL2Poses;
+    }
+
+    public static Pose2d[] robotReefAlgaeL3Poses() {
+        return RobotState.isBlue() ? blueConstants.robotReefAlgaeL3Poses : redConstants.robotReefAlgaeL3Poses;
     }
 
     private static Pose2d getTagPose(int id) {
@@ -116,12 +135,16 @@ public final class FieldConstants {
         private final Pose2d rightCoralStationPose;
         private final Pose2d[] reefBranchPoses;
         private final Pose2d[] reefAlgaePoses;
+        private final Pose2d[] reefAlgaeL2Poses;
+        private final Pose2d[] reefAlgaeL3Poses;
 
         private final Pose2d robotProcessorPose;
         private final Pose2d robotCoralStationLeftPose;
         private final Pose2d robotCoralStationRightPose;
         private final Pose2d[] robotReefBranchPoses;
         private final Pose2d[] robotReefAlgaePoses;
+        private final Pose2d[] robotReefAlgaeL2Poses;
+        private final Pose2d[] robotReefAlgaeL3Poses;
 
         @Builder
         private AllianceFieldConstants(
@@ -130,13 +153,17 @@ public final class FieldConstants {
                 Pose2d coralStationLeftPose,
                 Pose2d coralStationRightPose,
                 Pose2d[] reefBranchPoses,
-                Pose2d[] reefAlgaePoses) {
+                Pose2d[] reefAlgaeL2Poses,
+                Pose2d[] reefAlgaeL3Poses) {
             this.reefCenterPoint = reefCenterPoint;
             this.processorPose = processorPose;
             this.leftCoralStationPose = coralStationLeftPose;
             this.rightCoralStationPose = coralStationRightPose;
             this.reefBranchPoses = reefBranchPoses;
-            this.reefAlgaePoses = reefAlgaePoses;
+            this.reefAlgaePoses = Stream.concat(Arrays.stream(reefAlgaeL2Poses), Arrays.stream(reefAlgaeL3Poses))
+                    .toArray(Pose2d[]::new);
+            this.reefAlgaeL2Poses = reefAlgaeL2Poses;
+            this.reefAlgaeL3Poses = reefAlgaeL3Poses;
 
             var frontFacingRobotTransform =
                     new Transform2d(Constants.halfRobotLength.in(Meters), 0.0, Rotation2d.k180deg);
@@ -149,6 +176,12 @@ public final class FieldConstants {
                     .map(pose -> pose.transformBy(frontFacingRobotTransform))
                     .toArray(Pose2d[]::new);
             robotReefAlgaePoses = Stream.of(reefAlgaePoses)
+                    .map(pose -> pose.transformBy(frontFacingRobotTransform))
+                    .toArray(Pose2d[]::new);
+            robotReefAlgaeL2Poses = Stream.of(reefAlgaeL2Poses)
+                    .map(pose -> pose.transformBy(frontFacingRobotTransform))
+                    .toArray(Pose2d[]::new);
+            robotReefAlgaeL3Poses = Stream.of(reefAlgaeL3Poses)
                     .map(pose -> pose.transformBy(frontFacingRobotTransform))
                     .toArray(Pose2d[]::new);
         }

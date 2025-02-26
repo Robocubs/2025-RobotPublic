@@ -1,5 +1,6 @@
 package frc.robot.subsystems.superstructure.elevator;
 
+import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
@@ -21,16 +22,17 @@ public class ElevatorIOSim extends ElevatorIOHardware {
                 true,
                 0.0);
 
+        var motorSign = motorInvertedValue == InvertedValue.CounterClockwise_Positive ? 1 : -1;
         var masterSimState = masterMotor.getSimState();
         var followerSimState = followerMotor.getSimState();
 
         SimNotifier.register(deltaTime -> {
-            motorSim.setInputVoltage(masterSimState.getMotorVoltage());
+            motorSim.setInputVoltage(masterSimState.getMotorVoltage() * motorSign);
             motorSim.update(deltaTime.in(Seconds));
 
-            var position = Radians.of(motorSim.getPositionMeters() / sprocketRadius.in(Meters) * reduction);
-            var velocity =
-                    RadiansPerSecond.of(motorSim.getVelocityMetersPerSecond() / sprocketRadius.in(Meters) * reduction);
+            var position = Radians.of(motorSim.getPositionMeters() / sprocketRadius.in(Meters) * reduction * motorSign);
+            var velocity = RadiansPerSecond.of(
+                    motorSim.getVelocityMetersPerSecond() / sprocketRadius.in(Meters) * reduction * motorSign);
 
             masterSimState.setRawRotorPosition(position);
             masterSimState.setRotorVelocity(velocity);

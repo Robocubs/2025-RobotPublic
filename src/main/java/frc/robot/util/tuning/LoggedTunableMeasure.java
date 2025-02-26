@@ -37,7 +37,7 @@ public class LoggedTunableMeasure<U extends Unit, M extends Measure<U>> extends 
      */
     public LoggedTunableMeasure(String dashboardKey, M defaultValue) {
         this(dashboardKey, defaultValue.unit());
-        this.defaultValue = defaultValue;
+        initDefault(defaultValue);
     }
 
     /**

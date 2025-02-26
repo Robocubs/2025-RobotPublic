@@ -21,6 +21,8 @@ public class Rollers {
     private static final LoggedTunableNumber algaeIntakeDistance =
             new LoggedTunableNumber("Rollers/AlgaeIntakeDistance", RollersConstants.algaeIntakeDistance.in(Meters));
 
+    private static final Angle positionTolerance = Radians.of(0.1);
+
     private final RollersIO io;
     private final RollersIOInputsAutoLogged inputs = new RollersIOInputsAutoLogged();
     private final ThresholdLatchedBoolean longCoralDetected = ThresholdLatchedBoolean.fromThresholdTolerance(
@@ -188,6 +190,14 @@ public class Rollers {
                 io.stopHybrid();
                 break;
         }
+    }
+
+    @AutoLogOutput
+    public boolean atAutoFeedPosition() {
+        return autoFeedCoralCoralPosition.isPresent()
+                && autoFeedCoralHybridPosition.isPresent()
+                && inputs.coralPosition.isNear(autoFeedCoralCoralPosition.get(), positionTolerance)
+                && inputs.hybridPosition.isNear(autoFeedCoralHybridPosition.get(), positionTolerance);
     }
 
     @AutoLogOutput

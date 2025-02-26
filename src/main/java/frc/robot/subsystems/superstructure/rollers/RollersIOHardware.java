@@ -39,7 +39,7 @@ public class RollersIOHardware implements RollersIO {
     private static final LoggedTunableNumber hybridPositionKD =
             new LoggedTunableNumber("Rollers/HybridPositionKD", 0.0);
     private static final LoggedTunableNumber hybridVelocityKV =
-            new LoggedTunableNumber("Rollers/HybridVelocityKV", 0.53);
+            new LoggedTunableNumber("Rollers/HybridVelocityKV", 0.7);
     private static final LoggedTunableNumber hybridVelocityKP =
             new LoggedTunableNumber("Rollers/HybridVelocityKP", 1.0);
     private static final LoggedTunableNumber hybridVelocityKD =

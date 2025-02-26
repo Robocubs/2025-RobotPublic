@@ -63,7 +63,9 @@
     "java.lang.System.Logger",
     "edu.wpi.first.wpilibj.RobotState",
     "com.google.flatbuffers.*",
-    "org.jheaps.*"
+    "org.jheaps.*",
+    "com.ctre.phoenix.Logger",
+    "org.slf4j.*"
   ],
   "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx8G -Xms100m -Xlog:disable",
   "java.project.resourceFilters": [".git", "node_modules", ".gradle/nodejs"],
@@ -104,5 +106,6 @@
       "severity": "off"
     }
   ],
-  "eslint.validate": ["javascript", "typescript"]
+  "eslint.validate": ["javascript", "typescript"],
+  "cSpell.words": ["odometry", "setpoint"]
 }

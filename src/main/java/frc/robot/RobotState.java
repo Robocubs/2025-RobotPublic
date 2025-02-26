@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.DriveMeasurement;
 import frc.robot.subsystems.superstructure.SuperstructurePose;
@@ -26,6 +27,7 @@ import frc.robot.subsystems.superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.vision.VisionMeasurement;
 import frc.robot.util.GeometryUtil;
+import frc.robot.util.tuning.LoggedTunableBoolean;
 import lombok.Getter;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -33,10 +35,13 @@ import org.littletonrobotics.junction.Logger;
 import static edu.wpi.first.units.Units.*;
 
 public class RobotState {
-    private static final Rotation2d reefPoseAngleTolerance = Rotation2d.fromDegrees(25);
-    private static final Rotation2d facingProcessorTolerance = Rotation2d.fromDegrees(25);
-    private static final Rotation2d facingBargeTolerance = Rotation2d.fromDegrees(25);
-    private static final Distance reefAreaDistanceTolerance = Meters.of(2.5);
+    public static final LoggedTunableBoolean automaticAlgaeModeSelection =
+            new LoggedTunableBoolean("RobotState/AutomaticAlgaeModeSelection", true);
+
+    private static final Rotation2d reefPoseAngleTolerance = Rotation2d.fromDegrees(40);
+    private static final Rotation2d facingProcessorTolerance = Rotation2d.fromDegrees(40);
+    private static final Rotation2d facingBargeTolerance = Rotation2d.fromDegrees(40);
+    private static final Distance reefAreaDistanceTolerance = Meters.of(2.0);
     private static final Distance processorAreaDistanceTolerance = Meters.of(2);
     private static final Distance bargeAreaLengthTolerance = Meters.of(2);
     private static final Distance speedLimitMinHeight = Meters.of(0.5);
@@ -52,18 +57,25 @@ public class RobotState {
             );
     private final Field2d field;
 
-    private @AutoLogOutput @Getter ReefMode reefSelection = ReefMode.L4_CORAL;
-    private @AutoLogOutput @Getter AlgaeMode algaeSelection = AlgaeMode.L3;
+    private @AutoLogOutput @Getter CoralMode coralSelection = CoralMode.L4_CORAL;
+    private @AutoLogOutput @Getter AlgaeMode algaeSelection = AlgaeMode.NONE;
     private @AutoLogOutput @Getter ChassisSpeeds robotVelocity = new ChassisSpeeds();
     private @AutoLogOutput @Getter ChassisSpeeds fieldVelocity = new ChassisSpeeds();
     private @AutoLogOutput @Getter LinearVelocity robotSpeed = MetersPerSecond.zero();
     private @AutoLogOutput @Getter LinearVelocity maxSpeed = DriveConstants.maxSpeed;
+    private @Getter Rotation2d headingToReef = Rotation2d.kZero;
+    private @AutoLogOutput boolean isFacingReef;
+    private @AutoLogOutput boolean isFacingProcessor;
+    private @AutoLogOutput boolean isFacingBarge;
+    private @AutoLogOutput boolean inReefArea;
+    private @AutoLogOutput boolean inProcessorArea;
+    private @AutoLogOutput boolean inBargeArea;
     private Distance elevatorheight = Meters.zero();
     private boolean hasLongCoral;
     private boolean hasWideCoral;
     private boolean hasAlgae;
 
-    public static enum ReefMode {
+    public static enum CoralMode {
         L1_CORAL,
         L2_CORAL,
         L3_CORAL,
@@ -71,6 +83,7 @@ public class RobotState {
     }
 
     public static enum AlgaeMode {
+        NONE,
         PROCESSOR,
         L2,
         L3,
@@ -79,6 +92,11 @@ public class RobotState {
 
     public RobotState() {
         field = new Field2d();
+
+        var periodic = Commands.run(this::periodic).ignoringDisable(true).withName("RobotStatePeriodic");
+        periodic.schedule();
+        RobotModeTriggers.test().onFalse(periodic);
+
         SmartDashboard.putData("Field", field);
         SmartDashboard.putBoolean("IsSimulation", Robot.isSimulation());
     }
@@ -89,6 +107,52 @@ public class RobotState {
 
     public static boolean isRed() {
         return !isBlue();
+    }
+
+    public void periodic() {
+        field.setRobotPose(poseEstimator.getEstimatedPosition());
+
+        var pose = poseEstimator.getEstimatedPosition();
+        var translation = pose.getTranslation();
+
+        headingToReef =
+                FieldConstants.reefCenterPoint().minus(pose.getTranslation()).getAngle();
+
+        isFacingReef = GeometryUtil.isNear(headingToReef, getHeading(), Rotation2d.kCCW_90deg);
+
+        isFacingProcessor = GeometryUtil.isNear(
+                getHeading(), FieldConstants.robotProcessorPose().getRotation(), facingProcessorTolerance);
+
+        isFacingBarge = GeometryUtil.isNear(
+                pose.getX() < FieldConstants.fieldCenter.getX() ? Rotation2d.kZero : Rotation2d.k180deg,
+                getHeading(),
+                facingBargeTolerance);
+
+        inReefArea = FieldConstants.reefCenterPoint().getDistance(pose.getTranslation())
+                < reefAreaDistanceTolerance.in(Meters);
+
+        inProcessorArea = FieldConstants.processorPose().getTranslation().getDistance(pose.getTranslation())
+                < processorAreaDistanceTolerance.in(Meters);
+
+        inBargeArea = MathUtil.isNear(
+                        translation.getX(), FieldConstants.fieldCenter.getX(), bargeAreaLengthTolerance.in(Meters))
+                && (isBlue()
+                        ? translation.getY() > FieldConstants.fieldCenter.getY()
+                        : translation.getY() < FieldConstants.fieldCenter.getY());
+
+        if (automaticAlgaeModeSelection.get()) {
+            if (hasAlgae && inProcessorArea && isFacingProcessor) {
+                algaeSelection = AlgaeMode.PROCESSOR;
+            } else if (hasAlgae && inBargeArea && isFacingBarge) {
+                algaeSelection = AlgaeMode.BARGE;
+            } else if (!hasAlgae && inReefArea && isFacingReef) {
+                algaeSelection = MathUtil.inputModulus(pose.getRotation().getDegrees() + 30, 0, 360) % 120 > 60
+                        ? (isBlue() ? AlgaeMode.L2 : AlgaeMode.L3)
+                        : (isBlue() ? AlgaeMode.L3 : AlgaeMode.L2);
+            } else {
+                algaeSelection = AlgaeMode.NONE;
+            }
+        }
     }
 
     @AutoLogOutput
@@ -115,47 +179,28 @@ public class RobotState {
         return poseEstimator.getEstimatedPosition().getRotation();
     }
 
-    public Rotation2d getHeadingToReef() {
-        return FieldConstants.reefCenterPoint()
-                .minus(getPose().getTranslation())
-                .getAngle();
-    }
-
     public boolean isFacingReef() {
-        return GeometryUtil.isNear(getHeadingToReef(), getHeading(), Rotation2d.kCCW_90deg);
+        return isFacingReef;
     }
 
     public boolean isFacingProcessor() {
-        return GeometryUtil.isNear(
-                getHeading(), FieldConstants.robotProcessorPose().getRotation(), facingProcessorTolerance);
+        return isFacingProcessor;
     }
 
     public boolean isFacingBarge() {
-        return GeometryUtil.isNear(
-                getPose().getX() < FieldConstants.fieldCenter.getX() ? Rotation2d.kZero : Rotation2d.k180deg,
-                getHeading(),
-                facingBargeTolerance);
+        return isFacingBarge;
     }
 
     public boolean inReefArea() {
-        return FieldConstants.reefCenterPoint().getDistance(getPose().getTranslation())
-                < reefAreaDistanceTolerance.in(Meters);
+        return inReefArea;
     }
 
     public boolean inProcessorArea() {
-        return FieldConstants.processorPose()
-                        .getTranslation()
-                        .getDistance(getPose().getTranslation())
-                < processorAreaDistanceTolerance.in(Meters);
+        return inProcessorArea;
     }
 
     public boolean inBargeArea() {
-        var translation = getPose().getTranslation();
-        return MathUtil.isNear(
-                        translation.getX(), FieldConstants.fieldCenter.getX(), bargeAreaLengthTolerance.in(Meters))
-                && (isBlue()
-                        ? translation.getY() > FieldConstants.fieldCenter.getY()
-                        : translation.getY() < FieldConstants.fieldCenter.getY());
+        return inBargeArea;
     }
 
     public boolean robotSpeedNominal(SuperstructureState state) {
@@ -218,11 +263,19 @@ public class RobotState {
     }
 
     public Optional<Pose2d> getClosestReefBranch() {
-        return getClosestReefPose(FieldConstants.reefBranchPoses());
+        return getClosestReefPose(FieldConstants.robotReefBranchPoses());
     }
 
     public Optional<Pose2d> getClosestReefAlgae() {
-        return getClosestReefPose(FieldConstants.reefAlgaePoses());
+        return getClosestReefPose(FieldConstants.robotReefAlgaePoses());
+    }
+
+    public Optional<Pose2d> getClosestL2ReefAlgae() {
+        return getClosestReefPose(FieldConstants.robotReefAlgaePoses());
+    }
+
+    public Optional<Pose2d> getClosestL3ReefAlgae() {
+        return getClosestReefPose(FieldConstants.robotReefAlgaePoses());
     }
 
     private Optional<Pose2d> getClosestReefPose(Pose2d[] reefPoses) {
@@ -245,23 +298,23 @@ public class RobotState {
     }
 
     public void addDriveMeasurements(DriveMeasurement... measurements) {
+        if (measurements.length == 0) {
+            return;
+        }
+
         for (var measurement : measurements) {
             poseEstimator.updateWithTime(
                     measurement.timestampSeconds, measurement.gyroAngle, measurement.modulePositions);
         }
 
-        if (measurements.length == 0) {
-            return;
-        }
-
         robotVelocity = measurements[measurements.length - 1].chassisSpeeds;
         fieldVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(robotVelocity, getHeading());
         robotSpeed = MetersPerSecond.of(Math.hypot(robotVelocity.vxMetersPerSecond, robotVelocity.vyMetersPerSecond));
-        field.setRobotPose(poseEstimator.getEstimatedPosition());
     }
 
     public void addVisionMeasurements(VisionMeasurement... measurements) {
         for (var measurement : measurements) {
+            poseEstimator.setVisionMeasurementStdDevs(measurement.stdDevs);
             poseEstimator.addVisionMeasurement(measurement.pose.toPose2d(), measurement.timestampSeconds);
         }
     }
@@ -293,29 +346,30 @@ public class RobotState {
     public static LinearVelocity getMaxRobotSpeed(Distance elevatorHeight) {
         return elevatorHeight.lt(speedLimitMinHeight)
                 ? DriveConstants.maxSpeed
-                : MetersPerSecond.of((1 - elevatorHeight.in(Meters) / ElevatorConstants.maximumHeight.in(Meters))
-                                * (DriveConstants.maxSpeed.in(MetersPerSecond)
-                                        - DriveConstants.maxSpeedExtended.in(MetersPerSecond))
-                        + DriveConstants.maxSpeedExtended.in(MetersPerSecond));
+                : MetersPerSecond.of(
+                        (1 - (elevatorHeight.in(Meters) - 0.5) / (ElevatorConstants.maximumHeight.in(Meters) - 0.5))
+                                        * (DriveConstants.maxSpeed.in(MetersPerSecond)
+                                                - DriveConstants.maxSpeedExtended.in(MetersPerSecond))
+                                + DriveConstants.maxSpeedExtended.in(MetersPerSecond));
     }
 
-    public boolean isSelected(ReefMode selection) {
-        return reefSelection == selection;
+    public boolean isSelected(CoralMode selection) {
+        return coralSelection == selection;
     }
 
     public boolean isSelected(AlgaeMode selection) {
         return algaeSelection == selection;
     }
 
-    public Command setReefSelection(ReefMode selection) {
-        return Commands.runOnce(() -> reefSelection = selection)
+    public Command setCoralSelection(CoralMode selection) {
+        return Commands.runOnce(() -> coralSelection = selection)
                 .ignoringDisable(true)
-                .withName("OperatorSetReefSelection");
+                .withName("RobotStateSetCoralSelection");
     }
 
     public Command setAlgaeSelection(AlgaeMode selection) {
         return Commands.runOnce(() -> algaeSelection = selection)
                 .ignoringDisable(true)
-                .withName("OperatorSetAlgaeSelection");
+                .withName("RobotStateSetAlgaeSelection");
     }
 }
