@@ -41,6 +41,8 @@ import frc.robot.subsystems.vision.apriltag.AprilTagIOHardware;
 import frc.robot.subsystems.vision.apriltag.AprilTagIOSim;
 import frc.robot.util.TriggeredAlert;
 
+import static edu.wpi.first.units.Units.Inches;
+
 public class RobotContainer {
     private final CommandXboxController driverController = new CommandXboxController(0);
     private final StreamDeck streamDeck = new StreamDeck();
@@ -204,14 +206,15 @@ public class RobotContainer {
         var l3CoralScore = robotState.setCoralSelection(CoralMode.L3_CORAL);
         var l2CoralScore = robotState.setCoralSelection(CoralMode.L2_CORAL);
         var l1CoralScore = robotState.setCoralSelection(CoralMode.L1_CORAL);
-        var l3Algae = robotState.setAlgaeSelection(AlgaeMode.L3);
-        var l2Algae = robotState.setAlgaeSelection(AlgaeMode.L2);
         var coralIntake = superstructure.runState(SuperstructureState.CORAL_INTAKE_2);
         var algaeIntake = superstructure.runState(SuperstructureState.ALGAE_INTAKE);
         var feed = superstructure.runState(SuperstructureState.FEED);
         var stow = superstructure.runState(SuperstructureState.STOW);
         var processor = robotState.setAlgaeSelection(AlgaeMode.PROCESSOR);
         var barge = robotState.setAlgaeSelection(AlgaeMode.BARGE);
+        var bumpForwards = superstructure.bumpFeedPosition(Inches.of(1));
+        var bumpReverse = superstructure.bumpFeedPosition(Inches.of(-1));
+
         // var climbDeploy = climb.deploy();
         // var climbRetract = climb.retract();
         // var climbZero = climb.zero();
@@ -228,14 +231,13 @@ public class RobotContainer {
                         .add(StreamDeckButton.L3_CORAL, () -> robotState.isSelected(CoralMode.L3_CORAL))
                         .add(StreamDeckButton.L2_CORAL, () -> robotState.isSelected(CoralMode.L2_CORAL))
                         .add(StreamDeckButton.L1_CORAL, () -> robotState.isSelected(CoralMode.L1_CORAL))
-                        .add(StreamDeckButton.L3_ALGAE, () -> robotState.isSelected(AlgaeMode.L3))
-                        .add(StreamDeckButton.L2_ALGAE, () -> robotState.isSelected(AlgaeMode.L2))
-                        .add(StreamDeckButton.CORAL_INTAKE, () -> coralIntake.isScheduled())
                         .add(StreamDeckButton.ALGAE_INTAKE, () -> algaeIntake.isScheduled())
                         .add(StreamDeckButton.FEED, () -> feed.isScheduled())
                         .add(StreamDeckButton.STOW, () -> stow.isScheduled())
                         .add(StreamDeckButton.PROCESSOR, () -> robotState.isSelected(AlgaeMode.PROCESSOR))
-                        .add(StreamDeckButton.BARGE, () -> robotState.isSelected(AlgaeMode.BARGE)));
+                        .add(StreamDeckButton.BARGE, () -> robotState.isSelected(AlgaeMode.BARGE))
+                        .add(StreamDeckButton.BUMP_FORWARDS, () -> bumpForwards.isScheduled())
+                        .add(StreamDeckButton.BUMP_REVERSE, () -> bumpReverse.isScheduled()));
         // .add(StreamDeckButton.DEPLOY, () -> climbDeploy.isScheduled())
         // .add(StreamDeckButton.RETRACT, () -> climbRetract.isScheduled())
         // .add(StreamDeckButton.ZERO, () -> climbZero.isScheduled()));
@@ -244,14 +246,14 @@ public class RobotContainer {
         streamDeck.button(StreamDeckButton.L3_CORAL).onTrue(l3CoralScore);
         streamDeck.button(StreamDeckButton.L2_CORAL).onTrue(l2CoralScore);
         streamDeck.button(StreamDeckButton.L1_CORAL).onTrue(l1CoralScore);
-        streamDeck.button(StreamDeckButton.L3_ALGAE).onTrue(l3Algae);
-        streamDeck.button(StreamDeckButton.L2_ALGAE).onTrue(l2Algae);
         streamDeck.button(StreamDeckButton.CORAL_INTAKE).onTrue(coralIntake);
         streamDeck.button(StreamDeckButton.ALGAE_INTAKE).onTrue(algaeIntake);
         streamDeck.button(StreamDeckButton.FEED).onTrue(feed);
         streamDeck.button(StreamDeckButton.STOW).onTrue(stow);
         streamDeck.button(StreamDeckButton.PROCESSOR).onTrue(processor);
         streamDeck.button(StreamDeckButton.BARGE).onTrue(barge);
+        streamDeck.button(StreamDeckButton.BUMP_FORWARDS).onTrue(bumpForwards);
+        streamDeck.button(StreamDeckButton.BUMP_REVERSE).onTrue(bumpReverse);
         // streamDeck.button(StreamDeckButton.DEPLOY).onTrue(climbDeploy);
         // streamDeck.button(StreamDeckButton.RETRACT).onTrue(climbRetract);
         // streamDeck.button(StreamDeckButton.ZERO).onTrue(climbZero);

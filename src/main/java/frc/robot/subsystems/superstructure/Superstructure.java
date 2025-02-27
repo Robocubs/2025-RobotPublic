@@ -280,6 +280,10 @@ public class Superstructure extends SubsystemBase {
                 .withName("SuperstructureScore_" + state.name());
     }
 
+    public Command bumpFeedPosition(Distance distance) {
+        return rollers.bumpFeedPosition(distance);
+    }
+
     public Command zeroElevator() {
         return sequence(
                         retractArm(),

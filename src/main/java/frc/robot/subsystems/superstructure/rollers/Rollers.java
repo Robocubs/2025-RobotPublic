@@ -3,6 +3,8 @@ package frc.robot.subsystems.superstructure.rollers;
 import java.util.Optional;
 
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.util.booleans.LatchedBoolean;
 import frc.robot.util.booleans.ThresholdLatchedBoolean;
 import frc.robot.util.tuning.LoggedTunableNumber;
@@ -11,6 +13,7 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.wpilibj2.command.Commands.runOnce;
 import static frc.robot.subsystems.superstructure.rollers.RollersConstants.*;
 
 public class Rollers {
@@ -213,6 +216,19 @@ public class Rollers {
     @AutoLogOutput
     public boolean algaeDetected() {
         return algaeDetected.get();
+    }
+
+    public Command bumpFeedPosition(Distance distance) {
+        return runOnce(() -> {
+            if (autoFeedCoralCoralPosition.isPresent() && autoFeedCoralHybridPosition.isPresent()) {
+                autoFeedCoralCoralPosition = Optional.of(autoFeedCoralCoralPosition
+                        .get()
+                        .plus(Radians.of(distance.in(Meters) / coralRollerRadius.in(Meters))));
+                autoFeedCoralHybridPosition = Optional.of(autoFeedCoralHybridPosition
+                        .get()
+                        .plus(Radians.of(distance.in(Meters) / hybridRollerRadius.in(Meters))));
+            }
+        });
     }
 
     public void stop() {

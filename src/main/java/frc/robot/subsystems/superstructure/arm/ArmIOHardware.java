@@ -49,7 +49,7 @@ public class ArmIOHardware implements ArmIO {
     protected static final FeedbackSensorSourceValue feedbackSensorSource = Constants.robot == RobotType.SIM_BOT
             ? FeedbackSensorSourceValue.FusedCANcoder
             : FeedbackSensorSourceValue.FusedCANdiPWM1;
-    protected static final LoggedTunableNumber encoderOffset = new LoggedTunableNumber("Arm/EncoderOffset", 2.867);
+    protected static final LoggedTunableNumber encoderOffset = new LoggedTunableNumber("Arm/EncoderOffset", 0.77);
     private static final LoggedTunableNumber kG = new LoggedTunableNumber("Arm/KG", 0.4);
     private static final LoggedTunableNumber motionMagicMaxVelocity =
             new LoggedTunableNumber("Arm/MotionMagicMaxVelocity", maximumVelocity.in(RotationsPerSecond));
