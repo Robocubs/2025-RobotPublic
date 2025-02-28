@@ -2,6 +2,7 @@ package frc.robot.subsystems.superstructure.arm;
 
 import java.util.Optional;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
@@ -76,5 +77,9 @@ public class Arm {
     public void runCharacterization(Voltage volts) {
         holdAngle = Optional.empty();
         io.setVoltage(volts);
+    }
+
+    public void setNeutralMode(NeutralModeValue neutralMode) {
+        io.setNeutralMode(neutralMode);
     }
 }

@@ -159,4 +159,10 @@ public class FunnelIOHardware implements FunnelIO {
         masterMotor.setControl(velocityControlRequest.withVelocity(velocity));
         followerMotor.setControl(velocityControlRequest.withVelocity(velocity.times(-1)));
     }
+
+    @Override
+    public void stop() {
+        masterMotor.stopMotor();
+        followerMotor.stopMotor();
+    }
 }

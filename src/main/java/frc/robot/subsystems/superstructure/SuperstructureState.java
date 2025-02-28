@@ -9,19 +9,23 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public enum SuperstructureState {
     // Special states
-    START(SuperstructureStateData.builder().rollerState(Rollers.State.HOLD).build()),
     STOP(SuperstructureStateData.builder().rollerState(Rollers.State.STOPPED).build()),
     HOLD(SuperstructureStateData.builder().rollerState(Rollers.State.HOLD).build()),
     RETRACT_ARM(SuperstructureStateData.builder()
-            .pose(SuperstructurePose.Preset.STOW.getRetractPose())
+            .pose(Preset.STOW.getRetractPose())
+            .algaePose(Preset.STOW.getAlgaeRetractPose())
             .build()),
     ZERO_ELEVATOR(SuperstructureStateData.builder()
             .pose(Preset.STOW.getPose())
+            .algaePose(Preset.STOW.getAlgaePose())
             .rollerState(Rollers.State.HOLD)
             .build()),
 
     // Preset states
-    STOW(SuperstructureStateData.builder().pose(Preset.STOW.getPose()).build()),
+    STOW(SuperstructureStateData.builder()
+            .pose(Preset.STOW.getPose())
+            .algaePose(Preset.STOW.getAlgaePose())
+            .build()),
     FEED_RETRACTED(
             SuperstructureStateData.builder().pose(Preset.FEED.getRetractPose()).build()),
     FEED(SuperstructureStateData.builder()
@@ -57,15 +61,16 @@ public enum SuperstructureState {
             .rollerState(Rollers.State.CORAL_FORWARD)
             .build()),
     BARGE_RETRACTED(SuperstructureStateData.builder()
-            .pose(Preset.BARGE.getRetractPose())
+            .pose(Preset.BARGE.getAlgaeRetractPose())
             .build()),
     BARGE(SuperstructureStateData.builder().pose(Preset.BARGE.getPose()).build()),
     BARGE_SCORE(SuperstructureStateData.builder()
             .pose(Preset.BARGE.getPose())
-            .rollerState(Rollers.State.CORAL_FORWARD)
+            .rollerState(Rollers.State.ALGAE_FORWARD)
             .build()),
     L2_ALGAE_RETRACTED(SuperstructureStateData.builder()
             .pose(Preset.L2_ALGAE.getRetractPose())
+            .algaePose(Preset.L2_ALGAE.getAlgaeRetractPose())
             .build()),
     L2_ALGAE(SuperstructureStateData.builder()
             .pose(Preset.L2_ALGAE.getPose())
@@ -73,6 +78,7 @@ public enum SuperstructureState {
             .build()),
     L3_ALGAE_RETRACTED(SuperstructureStateData.builder()
             .pose(Preset.L3_ALGAE.getRetractPose())
+            .algaePose(Preset.L2_ALGAE.getAlgaeRetractPose())
             .build()),
     L3_ALGAE(SuperstructureStateData.builder()
             .pose(Preset.L3_ALGAE.getPose())

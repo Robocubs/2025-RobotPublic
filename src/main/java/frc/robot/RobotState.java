@@ -38,12 +38,12 @@ public class RobotState {
     public static final LoggedTunableBoolean automaticAlgaeModeSelection =
             new LoggedTunableBoolean("RobotState/AutomaticAlgaeModeSelection", true);
 
-    private static final Rotation2d reefPoseAngleTolerance = Rotation2d.fromDegrees(40);
-    private static final Rotation2d facingProcessorTolerance = Rotation2d.fromDegrees(40);
-    private static final Rotation2d facingBargeTolerance = Rotation2d.fromDegrees(40);
-    private static final Distance reefAreaDistanceTolerance = Meters.of(2.0);
-    private static final Distance processorAreaDistanceTolerance = Meters.of(2);
-    private static final Distance bargeAreaLengthTolerance = Meters.of(2);
+    private static final Rotation2d reefPoseAngleTolerance = Rotation2d.fromDegrees(59.9);
+    private static final Rotation2d facingProcessorTolerance = Rotation2d.fromDegrees(45.0);
+    private static final Rotation2d facingBargeTolerance = Rotation2d.fromDegrees(45.0);
+    private static final Distance reefAreaDistanceTolerance = Meters.of(2.5);
+    private static final Distance processorAreaDistanceTolerance = Meters.of(2.0);
+    private static final Distance bargeAreaLengthTolerance = Meters.of(2.0);
     private static final Distance speedLimitMinHeight = Meters.of(0.5);
     private static final LinearVelocity nominalSpeedTolerance = MetersPerSecond.of(0.1);
 
@@ -141,14 +141,14 @@ public class RobotState {
                         : translation.getY() < FieldConstants.fieldCenter.getY());
 
         if (automaticAlgaeModeSelection.get()) {
-            if (hasAlgae && inProcessorArea && isFacingProcessor) {
-                algaeSelection = AlgaeMode.PROCESSOR;
-            } else if (hasAlgae && inBargeArea && isFacingBarge) {
-                algaeSelection = AlgaeMode.BARGE;
-            } else if (!hasAlgae && inReefArea && isFacingReef) {
+            if (inReefArea && isFacingReef) {
                 algaeSelection = MathUtil.inputModulus(pose.getRotation().getDegrees() + 30, 0, 360) % 120 > 60
                         ? (isBlue() ? AlgaeMode.L2 : AlgaeMode.L3)
                         : (isBlue() ? AlgaeMode.L3 : AlgaeMode.L2);
+            } else if (hasAlgae && inProcessorArea && isFacingProcessor) {
+                algaeSelection = AlgaeMode.PROCESSOR;
+            } else if (hasAlgae && inBargeArea && isFacingBarge) {
+                algaeSelection = AlgaeMode.BARGE;
             } else {
                 algaeSelection = AlgaeMode.NONE;
             }
@@ -243,43 +243,46 @@ public class RobotState {
         return hasLongCoral || hasWideCoral || hasAlgae;
     }
 
-    public Optional<Pose2d> getClosesReefBranch() {
-        var robotPose = poseEstimator.getEstimatedPosition();
-        Pose2d closestPose = null;
-        double closestDistance = Double.MAX_VALUE;
-        for (var branchPose : FieldConstants.reefBranchPoses()) {
-            if (!GeometryUtil.isNear(robotPose.getRotation(), branchPose.getRotation(), reefPoseAngleTolerance)) {
-                continue;
-            }
-
-            var distance = robotPose.getTranslation().getDistance(branchPose.getTranslation());
-            if (distance < closestDistance) {
-                closestPose = branchPose;
-                closestDistance = distance;
-            }
-        }
-
-        return Optional.ofNullable(closestPose);
+    public Optional<Pose2d> getClosestReefBranch() {
+        return getClosestReefBranch(poseEstimator.getEstimatedPosition());
     }
 
-    public Optional<Pose2d> getClosestReefBranch() {
-        return getClosestReefPose(FieldConstants.robotReefBranchPoses());
+    public Optional<Pose2d> getClosestReefBranch(Pose2d robotPose) {
+        return getClosestReefPose(
+                robotPose,
+                switch (coralSelection) {
+                    case L4_CORAL -> FieldConstants.robotCoralL4Poses();
+                    case L3_CORAL -> FieldConstants.robotCoralL3Poses();
+                    case L2_CORAL -> FieldConstants.robotCoralL2Poses();
+                    case L1_CORAL -> FieldConstants.robotCoralL1Poses();
+                });
     }
 
     public Optional<Pose2d> getClosestReefAlgae() {
-        return getClosestReefPose(FieldConstants.robotReefAlgaePoses());
+        return getClosestReefAlgae(poseEstimator.getEstimatedPosition());
+    }
+
+    public Optional<Pose2d> getClosestReefAlgae(Pose2d robotPose) {
+        return getClosestReefPose(robotPose, FieldConstants.robotReefAlgaePoses());
     }
 
     public Optional<Pose2d> getClosestL2ReefAlgae() {
-        return getClosestReefPose(FieldConstants.robotReefAlgaePoses());
+        return getClosestReefAlgae(poseEstimator.getEstimatedPosition());
+    }
+
+    public Optional<Pose2d> getClosestL2ReefAlgae(Pose2d robotPose) {
+        return getClosestReefPose(robotPose, FieldConstants.robotReefAlgaeL2Poses());
     }
 
     public Optional<Pose2d> getClosestL3ReefAlgae() {
-        return getClosestReefPose(FieldConstants.robotReefAlgaePoses());
+        return getClosestReefAlgae(poseEstimator.getEstimatedPosition());
     }
 
-    private Optional<Pose2d> getClosestReefPose(Pose2d[] reefPoses) {
-        var robotPose = poseEstimator.getEstimatedPosition();
+    public Optional<Pose2d> getClosestL3ReefAlgae(Pose2d robotPose) {
+        return getClosestReefPose(robotPose, FieldConstants.robotReefAlgaeL3Poses());
+    }
+
+    private Optional<Pose2d> getClosestReefPose(Pose2d robotPose, Pose2d[] reefPoses) {
         Pose2d closestPose = null;
         double closestDistance = Double.MAX_VALUE;
         for (var reefPose : reefPoses) {

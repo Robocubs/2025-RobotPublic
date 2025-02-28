@@ -19,7 +19,7 @@ public final class ElevatorConstants {
     public static final Mass loadMass = Pounds.of(23.5);
     public static final InvertedValue motorInvertedValue = InvertedValue.Clockwise_Positive;
 
-    public static final Distance positionTolerance = Inches.of(1.0);
+    public static final Distance positionTolerance = Inches.of(2.0);
     public static final Distance maximumHeight = Inches.of(80.5);
     // public static final LinearVelocity maximumVelocity = FeetPerSecond.of(10);
     public static final LinearVelocity maximumVelocity = FeetPerSecond.of(10);

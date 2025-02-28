@@ -18,7 +18,6 @@ import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.Slot2Configs;
 import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.configs.TorqueCurrentConfigs;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -49,7 +48,7 @@ public class ArmIOHardware implements ArmIO {
     protected static final FeedbackSensorSourceValue feedbackSensorSource = Constants.robot == RobotType.SIM_BOT
             ? FeedbackSensorSourceValue.FusedCANcoder
             : FeedbackSensorSourceValue.FusedCANdiPWM1;
-    protected static final LoggedTunableNumber encoderOffset = new LoggedTunableNumber("Arm/EncoderOffset", 0.77);
+    protected static final LoggedTunableNumber encoderOffset = new LoggedTunableNumber("Arm/EncoderOffset", -2.303);
     private static final LoggedTunableNumber kG = new LoggedTunableNumber("Arm/KG", 0.4);
     private static final LoggedTunableNumber motionMagicMaxVelocity =
             new LoggedTunableNumber("Arm/MotionMagicMaxVelocity", maximumVelocity.in(RotationsPerSecond));
@@ -176,11 +175,8 @@ public class ArmIOHardware implements ArmIO {
                         .withForwardSoftLimitThreshold(maximumAngle)
                         .withReverseSoftLimitEnable(true)
                         .withReverseSoftLimitThreshold(minimumAngle))
-                .withTorqueCurrent(new TorqueCurrentConfigs()
-                        .withPeakForwardTorqueCurrent(Amps.of(60))
-                        .withPeakReverseTorqueCurrent(Amps.of(60)))
                 .withCurrentLimits(new CurrentLimitsConfigs()
-                        .withStatorCurrentLimit(Amps.of(60))
+                        .withStatorCurrentLimit(Amps.of(90))
                         .withSupplyCurrentLimit(Amps.of(40))
                         .withSupplyCurrentLowerLimit(30));
 
@@ -310,5 +306,10 @@ public class ArmIOHardware implements ArmIO {
     @Override
     public void stop() {
         motor.stopMotor();
+    }
+
+    @Override
+    public void setNeutralMode(NeutralModeValue neutralMode) {
+        motor.setNeutralMode(neutralMode);
     }
 }

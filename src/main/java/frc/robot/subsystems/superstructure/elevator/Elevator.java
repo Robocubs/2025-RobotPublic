@@ -2,6 +2,7 @@ package frc.robot.subsystems.superstructure.elevator;
 
 import java.util.Optional;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Force;
@@ -89,6 +90,10 @@ public class Elevator {
     public void runCharacterization(Current current) {
         holdPosition = Optional.empty();
         io.setTorqueCurrent(current);
+    }
+
+    public void setNeutralMode(NeutralModeValue neutralMode) {
+        io.setNeutralMode(neutralMode);
     }
 
     public Command setZeroPosition() {

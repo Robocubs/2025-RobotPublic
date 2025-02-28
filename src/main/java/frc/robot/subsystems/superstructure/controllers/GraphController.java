@@ -29,7 +29,7 @@ public class GraphController implements SuperstructureController {
             graph.addVertex(goal);
         }
 
-        var specialStates = Set.of(SuperstructureState.START, SuperstructureState.STOP, SuperstructureState.HOLD);
+        var specialStates = Set.of(SuperstructureState.STOP, SuperstructureState.HOLD);
 
         var freeStates = Set.of(
                 SuperstructureState.STOW,
@@ -147,6 +147,10 @@ public class GraphController implements SuperstructureController {
             var parent = parents.get(nextState);
             if (parent == null) {
                 return Optional.empty(); // Should never be null
+            }
+
+            if (parent.equals(start)) {
+                break;
             }
 
             command = runState(parent).andThen(command);

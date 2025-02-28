@@ -111,10 +111,10 @@ public class ElevatorIOHardware implements ElevatorIO {
                         .withForwardSoftLimitEnable(true)
                         .withForwardSoftLimitThreshold(toMotorPosition(maximumHeight)))
                 .withTorqueCurrent(new TorqueCurrentConfigs()
-                        .withPeakForwardTorqueCurrent(Amps.of(80))
-                        .withPeakReverseTorqueCurrent(Amps.of(80)))
+                        .withPeakForwardTorqueCurrent(Amps.of(120))
+                        .withPeakReverseTorqueCurrent(Amps.of(40)))
                 .withCurrentLimits(new CurrentLimitsConfigs()
-                        .withStatorCurrentLimit(Amps.of(80))
+                        .withStatorCurrentLimit(Amps.of(120))
                         .withSupplyCurrentLimit(60)
                         .withSupplyCurrentLowerLimit(Amps.of(40)));
 
@@ -248,6 +248,12 @@ public class ElevatorIOHardware implements ElevatorIO {
     @Override
     public void stop() {
         masterMotor.stopMotor();
+    }
+
+    @Override
+    public void setNeutralMode(NeutralModeValue neutralMode) {
+        masterMotor.setNeutralMode(neutralMode);
+        followerMotor.setNeutralMode(neutralMode);
     }
 
     private static Angle toMotorPosition(Distance position) {

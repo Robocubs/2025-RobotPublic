@@ -5,6 +5,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -53,5 +54,10 @@ public class DriveIOHardware implements DriveIO {
     @Override
     public void resetRotation(Rotation2d rotation2d) {
         swerveDrivetrain.resetRotation(rotation2d);
+    }
+
+    @Override
+    public void setNeutralMode(NeutralModeValue neutralMode) {
+        swerveDrivetrain.configNeutralMode(neutralMode);
     }
 }

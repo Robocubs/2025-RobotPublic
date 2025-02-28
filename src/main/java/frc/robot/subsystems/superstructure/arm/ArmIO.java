@@ -1,5 +1,6 @@
 package frc.robot.subsystems.superstructure.arm;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -31,4 +32,6 @@ public interface ArmIO {
     public default void setVelocity(AngularVelocity velocity, Voltage feedforward) {}
 
     public default void stop() {}
+
+    public default void setNeutralMode(NeutralModeValue neutralMode) {}
 }

@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import choreo.trajectory.SwerveSample;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -75,7 +76,11 @@ public class Drive extends SubsystemBase {
     }
 
     public void followPath(SwerveSample sample) {
-        io.setControl(choreoTrajectoryController.update(sample, robotState.getPose()));
+        io.setControl(choreoTrajectoryController.update(sample, robotState.getPose(), robotState.getMaxSpeed()));
+    }
+
+    public void setNeutralMode(NeutralModeValue neutralMode) {
+        io.setNeutralMode(neutralMode);
     }
 
     public Command resetRotation() {
@@ -113,7 +118,7 @@ public class Drive extends SubsystemBase {
                 this, robotState, throttle, strafe, rotation, fineControl, coralTrigger, algaeTrigger);
     }
 
-    public Command toPose(Supplier<Pose2d> poseSupplier, boolean finishAtGoal) {
+    public DriveToPose toPose(Supplier<Pose2d> poseSupplier, boolean finishAtGoal) {
         return new DriveToPose(this, robotState, poseSupplier, finishAtGoal);
     }
 

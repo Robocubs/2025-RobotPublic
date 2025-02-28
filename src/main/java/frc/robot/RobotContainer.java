@@ -1,7 +1,9 @@
 package frc.robot;
 
 import choreo.auto.AutoChooser;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -12,6 +14,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.RobotState.AlgaeMode;
 import frc.robot.RobotState.CoralMode;
 import frc.robot.autonomous.AutoRoutines;
+import frc.robot.commands.SubsystemScheduler;
 import frc.robot.commands.characterization.DriveCharacterization;
 import frc.robot.commands.characterization.SuperstructureCharacterization;
 import frc.robot.controls.StreamDeck;
@@ -41,7 +44,8 @@ import frc.robot.subsystems.vision.apriltag.AprilTagIOHardware;
 import frc.robot.subsystems.vision.apriltag.AprilTagIOSim;
 import frc.robot.util.TriggeredAlert;
 
-import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.wpilibj2.command.Commands.startEnd;
 
 public class RobotContainer {
     private final CommandXboxController driverController = new CommandXboxController(0);
@@ -57,6 +61,10 @@ public class RobotContainer {
     // State triggers
     private final Trigger teleop = RobotModeTriggers.teleop();
     private final Trigger disabled = RobotModeTriggers.disabled();
+
+    // On-robot buttons
+    private final DigitalInput coastButtonInput = new DigitalInput(0);
+    private final Trigger coastButton = disabled.and(coastButtonInput::get);
 
     public RobotContainer() {
         Drive drive = null;
@@ -123,6 +131,9 @@ public class RobotContainer {
         this.superstructure = superstructure;
         // this.climb = climb;
 
+        SmartDashboard.putData("Drive", drive);
+        SmartDashboard.putData("Superstructure", superstructure);
+
         configureBindings();
         configureAutoRoutines();
     }
@@ -145,8 +156,7 @@ public class RobotContainer {
                 driverController.rightTrigger(),
                 driverController.leftTrigger()));
 
-        teleop.onTrue(drive.resetRotation(robotState::getHeading));
-
+        /* Driver Controller */
         driverController.start().onTrue(drive.resetRotation());
         driverController.x().whileTrue(drive.brake());
         driverController.back().onTrue(superstructure.zeroElevator());
@@ -224,7 +234,7 @@ public class RobotContainer {
         // climb.setDefaultCommand(climb.stop());
 
         teleop.onTrue(superstructure.hold(true));
-        disabled.onTrue(superstructure.stop().ignoringDisable(true));
+        // disabled.onTrue(superstructure.stop().ignoringDisable(true));
 
         streamDeck.configureButtons(
                 config -> config.add(StreamDeckButton.L4_CORAL, () -> robotState.isSelected(CoralMode.L4_CORAL))
@@ -254,18 +264,32 @@ public class RobotContainer {
         streamDeck.button(StreamDeckButton.BARGE).onTrue(barge);
         streamDeck.button(StreamDeckButton.BUMP_FORWARDS).onTrue(bumpForwards);
         streamDeck.button(StreamDeckButton.BUMP_REVERSE).onTrue(bumpReverse);
-        // streamDeck.button(StreamDeckButton.DEPLOY).onTrue(climbDeploy);
-        // streamDeck.button(StreamDeckButton.RETRACT).onTrue(climbRetract);
-        // streamDeck.button(StreamDeckButton.ZERO).onTrue(climbZero);
+
+        /* Miscellaneous */
+        teleop.onTrue(drive.resetRotation(robotState::getHeading));
+        coastButton.whileTrue(startEnd(
+                        () -> {
+                            drive.setNeutralMode(NeutralModeValue.Coast);
+                            superstructure.setNeutralMode(NeutralModeValue.Coast);
+                        },
+                        () -> {
+                            drive.setNeutralMode(NeutralModeValue.Brake);
+                            superstructure.setNeutralMode(NeutralModeValue.Brake);
+                        })
+                .ignoringDisable(true)
+                .withName("RobotCoastMode"));
     }
 
     private void configureAutoRoutines() {
-        var autoRoutines = new AutoRoutines(robotState, drive);
+        var superstructureScheduler =
+                new SubsystemScheduler<Superstructure>(superstructure, superstructure.maintainState());
+        var autoRoutines = new AutoRoutines(robotState, drive, superstructureScheduler);
 
         autoChooser.addRoutine("Demo", autoRoutines::demoAuto);
+        autoChooser.addRoutine("Two Piece Right", autoRoutines::twoPieceRight);
 
         SmartDashboard.putData("Auto Chooser", autoChooser);
-        autoChooser.select("Demo");
+        autoChooser.select("Two Piece Right");
 
         if (Constants.characterizationEnabled) {
             autoChooser.addCmd("Drive Wheel Characterization", () -> DriveCharacterization.wheelRadius(drive));

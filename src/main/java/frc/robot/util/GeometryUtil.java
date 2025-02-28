@@ -17,6 +17,16 @@ public final class GeometryUtil {
                 0, MathUtil.angleModulus(expected.getRadians() - actual.getRadians()), tolerance.getRadians());
     }
 
+    public static boolean isNear(Translation2d expected, Translation2d actual, double tolerance) {
+        return MathUtil.isNear(0, expected.getDistance(actual), tolerance);
+    }
+
+    public static boolean isNear(
+            Pose2d expected, Pose2d actual, double translationTolerance, Rotation2d rotationTolerance) {
+        return isNear(expected.getTranslation(), actual.getTranslation(), translationTolerance)
+                && isNear(expected.getRotation(), actual.getRotation(), rotationTolerance);
+    }
+
     public static Rotation2d flip(Rotation2d rotation) {
         return rotation.minus(Rotation2d.kPi);
     }

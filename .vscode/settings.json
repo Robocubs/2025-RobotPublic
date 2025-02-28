@@ -107,5 +107,5 @@
     }
   ],
   "eslint.validate": ["javascript", "typescript"],
-  "cSpell.words": ["odometry", "setpoint"]
+  "cSpell.words": ["debouncer", "odometry", "setpoint"]
 }

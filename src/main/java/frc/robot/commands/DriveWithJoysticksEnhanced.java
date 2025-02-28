@@ -10,7 +10,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.LinearVelocityUnit;
@@ -31,7 +30,6 @@ import static frc.robot.subsystems.drive.DriveConstants.*;
 public class DriveWithJoysticksEnhanced extends Command {
     private static final double rotationTimeout = 0.25;
     private static final double rotationRateThreshold = Units.degreesToRadians(10);
-    private static final Transform2d l4Transform = new Transform2d(-0.3, 0.0, Rotation2d.kZero);
 
     private static final LoggedTunableMeasure<LinearVelocityUnit, LinearVelocity> maxTranslationControllerOutput =
             new LoggedTunableMeasure<>("DriveWithJoysticks/MaxPidOutput", MetersPerSecond.of(1.0));
@@ -127,8 +125,7 @@ public class DriveWithJoysticksEnhanced extends Command {
             if (coralTrigger && !robotState.isSelected(CoralMode.L1_CORAL) && robotState.isFacingReef()) {
                 targetPose = robotState
                         .getClosestReefBranch()
-                        .filter(tp -> tp.getTranslation().getDistance(pose.getTranslation()) < 2.0)
-                        .map(tp -> robotState.isSelected(CoralMode.L4_CORAL) ? tp.transformBy(l4Transform) : tp);
+                        .filter(tp -> tp.getTranslation().getDistance(pose.getTranslation()) < 2.0);
                 headingSetpoint = targetPose.map(Pose2d::getRotation);
             }
             // Target algae pickup

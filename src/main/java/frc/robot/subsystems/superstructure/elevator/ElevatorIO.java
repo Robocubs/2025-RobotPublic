@@ -1,5 +1,6 @@
 package frc.robot.subsystems.superstructure.elevator;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Force;
@@ -42,4 +43,6 @@ public interface ElevatorIO {
     public default void zeroPosition() {}
 
     public default void stop() {}
+
+    public default void setNeutralMode(NeutralModeValue neutralMode) {}
 }

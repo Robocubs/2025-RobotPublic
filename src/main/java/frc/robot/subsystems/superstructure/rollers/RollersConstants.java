@@ -59,7 +59,7 @@ public final class RollersConstants {
             coralIntakeHybridRollerPosition.div(coralIntakeTime);
 
     public static final Distance algaeIntakeDistance = Inches.of(-16);
-    public static final Time algaeIntakeTime = Seconds.of(0.5);
+    public static final Time algaeIntakeTime = Seconds.of(0.2);
     public static final Angle algaeIntakeCoralRollerPosition =
             Radians.of(algaeIntakeDistance.in(Meters) / coralRollerRadius.in(Meters));
     public static final Angle algaeIntakeHybridRollerPosition =
@@ -69,10 +69,10 @@ public final class RollersConstants {
     public static final AngularVelocity algaeIntakeHybridRollerVelocity =
             algaeIntakeHybridRollerPosition.div(algaeIntakeTime);
 
-    public static final AngularVelocity coralForwardCoralRollerVelocity = coralIntakeCoralRollerVelocity.times(-1);
-    public static final AngularVelocity coralForwardHybridRollerVelocity = algaeIntakeHybridRollerVelocity.times(-1);
-    public static final AngularVelocity coralReverseCoralRollerVelocity = coralIntakeCoralRollerVelocity;
-    public static final AngularVelocity coralReverseHybridRollerVelocity = algaeIntakeHybridRollerVelocity;
+    public static final AngularVelocity coralForwardCoralRollerVelocity = coralIntakeCoralRollerVelocity.times(-3);
+    public static final AngularVelocity coralForwardHybridRollerVelocity = algaeIntakeHybridRollerVelocity.times(-3);
+    public static final AngularVelocity coralReverseCoralRollerVelocity = coralIntakeCoralRollerVelocity.times(3);
+    public static final AngularVelocity coralReverseHybridRollerVelocity = algaeIntakeHybridRollerVelocity.times(3);
 
     public static final AngularVelocity algaeForwardCoralRollerVelocity = algaeIntakeCoralRollerVelocity.times(-1);
     public static final AngularVelocity algaeForwardHybridRollerVelocity = algaeIntakeHybridRollerVelocity.times(-1);

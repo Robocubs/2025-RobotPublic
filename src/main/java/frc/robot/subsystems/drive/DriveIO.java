@@ -1,5 +1,6 @@
 package frc.robot.subsystems.drive;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -17,4 +18,6 @@ public interface DriveIO {
     public default void setControl(SwerveRequest request) {}
 
     public default void resetRotation(Rotation2d rotation2d) {}
+
+    public default void setNeutralMode(NeutralModeValue neutralMode) {}
 }

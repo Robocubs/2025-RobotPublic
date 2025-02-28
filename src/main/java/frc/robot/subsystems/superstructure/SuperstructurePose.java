@@ -14,7 +14,7 @@ import static edu.wpi.first.units.Units.*;
 
 public record SuperstructurePose(Distance elevatorHeight, Angle armAngle) {
     public SuperstructurePose() {
-        this(Inches.zero(), Degrees.of(90));
+        this(Inches.zero(), ArmConstants.safeTravelAngle);
     }
 
     public Transform3d getRobotToEndEffector() {
@@ -33,28 +33,36 @@ public record SuperstructurePose(Distance elevatorHeight, Angle armAngle) {
     @RequiredArgsConstructor
     @Getter
     public static enum Preset {
-        STOW(Inches.zero(), ArmConstants.safeTravelAngle),
-        L1_LONG(Inches.zero(), Degrees.of(90)),
+        STOW(Inches.zero(), ArmConstants.safeTravelAngle, ArmConstants.algaeSafeTravelAngle),
+        L1_LONG(Inches.of(5), Degrees.of(90)),
         L1_WIDE(Inches.of(2), Degrees.of(70)),
         L2(Inches.of(13), Degrees.of(85)),
         L3(Inches.of(28), Degrees.of(85)),
         L4(Inches.of(61), Degrees.of(42.819)),
-        BARGE(ElevatorConstants.maximumHeight, Degrees.of(90)),
-        L2_ALGAE(Inches.of(17.5), Degrees.of(75)),
-        L3_ALGAE(Inches.of(34.0), Degrees.of(80)),
+        BARGE(ElevatorConstants.maximumHeight, Degrees.of(70)),
+        L2_ALGAE(Inches.of(17.5), Degrees.of(70)),
+        L3_ALGAE(Inches.of(33.0), Degrees.of(65)),
         ALGAE_INTAKE(Inches.zero(), Degrees.of(20.0)),
         CORAL_INTAKE_1(Inches.of(11.288), Degrees.of(-55.752)),
         CORAL_INTAKE_2(Inches.of(8.198), Degrees.of(-60.801)),
-        FEED(Inches.zero(), Degrees.of(92.24)),
-        PROCESSOR(Inches.zero(), Degrees.of(80));
+        FEED(Inches.of(0.5), Degrees.of(92.24)),
+        PROCESSOR(Inches.zero(), ArmConstants.algaeSafeTravelAngle);
 
         private final SuperstructurePose pose;
         private final SuperstructurePose retractPose;
+        private final SuperstructurePose algaePose;
+        private final SuperstructurePose algaeRetractPose;
 
         private Preset(Distance elevatorHeight, Angle armAngle) {
+            this(elevatorHeight, armAngle, armAngle);
+        }
+
+        private Preset(Distance elevatorHeight, Angle armAngle, Angle algaeArmAngle) {
             this(
                     new SuperstructurePose(elevatorHeight, armAngle),
-                    new SuperstructurePose(elevatorHeight, ArmConstants.safeTravelAngle));
+                    new SuperstructurePose(elevatorHeight, ArmConstants.safeTravelAngle),
+                    new SuperstructurePose(elevatorHeight, algaeArmAngle),
+                    new SuperstructurePose(elevatorHeight, ArmConstants.algaeSafeTravelAngle));
         }
     }
 }

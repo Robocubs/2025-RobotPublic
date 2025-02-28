@@ -102,6 +102,9 @@ public class DriveToPose extends Command {
             targetSpeed = 0.0;
         }
 
+        var maxSpeed = robotState.getMaxSpeed();
+        targetSpeed = MathUtil.clamp(targetSpeed, -maxSpeed.in(MetersPerSecond), maxSpeed.in(MetersPerSecond));
+
         var rotationTargetToRobot =
                 currentPose.getTranslation().minus(targetPose.getTranslation()).getAngle();
         var translationalVelocity = new Translation2d(targetSpeed, 0).rotateBy(rotationTargetToRobot);
@@ -141,6 +144,10 @@ public class DriveToPose extends Command {
 
     @Override
     public boolean isFinished() {
-        return finishAtGoal && translationController.atGoal() && rotationController.atGoal();
+        return finishAtGoal && atGoal();
+    }
+
+    public boolean atGoal() {
+        return translationController.atGoal() && rotationController.atGoal();
     }
 }
