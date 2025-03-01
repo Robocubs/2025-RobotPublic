@@ -93,4 +93,18 @@ public class AutoRoutines {
                 .followPathAndScore("TwoPieceRight", 2)
                 .build();
     }
+
+    public AutoRoutine rightFour() {
+        return create("Right 4")
+                .setCoralSelection(CoralMode.L4_CORAL)
+                .setSuperstructureState(SuperstructureState.FEED)
+                .followPathAndScore("Right4", 0)
+                .followPathAndWaitForCoral("Right4", 1)
+                .followPathAndScore("Right4", 2)
+                .followPathAndWaitForCoral("Right4", 3)
+                .followPathAndScore("Right4", 4)
+                .followPathAndWaitForCoral("Right4", 5)
+                .followPathAndScore("Right4", 6)
+                .build();
+    }
 }

@@ -57,7 +57,9 @@ public class LoggedAutoRoutine {
             routine.active()
                     .onTrue(sequence(
                             print("Starting " + name),
-                            parallel(superstructure, LoggedCommands.loggedSequence(commands.toArray(Command[]::new))),
+                            parallel(
+                                    superstructure.cmd(),
+                                    LoggedCommands.loggedSequence(commands.toArray(Command[]::new))),
                             print("Finished " + name)));
         }
 

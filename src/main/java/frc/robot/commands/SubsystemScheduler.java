@@ -5,10 +5,11 @@ import java.util.function.Function;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.littletonrobotics.junction.Logger;
 
-public class SubsystemScheduler<Subsystem extends SubsystemBase> extends Command {
+public class SubsystemScheduler<Subsystem extends SubsystemBase> {
     private final Subsystem subsystem;
     private Command defaultCommand;
     private Command command;
@@ -21,17 +22,13 @@ public class SubsystemScheduler<Subsystem extends SubsystemBase> extends Command
         CommandScheduler.getInstance().registerComposedCommands(defaultCommand);
         this.defaultCommand = defaultCommand;
         command = this.defaultCommand;
-
-        addRequirements(subsystem);
     }
 
-    @Override
     public final void initialize() {
         command = this.defaultCommand;
         command.initialize();
     }
 
-    @Override
     public final void execute() {
         Logger.recordOutput("SubsystemScheduler/Loops", loop++);
         Logger.recordOutput("SubsystemScheduler/Command", command.getName());
@@ -46,15 +43,18 @@ public class SubsystemScheduler<Subsystem extends SubsystemBase> extends Command
         command.execute();
 
         if (command.isFinished()) {
-            command.end(isFinished());
+            command.end(false);
             command = defaultCommand;
             command.initialize();
         }
     }
 
-    @Override
     public final void end(boolean interrupted) {
         command.end(interrupted);
+    }
+
+    public Command cmd() {
+        return new FunctionalCommand(this::initialize, this::execute, this::end, () -> false, subsystem);
     }
 
     public final Command schedule(Function<Subsystem, Command> command) {

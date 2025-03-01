@@ -285,11 +285,10 @@ public class RobotContainer {
                 new SubsystemScheduler<Superstructure>(superstructure, superstructure.maintainState());
         var autoRoutines = new AutoRoutines(robotState, drive, superstructureScheduler);
 
-        autoChooser.addRoutine("Demo", autoRoutines::demoAuto);
-        autoChooser.addRoutine("Two Piece Right", autoRoutines::twoPieceRight);
+        autoChooser.addRoutine("Right 2", autoRoutines::twoPieceRight);
+        autoChooser.addRoutine("Right 4", autoRoutines::rightFour);
 
         SmartDashboard.putData("Auto Chooser", autoChooser);
-        autoChooser.select("Two Piece Right");
 
         if (Constants.characterizationEnabled) {
             autoChooser.addCmd("Drive Wheel Characterization", () -> DriveCharacterization.wheelRadius(drive));
