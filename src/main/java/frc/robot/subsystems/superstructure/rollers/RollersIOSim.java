@@ -37,6 +37,7 @@ public class RollersIOSim extends RollersIOHardware {
         var hybridMotorSimState = hybridMotor.getSimState();
         var coralCanrageSimState = coralCanrange.getSimState();
         var algaeCanrangeSimState = algaeCanrange.getSimState();
+        var elevatorCanrangeSimState = elevatorCanrange.getSimState();
 
         SimNotifier.register(deltaTime -> {
             var batteryVoltage = RobotController.getBatteryVoltage();
@@ -65,6 +66,8 @@ public class RollersIOSim extends RollersIOHardware {
             coralCanrageSimState.setSupplyVoltage(batteryVoltage);
             algaeCanrangeSimState.setDistance(simState.getAlgaeSensorDistance());
             algaeCanrangeSimState.setSupplyVoltage(batteryVoltage);
+            elevatorCanrangeSimState.setDistance(simState.getElevatorSensorDistance());
+            elevatorCanrangeSimState.setSupplyVoltage(batteryVoltage);
         });
     }
 }

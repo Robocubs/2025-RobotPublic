@@ -44,6 +44,7 @@ public class GraphController implements SuperstructureController {
                 SuperstructureState.L3_ALGAE_RETRACTED,
                 SuperstructureState.ALGAE_INTAKE,
                 SuperstructureState.PROCESSOR,
+                SuperstructureState.PROCESSOR_SCORE,
                 SuperstructureState.CORAL_INTAKE_1_RETRACTED);
 
         // Special states to free states

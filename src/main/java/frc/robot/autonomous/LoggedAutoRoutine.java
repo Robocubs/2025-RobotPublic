@@ -90,6 +90,13 @@ public class LoggedAutoRoutine {
         return this;
     }
 
+    public LoggedAutoRoutine followPath(String pathName) {
+        var path = routine.trajectory(pathName);
+        commands.add(path.cmd());
+        pathBuilder.add(path.getRawTrajectory().getPoses());
+        return this;
+    }
+
     public LoggedAutoRoutine followPath(String pathName, int splitIndex) {
         var path = routine.trajectory(pathName, splitIndex);
         commands.add(path.cmd());

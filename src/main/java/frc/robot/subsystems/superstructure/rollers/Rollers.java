@@ -1,6 +1,7 @@
 package frc.robot.subsystems.superstructure.rollers;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
@@ -17,11 +18,11 @@ import static frc.robot.subsystems.superstructure.rollers.RollersConstants.*;
 
 public class Rollers {
     private static final LoggedTunableNumber coralFeedDistance =
-            new LoggedTunableNumber("Rollers/CoralFeedDistance", RollersConstants.coralFeedDistance.in(Meters));
+            new LoggedTunableNumber("Rollers/CoralFeedDistance", 0.0);
     private static final LoggedTunableNumber coralIntakeDistance =
-            new LoggedTunableNumber("Rollers/CoralIntakeDistance", RollersConstants.coralIntakeDistance.in(Meters));
+            new LoggedTunableNumber("Rollers/CoralIntakeDistance", -0.1);
     private static final LoggedTunableNumber algaeIntakeDistance =
-            new LoggedTunableNumber("Rollers/AlgaeIntakeDistance", 0.1);
+            new LoggedTunableNumber("Rollers/AlgaeIntakeDistance", 0.075);
 
     private static final Angle positionTolerance = Radians.of(0.1);
 
@@ -31,7 +32,10 @@ public class Rollers {
             coralDetectionDistance.in(Meters), detectionDistanceTolerance.in(Meters), false);
     private final ThresholdLatchedBoolean algaeDetected = ThresholdLatchedBoolean.fromThresholdTolerance(
             algaeDetectionDistance.in(Meters), detectionDistanceTolerance.in(Meters), false);
+    private final ThresholdLatchedBoolean elevatorDetected = ThresholdLatchedBoolean.fromThresholdTolerance(
+            elevatorDetectionDistance.in(Meters), detectionDistanceTolerance.in(Meters), false);
     // private final LatchedBoolean wideCoralDetected = new LatchedBoolean(true);
+    private final Supplier<Distance> elevatorHeight;
 
     private Angle coralFeedCoralRollerPosition = Radians.of(coralFeedDistance.get() / coralRollerRadius.in(Meters));
     private Angle coralFeedHybridRollerPosition = Radians.of(coralFeedDistance.get() / hybridRollerRadius.in(Meters));
@@ -61,8 +65,9 @@ public class Rollers {
         HOLD
     }
 
-    public Rollers(RollersIO io) {
+    public Rollers(RollersIO io, Supplier<Distance> elevatorHeight) {
         this.io = io;
+        this.elevatorHeight = elevatorHeight;
     }
 
     public void updateInputs() {
@@ -71,6 +76,12 @@ public class Rollers {
 
         longCoralDetected.update(inputs.coralDetectorDistance.in(Meters));
         algaeDetected.update(inputs.algaeDetectorDistance.in(Meters));
+
+        if (elevatorHeight.get().lt(elevatorMaxHeightForDetection)) {
+            elevatorDetected.update(inputs.elevatorDetectorDistance.in(Meters));
+        } else {
+            elevatorDetected.update(Double.POSITIVE_INFINITY);
+        }
 
         // if (state == State.AUTO_INTAKE_CORAL) {
         //     wideCoralDetected.update(inputs.coralDetectorDistance.lt(coralDetectionDistance));
@@ -110,7 +121,7 @@ public class Rollers {
         //     autoIntakeCoralHybridPosition = Optional.empty();
         // }
 
-        if (longCoralDetected.get()) {
+        if (longCoralDetected.get() && !elevatorDetected.get()) {
             if (autoFeedCoralCoralPosition.isEmpty() || autoFeedCoralHybridPosition.isEmpty()) {
                 autoFeedCoralCoralPosition = Optional.of(inputs.coralPosition.plus(coralFeedCoralRollerPosition));
                 autoFeedCoralHybridPosition = Optional.of(inputs.hybridPosition.plus(coralFeedHybridRollerPosition));
@@ -135,6 +146,9 @@ public class Rollers {
                 if (autoFeedCoralCoralPosition.isPresent() && autoFeedCoralHybridPosition.isPresent()) {
                     io.setCoralPosition(autoFeedCoralCoralPosition.get());
                     io.setHybridPosition(autoFeedCoralHybridPosition.get());
+                } else if (longCoralDetected.get()) {
+                    io.setCoralVelocity(coralFeedFastCoralRollerVelocity);
+                    io.setHybridVelocity(coralFeedFastHybridRollerVelocity);
                 } else {
                     io.setCoralVelocity(coralFeedCoralRollerVelocity);
                     io.setHybridVelocity(coralFeedHybridRollerVelocity);
@@ -217,6 +231,11 @@ public class Rollers {
     @AutoLogOutput
     public boolean algaeDetected() {
         return algaeDetected.get();
+    }
+
+    @AutoLogOutput
+    public boolean elevatorDetected() {
+        return elevatorDetected.get();
     }
 
     public Command bumpFeedPosition(Distance distance) {

@@ -193,7 +193,10 @@ public class RobotContainer {
         driverController
                 .leftTrigger()
                 .and(() -> robotState.isSelected(AlgaeMode.PROCESSOR))
-                .whileTrue(superstructure.runState(SuperstructureState.PROCESSOR_SCORE));
+                .whileTrue(superstructure.score(
+                        SuperstructureState.PROCESSOR,
+                        SuperstructureState.PROCESSOR_SCORE,
+                        driverController.rightBumper()));
 
         driverController
                 .leftTrigger()
@@ -287,6 +290,8 @@ public class RobotContainer {
 
         autoChooser.addRoutine("Right 2", autoRoutines::twoPieceRight);
         autoChooser.addRoutine("Right 4", autoRoutines::rightFour);
+        autoChooser.addRoutine("Left 4", autoRoutines::leftFour);
+        autoChooser.addRoutine("Rught Bump", autoRoutines::rightBump);
 
         SmartDashboard.putData("Auto Chooser", autoChooser);
 

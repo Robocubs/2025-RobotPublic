@@ -107,4 +107,26 @@ public class AutoRoutines {
                 .followPathAndScore("Right4", 6)
                 .build();
     }
+
+    public AutoRoutine leftFour() {
+        return create("Left 4")
+                .setCoralSelection(CoralMode.L4_CORAL)
+                .setSuperstructureState(SuperstructureState.FEED)
+                .followPathAndScore("Left4", 0)
+                .followPathAndWaitForCoral("Left4", 1)
+                .followPathAndScore("Left4", 2)
+                .followPathAndWaitForCoral("Left4", 3)
+                .followPathAndScore("Left4", 4)
+                .followPathAndWaitForCoral("Left4", 5)
+                .followPathAndScore("Left4", 6)
+                .build();
+    }
+
+    public AutoRoutine rightBump() {
+        return create("RightBump")
+                .resetPose("RightBump")
+                .followPath("RightBump")
+                .velocitySeconds(new ChassisSpeeds(), 1)
+                .build();
+    }
 }

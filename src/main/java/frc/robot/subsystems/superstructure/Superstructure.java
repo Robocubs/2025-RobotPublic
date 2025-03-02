@@ -62,7 +62,7 @@ public class Superstructure extends SubsystemBase {
             ElevatorIO elevatorIO, ArmIO armIO, RollersIO rollersIO, FunnelIO funnelIO, RobotState robotState) {
         elevator = new Elevator(elevatorIO);
         arm = new Arm(armIO);
-        rollers = new Rollers(rollersIO);
+        rollers = new Rollers(rollersIO, elevator::getHeight);
         funnel = new Funnel(funnelIO);
         this.robotState = robotState;
 

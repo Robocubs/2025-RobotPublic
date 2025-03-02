@@ -28,6 +28,7 @@ public interface RollersIO {
 
         public Distance coralDetectorDistance = Meters.zero();
         public Distance algaeDetectorDistance = Meters.zero();
+        public Distance elevatorDetectorDistance = Meters.zero();
     }
 
     public default void updateInputs(RollersIOInputs inputs) {}

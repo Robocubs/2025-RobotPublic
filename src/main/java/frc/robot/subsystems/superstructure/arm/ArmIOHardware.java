@@ -35,7 +35,6 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.Constants;
-import frc.robot.Constants.RobotType;
 import frc.robot.util.tuning.LoggedTunableBoolean;
 import frc.robot.util.tuning.LoggedTunableNumber;
 import frc.robot.util.tuning.LoggedTunableValue;
@@ -45,10 +44,8 @@ import static frc.robot.subsystems.superstructure.arm.ArmConstants.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 public class ArmIOHardware implements ArmIO {
-    protected static final FeedbackSensorSourceValue feedbackSensorSource = Constants.robot == RobotType.SIM_BOT
-            ? FeedbackSensorSourceValue.FusedCANcoder
-            : FeedbackSensorSourceValue.FusedCANdiPWM1;
-    protected static final LoggedTunableNumber encoderOffset = new LoggedTunableNumber("Arm/EncoderOffset", -2.303);
+    protected static final FeedbackSensorSourceValue feedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
+    protected static final LoggedTunableNumber encoderOffset = new LoggedTunableNumber("Arm/EncoderOffset", -0.3074);
     private static final LoggedTunableNumber kG = new LoggedTunableNumber("Arm/KG", 0.4);
     private static final LoggedTunableNumber motionMagicMaxVelocity =
             new LoggedTunableNumber("Arm/MotionMagicMaxVelocity", maximumVelocity.in(RotationsPerSecond));

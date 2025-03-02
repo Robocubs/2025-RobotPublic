@@ -11,6 +11,8 @@ public class SimState {
             new LoggedTunableMeasure<>("SimState/CoralSensorDistance", Meters.of(0.6));
     private final LoggedTunableMeasure<DistanceUnit, Distance> algaeSensorDistance =
             new LoggedTunableMeasure<>("SimState/AlgaeSensorDistance", Meters.of(0.6));
+    private final LoggedTunableMeasure<DistanceUnit, Distance> elevatorSensorDistance =
+            new LoggedTunableMeasure<>("SimState/ElevatorSensorDistance", Meters.of(0.6));
 
     public Distance getCoralSensorDistance() {
         return coralSensorDistance.get();
@@ -18,5 +20,9 @@ public class SimState {
 
     public Distance getAlgaeSensorDistance() {
         return algaeSensorDistance.get();
+    }
+
+    public Distance getElevatorSensorDistance() {
+        return elevatorSensorDistance.get();
     }
 }
