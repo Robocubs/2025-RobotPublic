@@ -35,8 +35,8 @@ public final class RollersConstants {
 
     public static final Distance coralDetectionDistance = Meters.of(0.4);
     public static final Distance algaeDetectionDistance = Meters.of(0.4);
-    public static final Distance elevatorDetectionDistance = Meters.of(0.4);
-    public static final Distance elevatorMaxHeightForDetection = Meters.of(0.6);
+    public static final Distance elevatorDetectionDistance = Meters.of(0.55);
+    public static final Distance elevatorMaxHeightForDetection = Meters.of(0.2);
     public static final Distance detectionDistanceTolerance = Meters.of(0.04);
 
     public static final Distance coralFeedDistance = Meters.of(0.3);
@@ -48,8 +48,8 @@ public final class RollersConstants {
     public static final AngularVelocity coralFeedCoralRollerVelocity = coralFeedCoralRollerPosition.div(coralFeedTime);
     public static final AngularVelocity coralFeedHybridRollerVelocity =
             coralFeedHybridRollerPosition.div(coralFeedTime);
-    public static final AngularVelocity coralFeedFastCoralRollerVelocity = coralFeedCoralRollerVelocity.times(1.5);
-    public static final AngularVelocity coralFeedFastHybridRollerVelocity = coralFeedHybridRollerVelocity.times(1.5);
+    public static final AngularVelocity coralFeedFastCoralRollerVelocity = coralFeedCoralRollerVelocity.times(1.3);
+    public static final AngularVelocity coralFeedFastHybridRollerVelocity = coralFeedHybridRollerVelocity.times(1.3);
 
     public static final Distance coralIntakeDistance = Inches.of(-3);
     public static final Time coralIntakeTime = Seconds.of(0.1);

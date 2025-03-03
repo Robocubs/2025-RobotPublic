@@ -201,12 +201,12 @@ public class RobotContainer {
         driverController
                 .leftTrigger()
                 .and(() -> robotState.isSelected(AlgaeMode.L3))
-                .whileTrue(superstructure.runState(SuperstructureState.L3_ALGAE));
+                .whileTrue(superstructure.runState(SuperstructureState.L3_ALGAE).unless(robotState::hasLongCoral));
 
         driverController
                 .leftTrigger()
                 .and(() -> robotState.isSelected(AlgaeMode.L2))
-                .whileTrue(superstructure.runState(SuperstructureState.L2_ALGAE));
+                .whileTrue(superstructure.runState(SuperstructureState.L2_ALGAE).unless(robotState::hasLongCoral));
 
         driverController
                 .leftTrigger()
@@ -219,8 +219,8 @@ public class RobotContainer {
         var l3CoralScore = robotState.setCoralSelection(CoralMode.L3_CORAL);
         var l2CoralScore = robotState.setCoralSelection(CoralMode.L2_CORAL);
         var l1CoralScore = robotState.setCoralSelection(CoralMode.L1_CORAL);
-        var coralIntake = superstructure.runState(SuperstructureState.CORAL_INTAKE_2);
         var algaeIntake = superstructure.runState(SuperstructureState.ALGAE_INTAKE);
+        var algaeEject = superstructure.runState(SuperstructureState.ALGAE_EJECT);
         var feed = superstructure.runState(SuperstructureState.FEED);
         var stow = superstructure.runState(SuperstructureState.STOW);
         var processor = robotState.setAlgaeSelection(AlgaeMode.PROCESSOR);
@@ -245,6 +245,7 @@ public class RobotContainer {
                         .add(StreamDeckButton.L2_CORAL, () -> robotState.isSelected(CoralMode.L2_CORAL))
                         .add(StreamDeckButton.L1_CORAL, () -> robotState.isSelected(CoralMode.L1_CORAL))
                         .add(StreamDeckButton.ALGAE_INTAKE, () -> algaeIntake.isScheduled())
+                        .add(StreamDeckButton.ALGAE_EJECT, () -> algaeEject.isScheduled())
                         .add(StreamDeckButton.FEED, () -> feed.isScheduled())
                         .add(StreamDeckButton.STOW, () -> stow.isScheduled())
                         .add(StreamDeckButton.PROCESSOR, () -> robotState.isSelected(AlgaeMode.PROCESSOR))
@@ -259,8 +260,8 @@ public class RobotContainer {
         streamDeck.button(StreamDeckButton.L3_CORAL).onTrue(l3CoralScore);
         streamDeck.button(StreamDeckButton.L2_CORAL).onTrue(l2CoralScore);
         streamDeck.button(StreamDeckButton.L1_CORAL).onTrue(l1CoralScore);
-        streamDeck.button(StreamDeckButton.CORAL_INTAKE).onTrue(coralIntake);
         streamDeck.button(StreamDeckButton.ALGAE_INTAKE).onTrue(algaeIntake);
+        streamDeck.button(StreamDeckButton.ALGAE_EJECT).onTrue(algaeEject);
         streamDeck.button(StreamDeckButton.FEED).onTrue(feed);
         streamDeck.button(StreamDeckButton.STOW).onTrue(stow);
         streamDeck.button(StreamDeckButton.PROCESSOR).onTrue(processor);

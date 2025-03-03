@@ -18,13 +18,13 @@ import static frc.robot.subsystems.superstructure.rollers.RollersConstants.*;
 
 public class Rollers {
     private static final LoggedTunableNumber coralFeedDistance =
-            new LoggedTunableNumber("Rollers/CoralFeedDistance", 0.0);
+            new LoggedTunableNumber("Rollers/CoralFeedDistance", -0.05);
     private static final LoggedTunableNumber coralIntakeDistance =
             new LoggedTunableNumber("Rollers/CoralIntakeDistance", -0.1);
     private static final LoggedTunableNumber algaeIntakeDistance =
             new LoggedTunableNumber("Rollers/AlgaeIntakeDistance", 0.075);
 
-    private static final Angle positionTolerance = Radians.of(0.1);
+    private static final Angle positionTolerance = Radians.of(0.2);
 
     private final RollersIO io;
     private final RollersIOInputsAutoLogged inputs = new RollersIOInputsAutoLogged();
@@ -121,7 +121,7 @@ public class Rollers {
         //     autoIntakeCoralHybridPosition = Optional.empty();
         // }
 
-        if (longCoralDetected.get() && !elevatorDetected.get()) {
+        if (longCoralDetected.get() && !elevatorDetected.get() && inputs.elevatorSignalStrength > 2500) {
             if (autoFeedCoralCoralPosition.isEmpty() || autoFeedCoralHybridPosition.isEmpty()) {
                 autoFeedCoralCoralPosition = Optional.of(inputs.coralPosition.plus(coralFeedCoralRollerPosition));
                 autoFeedCoralHybridPosition = Optional.of(inputs.hybridPosition.plus(coralFeedHybridRollerPosition));

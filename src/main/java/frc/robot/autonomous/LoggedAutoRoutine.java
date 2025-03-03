@@ -130,7 +130,7 @@ public class LoggedAutoRoutine {
     public LoggedAutoRoutine scoreCoral(Pose2d pose) {
         var flippedPose = GeometryUtil.autoFlip(pose);
         var goalPose = robotState.getClosestReefBranch(flippedPose).orElse(flippedPose);
-        var debouncer = new Debouncer(0.1, DebounceType.kRising);
+        var debouncer = new Debouncer(0.3, DebounceType.kRising);
         var driveToPose = drive.toPose(() -> goalPose, false);
         var score = superstructure.schedule(s -> Commands.defer(
                 () -> s.score(

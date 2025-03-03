@@ -163,7 +163,7 @@ public class Superstructure extends SubsystemBase {
         rollers.runState(state.getData().getRollerState());
         if (rollerState != Rollers.State.AUTO_FEED_CORAL
                 || !isNear(SuperstructurePose.Preset.FEED.getPose())
-                || rollers.atAutoFeedPosition()) {
+                || (rollers.longCoralDetected() && !rollers.elevatorDetected())) {
             funnel.stop();
         } else if (rollers.longCoralDetected()) {
             funnel.fastFeed();
@@ -188,7 +188,17 @@ public class Superstructure extends SubsystemBase {
                 arm.setAngle(state.getData().getPose().armAngle());
                 break;
             default:
-                elevator.setHeight(state.getData().getPose().elevatorHeight());
+                if (rollers.elevatorDetected()
+                        && state != SuperstructureState.FEED
+                        && state != SuperstructureState.FEED_RETRACTED
+                        && state.getData()
+                                .getPose()
+                                .elevatorHeight()
+                                .gt(SuperstructureState.FEED.getData().getPose().elevatorHeight())) {
+                    elevator.hold();
+                } else {
+                    elevator.setHeight(state.getData().getPose().elevatorHeight());
+                }
                 arm.setAngle(
                         rollers.algaeDetected()
                                 ? state.getData().getAlgaePose().armAngle()

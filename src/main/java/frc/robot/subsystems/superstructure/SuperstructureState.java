@@ -88,6 +88,10 @@ public enum SuperstructureState {
             .pose(Preset.ALGAE_INTAKE.getPose())
             .rollerState(Rollers.State.AUTO_INTAKE_ALGAE)
             .build()),
+    ALGAE_EJECT(SuperstructureStateData.builder()
+            .pose(Preset.STOW.getAlgaePose())
+            .rollerState(Rollers.State.ALGAE_FORWARD)
+            .build()),
     CORAL_INTAKE_1_RETRACTED(SuperstructureStateData.builder()
             .pose(Preset.CORAL_INTAKE_1.getRetractPose())
             .build()),

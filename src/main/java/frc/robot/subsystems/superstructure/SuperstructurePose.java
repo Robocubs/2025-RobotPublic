@@ -45,7 +45,7 @@ public record SuperstructurePose(Distance elevatorHeight, Angle armAngle) {
         ALGAE_INTAKE(Inches.zero(), Degrees.of(20.0)),
         CORAL_INTAKE_1(Inches.of(11.288), Degrees.of(-55.752)),
         CORAL_INTAKE_2(Inches.of(8.198), Degrees.of(-60.801)),
-        FEED(Inches.of(0.5), Degrees.of(92.24)),
+        FEED(Inches.of(0), Degrees.of(92.24)),
         PROCESSOR(Inches.zero(), ArmConstants.algaeSafeTravelAngle);
 
         private final SuperstructurePose pose;

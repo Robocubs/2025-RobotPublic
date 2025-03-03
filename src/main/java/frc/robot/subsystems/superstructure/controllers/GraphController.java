@@ -102,6 +102,10 @@ public class GraphController implements SuperstructureController {
         graph.addEdge(SuperstructureState.CORAL_INTAKE_1, SuperstructureState.CORAL_INTAKE_1_RETRACTED);
         graph.addEdge(SuperstructureState.CORAL_INTAKE_1, SuperstructureState.CORAL_INTAKE_2);
         graph.addEdge(SuperstructureState.CORAL_INTAKE_2, SuperstructureState.CORAL_INTAKE_1);
+
+        // Eject states
+        graph.addEdge(SuperstructureState.STOW, SuperstructureState.ALGAE_EJECT);
+        graph.addEdge(SuperstructureState.ALGAE_EJECT, SuperstructureState.STOW);
     }
 
     @Override

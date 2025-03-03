@@ -68,6 +68,7 @@ public class RollersIOHardware implements RollersIO {
     private final StatusSignal<Distance> coralDistanceSignal;
     private final StatusSignal<Distance> algaeDistanceSignal;
     private final StatusSignal<Distance> elevatorDistanceSignal;
+    private final StatusSignal<Double> elevatorSignalStrengthSignal;
 
     private final PositionVoltage coralPositionControlRequest = new PositionVoltage(0.0).withSlot(0);
     private final VelocityVoltage coralVelocityControlRequest = new VelocityVoltage(0.0).withSlot(1);
@@ -114,7 +115,7 @@ public class RollersIOHardware implements RollersIO {
         elevatorCanrange = new CANrange(1, Constants.canivoreBusName);
 
         var elevatorCanrangeConfig = new CANrangeConfiguration()
-                .withFovParams(new FovParamsConfigs().withFOVRangeX(6.75).withFOVRangeY(27));
+                .withFovParams(new FovParamsConfigs().withFOVRangeX(6.75).withFOVRangeY(15));
         tryUntilOk(() -> elevatorCanrange.getConfigurator().apply(elevatorCanrangeConfig));
 
         coralPositionSignal = coralMotor.getPosition();
@@ -130,6 +131,7 @@ public class RollersIOHardware implements RollersIO {
         coralDistanceSignal = coralCanrange.getDistance();
         algaeDistanceSignal = algaeCanrange.getDistance();
         elevatorDistanceSignal = elevatorCanrange.getDistance();
+        elevatorSignalStrengthSignal = elevatorCanrange.getSignalStrength();
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 Constants.mainLoopFrequency,
@@ -145,11 +147,13 @@ public class RollersIOHardware implements RollersIO {
                 hybridClosedLoopReferenceSignal,
                 coralDistanceSignal,
                 algaeDistanceSignal,
-                elevatorDistanceSignal);
+                elevatorDistanceSignal,
+                elevatorSignalStrengthSignal);
         coralMotor.optimizeBusUtilization();
         hybridMotor.optimizeBusUtilization();
         coralCanrange.optimizeBusUtilization();
         algaeCanrange.optimizeBusUtilization();
+        elevatorCanrange.optimizeBusUtilization();
     }
 
     @Override
@@ -167,7 +171,8 @@ public class RollersIOHardware implements RollersIO {
                 hybridClosedLoopReferenceSignal,
                 coralDistanceSignal,
                 algaeDistanceSignal,
-                elevatorDistanceSignal);
+                elevatorDistanceSignal,
+                elevatorSignalStrengthSignal);
 
         inputs.coralPosition = coralPositionSignal.getValue();
         inputs.coralVelocity = coralVelocitySignal.getValue();
@@ -182,6 +187,7 @@ public class RollersIOHardware implements RollersIO {
         inputs.coralDetectorDistance = coralDistanceSignal.getValue();
         inputs.algaeDetectorDistance = algaeDistanceSignal.getValue();
         inputs.elevatorDetectorDistance = elevatorDistanceSignal.getValue();
+        inputs.elevatorSignalStrength = elevatorSignalStrengthSignal.getValue();
 
         LoggedTunableValue.ifChanged(
                 0,
