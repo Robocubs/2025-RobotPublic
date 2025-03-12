@@ -10,10 +10,10 @@ import frc.robot.util.CustomDCMotor;
 import static edu.wpi.first.units.Units.*;
 
 public final class RollersConstants {
-    public static final Distance coralRollerRadius = Inches.of(1.5);
+    public static final Distance coralRollerRadius = Inches.of(1.2);
     public static final Distance hybridRollerRadius = Inches.of(0.6);
-    public static final double coralRollerReduction = 9.0;
-    public static final double hybridRollerReduction = 5.0;
+    public static final double coralRollerReduction = 9.0 * 22.0 / 24.0;
+    public static final double hybridRollerReduction = 5.0 * 24.0 / 18.0;
     public static final Angle coralAngleRelativeToArm = Degrees.of(-20.855);
     public static final Angle algaeAngleRelativeToArm = Degrees.of(10.332);
 
@@ -33,8 +33,8 @@ public final class RollersConstants {
     public static final double kTHybridRoller =
             CustomDCMotor.getKrakenX44(1).withReduction(hybridRollerReduction).KtNMPerAmp;
 
-    public static final Distance coralDetectionDistance = Meters.of(0.4);
-    public static final Distance algaeDetectionDistance = Meters.of(0.4);
+    public static final Distance coralDetectionDistance = Meters.of(0.3);
+    public static final Distance algaeDetectionDistance = Meters.of(0.3);
     public static final Distance elevatorDetectionDistance = Meters.of(0.55);
     public static final Distance elevatorMaxHeightForDetection = Meters.of(0.2);
     public static final Distance detectionDistanceTolerance = Meters.of(0.04);

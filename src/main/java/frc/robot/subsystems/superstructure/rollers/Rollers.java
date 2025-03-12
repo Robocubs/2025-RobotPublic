@@ -22,7 +22,7 @@ public class Rollers {
     private static final LoggedTunableNumber coralIntakeDistance =
             new LoggedTunableNumber("Rollers/CoralIntakeDistance", -0.1);
     private static final LoggedTunableNumber algaeIntakeDistance =
-            new LoggedTunableNumber("Rollers/AlgaeIntakeDistance", 0.075);
+            new LoggedTunableNumber("Rollers/AlgaeIntakeDistance", 0.05);
 
     private static final Angle positionTolerance = Radians.of(0.2);
 
@@ -133,7 +133,6 @@ public class Rollers {
 
         if (algaeDetected.get() && !longCoralDetected.get()) {
             if (autoIntakeAlgaeHybridPosition.isEmpty()) {
-                // autoIntakeAlgaeHybridPosition = Optional.of(inputs.hybridPosition);
                 autoIntakeAlgaeHybridPosition =
                         Optional.of(inputs.hybridPosition.plus(algaeIntakeHybridRollerPosition));
             }

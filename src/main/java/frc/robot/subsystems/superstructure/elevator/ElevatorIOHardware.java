@@ -13,8 +13,8 @@ import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TorqueCurrentConfigs;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -40,15 +40,15 @@ import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 public class ElevatorIOHardware implements ElevatorIO {
     private static final double kT = DCMotor.getKrakenX60Foc(numMotors).withReduction(reduction).KtNMPerAmp * numMotors;
-    // private static final LoggedTunableNumber kG = new LoggedTunableNumber(
-    //         "Elevator/KG",
-    //         9.81 * loadMass.in(Kilograms) * sprocketRadius.in(Meters) / kT * Math.sin(elevatorAngle.in(Radians)));
-    private static final LoggedTunableNumber kG = new LoggedTunableNumber("Elevator/KG", 0.54);
-    private static final LoggedTunableNumber motionMagicKV =
-            new LoggedTunableNumber("Elevator/MotionMagicKV", 0.0); // 2.30);
-    private static final LoggedTunableNumber motionMagicKA = new LoggedTunableNumber("Elevator/MotionMagicKA", 0.05);
-    private static final LoggedTunableNumber positionKP = new LoggedTunableNumber("Elevator/PositionKP", 10.0);
-    private static final LoggedTunableNumber positionKD = new LoggedTunableNumber("Elevator/PositionKD", 0.1);
+    private static final LoggedTunableNumber kGCurrent = new LoggedTunableNumber(
+            "Elevator/KGCurrent",
+            9.81 * loadMass.in(Kilograms) * sprocketRadius.in(Meters) / kT * Math.sin(elevatorAngle.in(Radians)));
+    private static final LoggedTunableNumber kGVoltage = new LoggedTunableNumber("Elevator/KGVoltage", 0.54);
+    private static final LoggedTunableNumber motionMagicExpoKV = new LoggedTunableNumber("Elevator/MotionMagicKV", 2.3);
+    private static final LoggedTunableNumber motionMagicExpoKA =
+            new LoggedTunableNumber("Elevator/MotionMagicKA", 0.05);
+    private static final LoggedTunableNumber positionKP = new LoggedTunableNumber("Elevator/PositionKP", 150.0);
+    private static final LoggedTunableNumber positionKD = new LoggedTunableNumber("Elevator/PositionKD", 10.0);
     private static final LoggedTunableNumber velocityKP = new LoggedTunableNumber("Elevator/VelocityKP", 0.0);
     private static final LoggedTunableNumber velocityKD = new LoggedTunableNumber("Elevator/VelocityKD", 0.0);
     private static final LoggedTunableBoolean useMotionMagic =
@@ -72,8 +72,9 @@ public class ElevatorIOHardware implements ElevatorIO {
 
     private final VoltageOut voltageControlRequest = new VoltageOut(0.0);
     private final TorqueCurrentFOC torqueCurrentControlRequest = new TorqueCurrentFOC(0.0);
-    private final MotionMagicVoltage motionMagicControlRequest = new MotionMagicVoltage(0.0).withSlot(0);
-    private final PositionVoltage positionControlRequest = new PositionVoltage(0.0).withSlot(1);
+    private final MotionMagicTorqueCurrentFOC motionMagicControlRequest =
+            new MotionMagicTorqueCurrentFOC(0.0).withSlot(0);
+    private final PositionTorqueCurrentFOC positionControlRequest = new PositionTorqueCurrentFOC(0.0).withSlot(1);
     private final VelocityVoltage velocityControlRequest = new VelocityVoltage(0.0).withSlot(2);
 
     public ElevatorIOHardware() {
@@ -88,22 +89,20 @@ public class ElevatorIOHardware implements ElevatorIO {
                                 maximumAcceleration.in(MetersPerSecondPerSecond) / sprocketRadius.in(Meters)))
                         .withMotionMagicJerk(RadiansPerSecondPerSecond.per(Second)
                                 .of(maximumJerk.in(MetersPerSecondPerSecond.per(Second)) / sprocketRadius.in(Meters)))
-                        .withMotionMagicExpo_kV(motionMagicKV.get())
-                        .withMotionMagicExpo_kA(motionMagicKA.get()))
+                        .withMotionMagicExpo_kV(motionMagicExpoKV.get())
+                        .withMotionMagicExpo_kA(motionMagicExpoKA.get()))
                 .withSlot0(new Slot0Configs()
-                        .withKG(kG.get())
+                        .withKG(kGCurrent.get())
                         .withGravityType(GravityTypeValue.Elevator_Static)
                         .withKP(positionKP.get())
-                        .withKD(positionKD.get())
-                        .withKV(motionMagicKV.get())
-                        .withKA(motionMagicKA.get()))
+                        .withKD(positionKD.get()))
                 .withSlot1(new Slot1Configs()
-                        .withKG(kG.get())
+                        .withKG(kGCurrent.get())
                         .withGravityType(GravityTypeValue.Elevator_Static)
                         .withKP(positionKP.get())
                         .withKD(positionKD.get()))
                 .withSlot2(new Slot2Configs()
-                        .withKG(kG.get())
+                        .withKG(kGVoltage.get())
                         .withGravityType(GravityTypeValue.Elevator_Static)
                         .withKP(velocityKP.get())
                         .withKD(velocityKD.get()))
@@ -183,23 +182,24 @@ public class ElevatorIOHardware implements ElevatorIO {
         LoggedTunableValue.ifChanged(
                 0,
                 () -> {
-                    motorConfig.Slot0.kG = kG.get();
-                    motorConfig.Slot0.kV = (motionMagicKV.get());
-                    motorConfig.Slot0.kA = (motionMagicKA.get());
+                    motorConfig.MotionMagic.MotionMagicExpo_kV = motionMagicExpoKV.get();
+                    motorConfig.MotionMagic.MotionMagicExpo_kA = motionMagicExpoKA.get();
+                    motorConfig.Slot0.kG = kGCurrent.get();
                     motorConfig.Slot0.kP = positionKP.get();
                     motorConfig.Slot0.kD = positionKD.get();
-                    motorConfig.Slot1.kG = kG.get();
+                    motorConfig.Slot1.kG = kGCurrent.get();
                     motorConfig.Slot1.kP = positionKP.get();
                     motorConfig.Slot1.kD = positionKD.get();
-                    motorConfig.Slot2.kG = kG.get();
+                    motorConfig.Slot2.kG = kGVoltage.get();
                     motorConfig.Slot2.kP = velocityKP.get();
                     motorConfig.Slot2.kD = velocityKD.get();
                     tryUntilOk(() -> masterMotor.getConfigurator().apply(motorConfig));
                     tryUntilOk(() -> followerMotor.getConfigurator().apply(motorConfig));
                 },
-                kG,
-                motionMagicKV,
-                motionMagicKA,
+                kGCurrent,
+                kGVoltage,
+                motionMagicExpoKV,
+                motionMagicExpoKA,
                 positionKP,
                 positionKD,
                 velocityKP,

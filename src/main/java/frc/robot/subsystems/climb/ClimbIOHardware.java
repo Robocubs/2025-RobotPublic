@@ -34,7 +34,7 @@ import static frc.robot.util.PhoenixUtil.tryUntilOk;
 public class ClimbIOHardware implements ClimbIO {
     private static final double kT = DCMotor.getKrakenX60(numMotors).withReduction(reduction).KtNMPerAmp * numMotors;
     private static final LoggedTunableNumber positionKP = new LoggedTunableNumber("Climb/PositionKP", 15);
-    private static final LoggedTunableNumber positionKD = new LoggedTunableNumber("Climb /PositionKD", 2);
+    private static final LoggedTunableNumber positionKD = new LoggedTunableNumber("Climb/PositionKD", 2);
     private static final LoggedTunableNumber velocityKP = new LoggedTunableNumber("Climb/VelocityKP", 1.0);
     private static final LoggedTunableNumber velocityKD = new LoggedTunableNumber("Climb/VelocityKD", 0.1);
 
@@ -57,14 +57,14 @@ public class ClimbIOHardware implements ClimbIO {
     public ClimbIOHardware() {
         motorConfig = new TalonFXConfiguration()
                 .withMotorOutput(new MotorOutputConfigs()
-                        .withNeutralMode(NeutralModeValue.Coast)
+                        .withNeutralMode(NeutralModeValue.Brake)
                         .withInverted(InvertedValue.CounterClockwise_Positive))
                 .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(reduction))
                 .withSlot0(new Slot0Configs().withKP(positionKP.get()).withKD(positionKD.get()))
                 .withSlot1(new Slot1Configs().withKP(velocityKP.get()).withKD(velocityKD.get()))
                 .withTorqueCurrent(new TorqueCurrentConfigs()
                         .withPeakForwardTorqueCurrent(Amps.of(retractVoltage.in(Volts) / 12.0 * 60))
-                        .withPeakReverseTorqueCurrent(Amps.of(-10)))
+                        .withPeakReverseTorqueCurrent(Amps.of(-5)))
                 .withCurrentLimits(new CurrentLimitsConfigs()
                         .withStatorCurrentLimit(Amps.of(40))
                         .withSupplyCurrentLimit(Amps.of(60))
@@ -122,12 +122,12 @@ public class ClimbIOHardware implements ClimbIO {
 
     @Override
     public void setReleaseServoSpeed(double speed) {
-        releaseServo.setSpeed(speed);
+        // releaseServo.setSpeed(speed);
     }
 
     @Override
     public void stopReleaseServo() {
-        releaseServo.setSpeed(0);
+        // releaseServo.setSpeed(0);
     }
 
     @Override

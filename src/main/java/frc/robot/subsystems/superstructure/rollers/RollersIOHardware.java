@@ -79,7 +79,7 @@ public class RollersIOHardware implements RollersIO {
         coralMotorConfig = new TalonFXConfiguration()
                 .withMotorOutput(new MotorOutputConfigs()
                         .withNeutralMode(NeutralModeValue.Brake)
-                        .withInverted((InvertedValue.CounterClockwise_Positive)))
+                        .withInverted((InvertedValue.Clockwise_Positive)))
                 .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(coralRollerReduction))
                 .withSlot0(new Slot0Configs().withKP(coralPositionKP.get()).withKD(coralPositionKD.get()))
                 .withSlot1(new Slot1Configs()
@@ -90,13 +90,13 @@ public class RollersIOHardware implements RollersIO {
                         .withStatorCurrentLimit(Amps.of(120))
                         .withSupplyCurrentLimit(Amps.of(30))
                         .withSupplyCurrentLowerLimit(30));
-        coralMotor = new TalonFX(34, Constants.canivoreBusName);
+        coralMotor = new TalonFX(33, Constants.canivoreBusName);
         tryUntilOk(() -> coralMotor.getConfigurator().apply(coralMotorConfig));
 
         hybridMotorConfig = new TalonFXConfiguration()
                 .withMotorOutput(new MotorOutputConfigs()
                         .withNeutralMode(NeutralModeValue.Brake)
-                        .withInverted((InvertedValue.Clockwise_Positive)))
+                        .withInverted((InvertedValue.CounterClockwise_Positive)))
                 .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(hybridRollerReduction))
                 .withSlot0(new Slot0Configs().withKP(hybridPositionKP.get()).withKD(hybridPositionKD.get()))
                 .withSlot1(new Slot1Configs()
@@ -107,12 +107,20 @@ public class RollersIOHardware implements RollersIO {
                         .withStatorCurrentLimit(Amps.of(120))
                         .withSupplyCurrentLimit(Amps.of(30))
                         .withSupplyCurrentLowerLimit(30));
-        hybridMotor = new TalonFX(33, Constants.canivoreBusName);
+        hybridMotor = new TalonFX(34, Constants.canivoreBusName);
         tryUntilOk(() -> hybridMotor.getConfigurator().apply(hybridMotorConfig));
 
         coralCanrange = new CANrange(3, Constants.canivoreBusName);
         algaeCanrange = new CANrange(2, Constants.canivoreBusName);
         elevatorCanrange = new CANrange(1, Constants.canivoreBusName);
+
+        var coralCanrageConfig = new CANrangeConfiguration()
+                .withFovParams(new FovParamsConfigs().withFOVRangeX(6.75).withFOVRangeY(6.75));
+        tryUntilOk(() -> coralCanrange.getConfigurator().apply(coralCanrageConfig));
+
+        var algaeCanrageConfig = new CANrangeConfiguration()
+                .withFovParams(new FovParamsConfigs().withFOVRangeX(6.75).withFOVRangeY(6.75));
+        tryUntilOk(() -> algaeCanrange.getConfigurator().apply(algaeCanrageConfig));
 
         var elevatorCanrangeConfig = new CANrangeConfiguration()
                 .withFovParams(new FovParamsConfigs().withFOVRangeX(6.75).withFOVRangeY(15));

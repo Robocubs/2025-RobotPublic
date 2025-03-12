@@ -19,6 +19,10 @@ import frc.robot.commands.characterization.DriveCharacterization;
 import frc.robot.commands.characterization.SuperstructureCharacterization;
 import frc.robot.controls.StreamDeck;
 import frc.robot.controls.StreamDeck.StreamDeckButton;
+import frc.robot.subsystems.climb.Climb;
+import frc.robot.subsystems.climb.ClimbIO;
+import frc.robot.subsystems.climb.ClimbIOHardware;
+import frc.robot.subsystems.climb.ClimbIOSim;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIO;
 import frc.robot.subsystems.drive.DriveIOHardware;
@@ -56,7 +60,7 @@ public class RobotContainer {
     private final RobotState robotState = new RobotState();
     private final Drive drive;
     private final Superstructure superstructure;
-    // private final Climb climb;
+    private final Climb climb;
 
     // State triggers
     private final Trigger teleop = RobotModeTriggers.teleop();
@@ -70,7 +74,7 @@ public class RobotContainer {
         Drive drive = null;
         Vision vision = null;
         Superstructure superstructure = null;
-        // Climb climb = null;
+        Climb climb = null;
 
         if (Constants.mode != Mode.REPLAY) {
             switch (Constants.robot) {
@@ -88,7 +92,7 @@ public class RobotContainer {
                             new RollersIOHardware(),
                             new FunnelIOHardware() {},
                             robotState);
-                    // climb = new Climb(new ClimbIOHardware());
+                    climb = new Climb(new ClimbIOHardware());
                     break;
                 case SIM_BOT:
                     var simState = new SimState();
@@ -106,7 +110,7 @@ public class RobotContainer {
                             new RollersIOSim(simState),
                             new FunnelIOSim(),
                             robotState);
-                    // climb = new Climb(new ClimbIOSim());
+                    climb = new Climb(new ClimbIOSim());
             }
         }
 
@@ -123,13 +127,13 @@ public class RobotContainer {
             vision = new Vision(new AprilTagIO[] {}, robotState);
         }
 
-        // if (climb == null) {
-        //     climb = new Climb(new ClimbIO() {});
-        // }
+        if (climb == null) {
+            climb = new Climb(new ClimbIO() {});
+        }
 
         this.drive = drive;
         this.superstructure = superstructure;
-        // this.climb = climb;
+        this.climb = climb;
 
         SmartDashboard.putData("Drive", drive);
         SmartDashboard.putData("Superstructure", superstructure);
@@ -228,16 +232,16 @@ public class RobotContainer {
         var bumpForwards = superstructure.bumpFeedPosition(Inches.of(1));
         var bumpReverse = superstructure.bumpFeedPosition(Inches.of(-1));
 
-        // var climbDeploy = climb.deploy();
-        // var climbRetract = climb.retract();
-        // var climbZero = climb.zero();
+        var climbDeploy = climb.deploy();
+        var climbRetract = climb.retract();
+        var climbZero = climb.zero();
 
         // TODO: Make automatically switch between feed and stow when appropriate
         superstructure.setDefaultCommand(stow);
-        // climb.setDefaultCommand(climb.stop());
+        climb.setDefaultCommand(climb.stop());
 
         teleop.onTrue(superstructure.hold(true));
-        // disabled.onTrue(superstructure.stop().ignoringDisable(true));
+        disabled.onTrue(superstructure.stop().ignoringDisable(true));
 
         streamDeck.configureButtons(
                 config -> config.add(StreamDeckButton.L4_CORAL, () -> robotState.isSelected(CoralMode.L4_CORAL))
@@ -251,10 +255,10 @@ public class RobotContainer {
                         .add(StreamDeckButton.PROCESSOR, () -> robotState.isSelected(AlgaeMode.PROCESSOR))
                         .add(StreamDeckButton.BARGE, () -> robotState.isSelected(AlgaeMode.BARGE))
                         .add(StreamDeckButton.BUMP_FORWARDS, () -> bumpForwards.isScheduled())
-                        .add(StreamDeckButton.BUMP_REVERSE, () -> bumpReverse.isScheduled()));
-        // .add(StreamDeckButton.DEPLOY, () -> climbDeploy.isScheduled())
-        // .add(StreamDeckButton.RETRACT, () -> climbRetract.isScheduled())
-        // .add(StreamDeckButton.ZERO, () -> climbZero.isScheduled()));
+                        .add(StreamDeckButton.BUMP_REVERSE, () -> bumpReverse.isScheduled())
+                        .add(StreamDeckButton.DEPLOY, () -> climbDeploy.isScheduled())
+                        .add(StreamDeckButton.RETRACT, () -> climbRetract.isScheduled())
+                        .add(StreamDeckButton.ZERO, () -> climbZero.isScheduled()));
 
         streamDeck.button(StreamDeckButton.L4_CORAL).onTrue(l4CoralScore);
         streamDeck.button(StreamDeckButton.L3_CORAL).onTrue(l3CoralScore);
@@ -268,6 +272,9 @@ public class RobotContainer {
         streamDeck.button(StreamDeckButton.BARGE).onTrue(barge);
         streamDeck.button(StreamDeckButton.BUMP_FORWARDS).onTrue(bumpForwards);
         streamDeck.button(StreamDeckButton.BUMP_REVERSE).onTrue(bumpReverse);
+        streamDeck.button(StreamDeckButton.DEPLOY).onTrue(climbDeploy);
+        streamDeck.button(StreamDeckButton.RETRACT).onTrue(climbRetract);
+        streamDeck.button(StreamDeckButton.ZERO).onTrue(climbZero);
 
         /* Miscellaneous */
         teleop.onTrue(drive.resetRotation(robotState::getHeading));
