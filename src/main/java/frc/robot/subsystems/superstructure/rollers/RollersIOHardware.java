@@ -52,6 +52,7 @@ public class RollersIOHardware implements RollersIO {
     protected final CANrange coralCanrange;
     protected final CANrange algaeCanrange;
     protected final CANrange elevatorCanrange;
+    protected final CANrange funnelCanrange;
     private final TalonFXConfiguration coralMotorConfig;
     private final TalonFXConfiguration hybridMotorConfig;
 
@@ -69,6 +70,8 @@ public class RollersIOHardware implements RollersIO {
     private final StatusSignal<Distance> algaeDistanceSignal;
     private final StatusSignal<Distance> elevatorDistanceSignal;
     private final StatusSignal<Double> elevatorSignalStrengthSignal;
+    private final StatusSignal<Distance> funnelDistanceSignal;
+    private final StatusSignal<Double> funnelSignalStrengthSignal;
 
     private final PositionVoltage coralPositionControlRequest = new PositionVoltage(0.0).withSlot(0);
     private final VelocityVoltage coralVelocityControlRequest = new VelocityVoltage(0.0).withSlot(1);
@@ -113,6 +116,7 @@ public class RollersIOHardware implements RollersIO {
         coralCanrange = new CANrange(3, Constants.canivoreBusName);
         algaeCanrange = new CANrange(2, Constants.canivoreBusName);
         elevatorCanrange = new CANrange(1, Constants.canivoreBusName);
+        funnelCanrange = new CANrange(4, Constants.canivoreBusName);
 
         var coralCanrageConfig = new CANrangeConfiguration()
                 .withFovParams(new FovParamsConfigs().withFOVRangeX(6.75).withFOVRangeY(6.75));
@@ -125,6 +129,10 @@ public class RollersIOHardware implements RollersIO {
         var elevatorCanrangeConfig = new CANrangeConfiguration()
                 .withFovParams(new FovParamsConfigs().withFOVRangeX(6.75).withFOVRangeY(15));
         tryUntilOk(() -> elevatorCanrange.getConfigurator().apply(elevatorCanrangeConfig));
+
+        var funnelCanrangeConfig = new CANrangeConfiguration()
+                .withFovParams(new FovParamsConfigs().withFOVRangeX(6.75).withFOVRangeY(15));
+        tryUntilOk(() -> funnelCanrange.getConfigurator().apply(funnelCanrangeConfig));
 
         coralPositionSignal = coralMotor.getPosition();
         coralVelocitySignal = coralMotor.getVelocity();
@@ -140,6 +148,8 @@ public class RollersIOHardware implements RollersIO {
         algaeDistanceSignal = algaeCanrange.getDistance();
         elevatorDistanceSignal = elevatorCanrange.getDistance();
         elevatorSignalStrengthSignal = elevatorCanrange.getSignalStrength();
+        funnelDistanceSignal = funnelCanrange.getDistance();
+        funnelSignalStrengthSignal = funnelCanrange.getSignalStrength();
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 Constants.mainLoopFrequency,
@@ -156,12 +166,15 @@ public class RollersIOHardware implements RollersIO {
                 coralDistanceSignal,
                 algaeDistanceSignal,
                 elevatorDistanceSignal,
-                elevatorSignalStrengthSignal);
+                elevatorSignalStrengthSignal,
+                funnelDistanceSignal,
+                funnelSignalStrengthSignal);
         coralMotor.optimizeBusUtilization();
         hybridMotor.optimizeBusUtilization();
         coralCanrange.optimizeBusUtilization();
         algaeCanrange.optimizeBusUtilization();
         elevatorCanrange.optimizeBusUtilization();
+        funnelCanrange.optimizeBusUtilization();
     }
 
     @Override
@@ -180,7 +193,9 @@ public class RollersIOHardware implements RollersIO {
                 coralDistanceSignal,
                 algaeDistanceSignal,
                 elevatorDistanceSignal,
-                elevatorSignalStrengthSignal);
+                elevatorSignalStrengthSignal,
+                funnelDistanceSignal,
+                funnelSignalStrengthSignal);
 
         inputs.coralPosition = coralPositionSignal.getValue();
         inputs.coralVelocity = coralVelocitySignal.getValue();
@@ -196,6 +211,8 @@ public class RollersIOHardware implements RollersIO {
         inputs.algaeDetectorDistance = algaeDistanceSignal.getValue();
         inputs.elevatorDetectorDistance = elevatorDistanceSignal.getValue();
         inputs.elevatorSignalStrength = elevatorSignalStrengthSignal.getValue();
+        inputs.funnelDetectorDistance = funnelDistanceSignal.getValue();
+        inputs.funnelSignalStrength = funnelSignalStrengthSignal.getValue();
 
         LoggedTunableValue.ifChanged(
                 0,

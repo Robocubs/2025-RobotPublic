@@ -163,7 +163,7 @@ public class Superstructure extends SubsystemBase {
         rollers.runState(state.getData().getRollerState());
         if (rollerState != Rollers.State.AUTO_FEED_CORAL
                 || !isNear(SuperstructurePose.Preset.FEED.getPose())
-                || (rollers.longCoralDetected() && !rollers.elevatorDetected())) {
+                || (rollers.longCoralDetected() && !rollers.funnelDetected())) {
             funnel.stop();
         } else if (rollers.longCoralDetected()) {
             funnel.fastFeed();

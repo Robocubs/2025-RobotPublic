@@ -30,6 +30,9 @@ public interface RollersIO {
         public Distance algaeDetectorDistance = Meters.zero();
         public Distance elevatorDetectorDistance = Meters.zero();
         public double elevatorSignalStrength = 0;
+
+        public Distance funnelDetectorDistance = Meters.zero();
+        public double funnelSignalStrength = 0;
     }
 
     public default void updateInputs(RollersIOInputs inputs) {}

@@ -18,7 +18,7 @@ import static frc.robot.subsystems.superstructure.rollers.RollersConstants.*;
 
 public class Rollers {
     private static final LoggedTunableNumber coralFeedDistance =
-            new LoggedTunableNumber("Rollers/CoralFeedDistance", -0.05);
+            new LoggedTunableNumber("Rollers/CoralFeedDistance", 0.18);
     private static final LoggedTunableNumber coralIntakeDistance =
             new LoggedTunableNumber("Rollers/CoralIntakeDistance", -0.1);
     private static final LoggedTunableNumber algaeIntakeDistance =
@@ -34,6 +34,8 @@ public class Rollers {
             algaeDetectionDistance.in(Meters), detectionDistanceTolerance.in(Meters), false);
     private final ThresholdLatchedBoolean elevatorDetected = ThresholdLatchedBoolean.fromThresholdTolerance(
             elevatorDetectionDistance.in(Meters), detectionDistanceTolerance.in(Meters), false);
+    private final ThresholdLatchedBoolean funnelDetected = ThresholdLatchedBoolean.fromThresholdTolerance(
+            funnelDetectionDistance.in(Meters), detectionDistanceTolerance.in(Meters), false);
     // private final LatchedBoolean wideCoralDetected = new LatchedBoolean(true);
     private final Supplier<Distance> elevatorHeight;
 
@@ -76,6 +78,7 @@ public class Rollers {
 
         longCoralDetected.update(inputs.coralDetectorDistance.in(Meters));
         algaeDetected.update(inputs.algaeDetectorDistance.in(Meters));
+        funnelDetected.update(inputs.funnelDetectorDistance.in(Meters));
 
         if (elevatorHeight.get().lt(elevatorMaxHeightForDetection)) {
             elevatorDetected.update(inputs.elevatorDetectorDistance.in(Meters));
@@ -121,10 +124,10 @@ public class Rollers {
         //     autoIntakeCoralHybridPosition = Optional.empty();
         // }
 
-        if (longCoralDetected.get() && !elevatorDetected.get() && inputs.elevatorSignalStrength > 2500) {
+        if (longCoralDetected.get() && !funnelDetected()) {
             if (autoFeedCoralCoralPosition.isEmpty() || autoFeedCoralHybridPosition.isEmpty()) {
                 autoFeedCoralCoralPosition = Optional.of(inputs.coralPosition.plus(coralFeedCoralRollerPosition));
-                autoFeedCoralHybridPosition = Optional.of(inputs.hybridPosition.plus(coralFeedHybridRollerPosition));
+                autoFeedCoralHybridPosition = Optional.of(inputs.hybridPosition.minus(coralFeedHybridRollerPosition));
             }
         } else {
             autoFeedCoralCoralPosition = Optional.empty();
@@ -234,7 +237,12 @@ public class Rollers {
 
     @AutoLogOutput
     public boolean elevatorDetected() {
-        return elevatorDetected.get();
+        return elevatorDetected.get() && inputs.elevatorSignalStrength > 2500;
+    }
+
+    @AutoLogOutput
+    public boolean funnelDetected() {
+        return funnelDetected.get() && inputs.funnelSignalStrength > 2500;
     }
 
     public Command bumpFeedPosition(Distance distance) {
@@ -245,7 +253,7 @@ public class Rollers {
                         .plus(Radians.of(distance.in(Meters) / coralRollerRadius.in(Meters))));
                 autoFeedCoralHybridPosition = Optional.of(autoFeedCoralHybridPosition
                         .get()
-                        .plus(Radians.of(distance.in(Meters) / hybridRollerRadius.in(Meters))));
+                        .minus(Radians.of(distance.in(Meters) / hybridRollerRadius.in(Meters))));
             }
         });
     }

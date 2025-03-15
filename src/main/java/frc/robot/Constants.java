@@ -12,7 +12,7 @@ public final class Constants {
     private static final Mode simMode = Mode.SIM;
     private static final RobotType realBot = RobotType.COMP_BOT;
     private static final RobotType simBot = RobotType.SIM_BOT;
-    private static final boolean realBotTuningEnabled = false;
+    private static final boolean realBotTuningEnabled = true;
     private static final boolean realBotCharacterizationEnabled = false;
 
     public static final Mode mode = RobotBase.isReal() ? Mode.REAL : simMode;
