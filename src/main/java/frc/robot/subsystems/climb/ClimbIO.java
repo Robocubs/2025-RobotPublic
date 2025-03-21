@@ -1,5 +1,6 @@
 package frc.robot.subsystems.climb;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -36,4 +37,6 @@ public interface ClimbIO {
     public default void setVelocity(AngularVelocity velocity, Torque feedforward) {}
 
     public default void stop() {}
+
+    public default void setNeutralMode(NeutralModeValue neutralMode) {}
 }

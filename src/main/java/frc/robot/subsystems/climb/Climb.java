@@ -2,6 +2,7 @@ package frc.robot.subsystems.climb;
 
 import java.util.Optional;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.units.AngleUnit;
@@ -22,9 +23,9 @@ import static frc.robot.subsystems.climb.ClimbConstants.*;
 
 public class Climb extends SubsystemBase {
     private static final LoggedTunableMeasure<AngleUnit, Angle> climbedPosition =
-            new LoggedTunableMeasure<>("Climb/ClimbedPosition", Radians.of(-22));
+            new LoggedTunableMeasure<>("Climb/ClimbedPosition", Radians.of(-13));
     private static final LoggedTunableMeasure<AngleUnit, Angle> deployedPosition =
-            new LoggedTunableMeasure<>("Climb/DeployedPosition", Radians.of(-40));
+            new LoggedTunableMeasure<>("Climb/DeployedPosition", Radians.of(-32));
     private static final LoggedTunableMeasure<AngleUnit, Angle> brakeEngagedAngle =
             new LoggedTunableMeasure<>("Climb/BrakeEngagedAngle", Degrees.of(135.0));
     private static final LoggedTunableMeasure<AngleUnit, Angle> brakeDisengagedAngle =
@@ -56,21 +57,30 @@ public class Climb extends SubsystemBase {
         return sequence(
                         zero().unless(() -> zeroedPosition.isPresent()),
                         run(() -> {
+                                    io.setPosition(zeroedPosition.get(), NewtonMeters.zero());
+                                    // io.setTorqueCurrent(Amps.of(1.0));
+                                    io.setBrakeServoAngle(brakeDisengagedAngle.get());
+                                })
+                                .until(() -> inputs.position.isNear(zeroedPosition.get(), positionTolerance)),
+                        // run(() -> {
+                        //             io.setBrakeServoAngle(brakeDisengagedAngle.get());
+                        //             io.setTorqueCurrent(zeroTorqueCurrent.get());
+                        //         })
+                        // .until(() -> inputs.position.isNear(
+                        //         zeroedPosition.get().plus(Degrees.of(1)), positionTolerance)),
+                        run(() -> {
+                                    io.setReleaseServoSpeed(1.0);
                                     io.setBrakeServoAngle(brakeDisengagedAngle.get());
                                     io.stop();
                                 })
-                                .withTimeout(Seconds.of(0.5)),
+                                .withTimeout(2.0),
                         run(() -> {
                             var position = deployedPosition.get().plus(zeroedPosition.get());
                             io.setPosition(position, NewtonMeters.zero());
                             io.setBrakeServoAngle(brakeDisengagedAngle.get());
-
-                            if (position.isNear(inputs.position, positionTolerance)
-                                    && DriverStation.getMatchTime() < 20) {
-                                io.setReleaseServoSpeed(1.0);
-                            }
                         }))
                 .finallyDo(() -> io.stopReleaseServo())
+                .unless(() -> DriverStation.getMatchTime() > 20)
                 .withName("ClimbDeploy");
     }
 
@@ -92,7 +102,10 @@ public class Climb extends SubsystemBase {
         var debouncer = new Debouncer(0.1, DebounceType.kRising);
         return sequence(
                         runOnce(() -> debouncer.calculate(false)),
-                        run(() -> io.setTorqueCurrent(zeroTorqueCurrent.get()))
+                        run(() -> {
+                                    io.setTorqueCurrent(zeroTorqueCurrent.get());
+                                    io.setBrakeServoAngle(brakeDisengagedAngle.get());
+                                })
                                 .until(() -> debouncer.calculate(inputs.velocity.lt(zeroVelocityLimit.get()))),
                         runOnce(() -> {
                             zeroedPosition = Optional.of(inputs.position);
@@ -103,9 +116,12 @@ public class Climb extends SubsystemBase {
 
     public Command stop() {
         return sequence(run(() -> io.stop()).until(() -> inputs.velocity.gt(minBrakeSpeed.get())), run(() -> {
-                    io.setBrakeServoAngle(brakeEngagedAngle.get());
                     io.stop();
                 }))
                 .withName("ClimbStop");
+    }
+
+    public void setNeutralMode(NeutralModeValue neutralMode) {
+        io.setNeutralMode(neutralMode);
     }
 }

@@ -134,7 +134,7 @@ public class Rollers {
             autoFeedCoralHybridPosition = Optional.empty();
         }
 
-        if (algaeDetected.get() && !longCoralDetected.get()) {
+        if (algaeDetected.get()) {
             if (autoIntakeAlgaeHybridPosition.isEmpty()) {
                 autoIntakeAlgaeHybridPosition =
                         Optional.of(inputs.hybridPosition.plus(algaeIntakeHybridRollerPosition));
@@ -222,7 +222,7 @@ public class Rollers {
 
     @AutoLogOutput
     public boolean longCoralDetected() {
-        return longCoralDetected.get();
+        return longCoralDetected.get() && inputs.coralSignalStrengthSignal > 2500;
     }
 
     @AutoLogOutput
@@ -232,7 +232,7 @@ public class Rollers {
 
     @AutoLogOutput
     public boolean algaeDetected() {
-        return algaeDetected.get();
+        return algaeDetected.get() && inputs.algaeSignalStrengthSignal > 2500;
     }
 
     @AutoLogOutput

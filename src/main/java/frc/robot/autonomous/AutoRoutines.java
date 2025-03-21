@@ -84,18 +84,9 @@ public class AutoRoutines {
                 .build();
     }
 
-    public AutoRoutine twoPieceRight() {
-        return create("Two Piece Right")
-                .setCoralSelection(CoralMode.L4_CORAL)
-                .setSuperstructureState(SuperstructureState.FEED)
-                .followPathAndScore("TwoPieceRight", 0)
-                .followPathAndWaitForCoral("TwoPieceRight", 1)
-                .followPathAndScore("TwoPieceRight", 2)
-                .build();
-    }
-
     public AutoRoutine rightFour() {
         return create("Right 4")
+                .requireStartingPose("Right4")
                 .setCoralSelection(CoralMode.L4_CORAL)
                 .setSuperstructureState(SuperstructureState.FEED)
                 .followPathAndScore("Right4", 0)
@@ -110,6 +101,7 @@ public class AutoRoutines {
 
     public AutoRoutine leftFour() {
         return create("Left 4")
+                .requireStartingPose("Left4")
                 .setCoralSelection(CoralMode.L4_CORAL)
                 .setSuperstructureState(SuperstructureState.FEED)
                 .followPathAndScore("Left4", 0)

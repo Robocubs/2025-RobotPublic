@@ -27,7 +27,9 @@ public interface RollersIO {
         public double hybridClosedLoopReferenceSignal = 0.0;
 
         public Distance coralDetectorDistance = Meters.zero();
+        public double coralSignalStrengthSignal = 0;
         public Distance algaeDetectorDistance = Meters.zero();
+        public double algaeSignalStrengthSignal = 0;
         public Distance elevatorDetectorDistance = Meters.zero();
         public double elevatorSignalStrength = 0;
 

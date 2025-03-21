@@ -37,7 +37,7 @@ public record SuperstructurePose(Distance elevatorHeight, Angle armAngle) {
         L1_LONG(Inches.of(5), Degrees.of(90)),
         L1_WIDE(Inches.of(2), Degrees.of(70)),
         L2(Inches.of(13), Degrees.of(85)),
-        L3(Inches.of(28), Degrees.of(85)),
+        L3(Inches.of(29.5), Degrees.of(85)),
         L4(Inches.of(61), Degrees.of(42.819)),
         BARGE(ElevatorConstants.maximumHeight, Degrees.of(70)),
         L2_ALGAE(Inches.of(17.5), Degrees.of(70)),

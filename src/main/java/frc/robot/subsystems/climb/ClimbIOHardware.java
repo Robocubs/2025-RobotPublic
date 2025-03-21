@@ -34,8 +34,8 @@ import static frc.robot.util.PhoenixUtil.tryUntilOk;
 public class ClimbIOHardware implements ClimbIO {
     private static final double kT = DCMotor.getKrakenX60(numMotors).withReduction(reduction).KtNMPerAmp * numMotors;
     private static final LoggedTunableNumber positionKP = new LoggedTunableNumber("Climb/PositionKP", 15);
-    private static final LoggedTunableNumber positionKD = new LoggedTunableNumber("Climb/PositionKD", 2);
-    private static final LoggedTunableNumber velocityKP = new LoggedTunableNumber("Climb/VelocityKP", 1.0);
+    private static final LoggedTunableNumber positionKD = new LoggedTunableNumber("Climb/PositionKD", 10);
+    private static final LoggedTunableNumber velocityKP = new LoggedTunableNumber("Climb/VelocityKP", 50);
     private static final LoggedTunableNumber velocityKD = new LoggedTunableNumber("Climb/VelocityKD", 0.1);
 
     protected final TalonFX motor;
@@ -122,12 +122,12 @@ public class ClimbIOHardware implements ClimbIO {
 
     @Override
     public void setReleaseServoSpeed(double speed) {
-        // releaseServo.setSpeed(speed);
+        releaseServo.set(speed / 2 + 0.5);
     }
 
     @Override
     public void stopReleaseServo() {
-        // releaseServo.setSpeed(0);
+        releaseServo.set(0.5);
     }
 
     @Override
@@ -155,5 +155,10 @@ public class ClimbIOHardware implements ClimbIO {
     @Override
     public void stop() {
         motor.stopMotor();
+    }
+
+    @Override
+    public void setNeutralMode(NeutralModeValue neutralMode) {
+        motor.setNeutralMode(neutralMode);
     }
 }

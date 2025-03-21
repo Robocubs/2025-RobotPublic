@@ -48,7 +48,8 @@ public class DriveWithJoysticksEnhanced extends Command {
     private final DoubleSupplier strafe;
     private final DoubleSupplier rotation;
     private final BooleanSupplier fineControl;
-    private final BooleanSupplier coralTrigger;
+    private final BooleanSupplier leftCoralTrigger;
+    private final BooleanSupplier rightCoralTrigger;
     private final BooleanSupplier algaeTrigger;
     private final PIDController translationController =
             new PIDController(translationKP.get(), 0.0, 0, Constants.mainLoopPeriod.in(Seconds));
@@ -63,7 +64,8 @@ public class DriveWithJoysticksEnhanced extends Command {
             DoubleSupplier strafe,
             DoubleSupplier rotation,
             BooleanSupplier fineControl,
-            BooleanSupplier coralTrigger,
+            BooleanSupplier leftCoralTrigger,
+            BooleanSupplier rightCoralTrigger,
             BooleanSupplier algaeTrigger) {
         this.drive = drive;
         this.robotState = robotState;
@@ -71,7 +73,8 @@ public class DriveWithJoysticksEnhanced extends Command {
         this.strafe = strafe;
         this.rotation = rotation;
         this.fineControl = fineControl;
-        this.coralTrigger = coralTrigger;
+        this.leftCoralTrigger = leftCoralTrigger;
+        this.rightCoralTrigger = rightCoralTrigger;
         this.algaeTrigger = algaeTrigger;
 
         addRequirements(drive);
@@ -117,14 +120,20 @@ public class DriveWithJoysticksEnhanced extends Command {
         Logger.recordOutput("Commands/DriveWithJoysticksEnhanced/HeadingLocked", headingLocked);
 
         if (headingLocked) {
-            var coralTrigger = this.coralTrigger.getAsBoolean();
+            var leftCoralTrigger = this.leftCoralTrigger.getAsBoolean();
+            var rightCoralTrigger = this.rightCoralTrigger.getAsBoolean();
             var algaeTrigger = this.algaeTrigger.getAsBoolean();
 
             Optional<Pose2d> targetPose = Optional.empty();
             // Target scoring coral
-            if (coralTrigger && !robotState.isSelected(CoralMode.L1_CORAL) && robotState.isFacingReef()) {
+            if (leftCoralTrigger && !robotState.isSelected(CoralMode.L1_CORAL) && robotState.isFacingReef()) {
                 targetPose = robotState
-                        .getClosestReefBranch()
+                        .getLeftReefPose()
+                        .filter(tp -> tp.getTranslation().getDistance(pose.getTranslation()) < 2.0);
+                headingSetpoint = targetPose.map(Pose2d::getRotation);
+            } else if (rightCoralTrigger && !robotState.isSelected(CoralMode.L1_CORAL) && robotState.isFacingReef()) {
+                targetPose = robotState
+                        .getRightReefPose()
                         .filter(tp -> tp.getTranslation().getDistance(pose.getTranslation()) < 2.0);
                 headingSetpoint = targetPose.map(Pose2d::getRotation);
             }

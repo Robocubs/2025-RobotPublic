@@ -67,7 +67,9 @@ public class RollersIOHardware implements RollersIO {
     private final StatusSignal<Current> hybridSupplyCurrentSignal;
     private final StatusSignal<Double> hybridClosedLoopReferenceSignal;
     private final StatusSignal<Distance> coralDistanceSignal;
+    private final StatusSignal<Double> coralSignalStrengthSignal;
     private final StatusSignal<Distance> algaeDistanceSignal;
+    private final StatusSignal<Double> algaeSignalStrengthSignal;
     private final StatusSignal<Distance> elevatorDistanceSignal;
     private final StatusSignal<Double> elevatorSignalStrengthSignal;
     private final StatusSignal<Distance> funnelDistanceSignal;
@@ -145,7 +147,9 @@ public class RollersIOHardware implements RollersIO {
         hybridSupplyCurrentSignal = hybridMotor.getSupplyCurrent();
         hybridClosedLoopReferenceSignal = hybridMotor.getClosedLoopReference();
         coralDistanceSignal = coralCanrange.getDistance();
+        coralSignalStrengthSignal = coralCanrange.getSignalStrength();
         algaeDistanceSignal = algaeCanrange.getDistance();
+        algaeSignalStrengthSignal = funnelCanrange.getSignalStrength();
         elevatorDistanceSignal = elevatorCanrange.getDistance();
         elevatorSignalStrengthSignal = elevatorCanrange.getSignalStrength();
         funnelDistanceSignal = funnelCanrange.getDistance();
@@ -191,7 +195,9 @@ public class RollersIOHardware implements RollersIO {
                 hybridSupplyCurrentSignal,
                 hybridClosedLoopReferenceSignal,
                 coralDistanceSignal,
+                coralSignalStrengthSignal,
                 algaeDistanceSignal,
+                algaeSignalStrengthSignal,
                 elevatorDistanceSignal,
                 elevatorSignalStrengthSignal,
                 funnelDistanceSignal,
@@ -208,7 +214,9 @@ public class RollersIOHardware implements RollersIO {
         inputs.hybridSupplyCurrent = hybridSupplyCurrentSignal.getValue();
         inputs.hybridClosedLoopReferenceSignal = Units.rotationsToRadians(hybridClosedLoopReferenceSignal.getValue());
         inputs.coralDetectorDistance = coralDistanceSignal.getValue();
+        inputs.coralSignalStrengthSignal = coralSignalStrengthSignal.getValue();
         inputs.algaeDetectorDistance = algaeDistanceSignal.getValue();
+        inputs.algaeSignalStrengthSignal = algaeSignalStrengthSignal.getValue();
         inputs.elevatorDetectorDistance = elevatorDistanceSignal.getValue();
         inputs.elevatorSignalStrength = elevatorSignalStrengthSignal.getValue();
         inputs.funnelDetectorDistance = funnelDistanceSignal.getValue();

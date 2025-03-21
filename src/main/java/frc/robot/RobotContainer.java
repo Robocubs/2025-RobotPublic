@@ -38,6 +38,7 @@ import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
 import frc.robot.subsystems.superstructure.funnel.FunnelIO;
 import frc.robot.subsystems.superstructure.funnel.FunnelIOHardware;
 import frc.robot.subsystems.superstructure.funnel.FunnelIOSim;
+import frc.robot.subsystems.superstructure.leds.LED;
 import frc.robot.subsystems.superstructure.rollers.RollersIO;
 import frc.robot.subsystems.superstructure.rollers.RollersIOHardware;
 import frc.robot.subsystems.superstructure.rollers.RollersIOSim;
@@ -68,13 +69,14 @@ public class RobotContainer {
 
     // On-robot buttons
     private final DigitalInput coastButtonInput = new DigitalInput(0);
-    private final Trigger coastButton = disabled.and(coastButtonInput::get);
+    private final Trigger coastButton = disabled.and(coastButtonInput::get).and(() -> !DriverStation.isFMSAttached());
 
     public RobotContainer() {
         Drive drive = null;
         Vision vision = null;
         Superstructure superstructure = null;
         Climb climb = null;
+        LED led = null;
 
         if (Constants.mode != Mode.REPLAY) {
             switch (Constants.robot) {
@@ -87,12 +89,13 @@ public class RobotContainer {
                             },
                             robotState);
                     superstructure = new Superstructure(
-                            new ElevatorIOHardware() {},
+                            new ElevatorIOHardware(),
                             new ArmIOHardware(),
                             new RollersIOHardware(),
-                            new FunnelIOHardware() {},
+                            new FunnelIOHardware(),
                             robotState);
                     climb = new Climb(new ClimbIOHardware());
+                    led = new LED();
                     break;
                 case SIM_BOT:
                     var simState = new SimState();
@@ -111,6 +114,7 @@ public class RobotContainer {
                             new FunnelIOSim(),
                             robotState);
                     climb = new Climb(new ClimbIOSim());
+                    led = new LED();
             }
         }
 
@@ -129,6 +133,10 @@ public class RobotContainer {
 
         if (climb == null) {
             climb = new Climb(new ClimbIO() {});
+        }
+
+        if (led == null) {
+            led = new LED();
         }
 
         this.drive = drive;
@@ -157,37 +165,35 @@ public class RobotContainer {
                 () -> -driverController.getLeftX(),
                 () -> -driverController.getRightX(),
                 driverController.leftBumper(),
+                driverController.leftTrigger(),
                 driverController.rightTrigger(),
-                driverController.leftTrigger()));
+                driverController.a()));
 
         /* Driver Controller */
         driverController.start().onTrue(drive.resetRotation());
         driverController.x().whileTrue(drive.brake());
         driverController.back().onTrue(superstructure.zeroElevator());
 
-        driverController
-                .rightTrigger()
+        var eitherCoralTrigger = driverController.rightTrigger().or(driverController.leftTrigger());
+        eitherCoralTrigger
                 .and(() -> robotState.isSelected(CoralMode.L4_CORAL))
                 .whileTrue(superstructure.score(
                         SuperstructureState.L4_CORAL,
                         SuperstructureState.L4_CORAL_SCORE,
                         driverController.rightBumper()));
-        driverController
-                .rightTrigger()
+        eitherCoralTrigger
                 .and(() -> robotState.isSelected(CoralMode.L3_CORAL))
                 .whileTrue(superstructure.score(
                         SuperstructureState.L3_CORAL,
                         SuperstructureState.L3_CORAL_SCORE,
                         driverController.rightBumper()));
-        driverController
-                .rightTrigger()
+        eitherCoralTrigger
                 .and(() -> robotState.isSelected(CoralMode.L2_CORAL))
                 .whileTrue(superstructure.score(
                         SuperstructureState.L2_CORAL,
                         SuperstructureState.L2_CORAL_SCORE,
                         driverController.rightBumper()));
-        driverController
-                .rightTrigger()
+        eitherCoralTrigger
                 .and(() -> robotState.isSelected(CoralMode.L1_CORAL))
                 .whileTrue(superstructure.score(
                         SuperstructureState.L1_CORAL,
@@ -195,28 +201,29 @@ public class RobotContainer {
                         driverController.rightBumper()));
 
         driverController
-                .leftTrigger()
+                .a()
                 .and(() -> robotState.isSelected(AlgaeMode.PROCESSOR))
                 .whileTrue(superstructure.score(
                         SuperstructureState.PROCESSOR,
                         SuperstructureState.PROCESSOR_SCORE,
                         driverController.rightBumper()));
-
         driverController
-                .leftTrigger()
+                .a()
                 .and(() -> robotState.isSelected(AlgaeMode.L3))
                 .whileTrue(superstructure.runState(SuperstructureState.L3_ALGAE).unless(robotState::hasLongCoral));
-
         driverController
-                .leftTrigger()
+                .a()
                 .and(() -> robotState.isSelected(AlgaeMode.L2))
                 .whileTrue(superstructure.runState(SuperstructureState.L2_ALGAE).unless(robotState::hasLongCoral));
-
         driverController
-                .leftTrigger()
+                .a()
                 .and(() -> robotState.isSelected(AlgaeMode.BARGE))
-                .whileTrue(superstructure.score(
-                        SuperstructureState.BARGE, SuperstructureState.BARGE_SCORE, driverController.rightBumper()));
+                .whileTrue(superstructure
+                        .score(
+                                SuperstructureState.BARGE,
+                                SuperstructureState.BARGE_SCORE,
+                                driverController.rightBumper())
+                        .unless(robotState::underNetArea));
 
         /* Stream Dech Buttons */
         var l4CoralScore = robotState.setCoralSelection(CoralMode.L4_CORAL);
@@ -282,10 +289,12 @@ public class RobotContainer {
                         () -> {
                             drive.setNeutralMode(NeutralModeValue.Coast);
                             superstructure.setNeutralMode(NeutralModeValue.Coast);
+                            climb.setNeutralMode(NeutralModeValue.Coast);
                         },
                         () -> {
                             drive.setNeutralMode(NeutralModeValue.Brake);
                             superstructure.setNeutralMode(NeutralModeValue.Brake);
+                            climb.setNeutralMode(NeutralModeValue.Brake);
                         })
                 .ignoringDisable(true)
                 .withName("RobotCoastMode"));
@@ -296,7 +305,6 @@ public class RobotContainer {
                 new SubsystemScheduler<Superstructure>(superstructure, superstructure.maintainState());
         var autoRoutines = new AutoRoutines(robotState, drive, superstructureScheduler);
 
-        autoChooser.addRoutine("Right 2", autoRoutines::twoPieceRight);
         autoChooser.addRoutine("Right 4", autoRoutines::rightFour);
         autoChooser.addRoutine("Left 4", autoRoutines::leftFour);
         autoChooser.addRoutine("Rught Bump", autoRoutines::rightBump);

@@ -38,12 +38,13 @@ public class RobotState {
     public static final LoggedTunableBoolean automaticAlgaeModeSelection =
             new LoggedTunableBoolean("RobotState/AutomaticAlgaeModeSelection", true);
 
-    private static final Rotation2d reefPoseAngleTolerance = Rotation2d.fromDegrees(59.9);
+    private static final Rotation2d reefPoseAngleTolerance = Rotation2d.fromDegrees(29.9);
     private static final Rotation2d facingProcessorTolerance = Rotation2d.fromDegrees(45.0);
     private static final Rotation2d facingBargeTolerance = Rotation2d.fromDegrees(45.0);
     private static final Distance reefAreaDistanceTolerance = Meters.of(2.5);
     private static final Distance processorAreaDistanceTolerance = Meters.of(2.0);
     private static final Distance bargeAreaLengthTolerance = Meters.of(2.0);
+    private static final Distance underNetAreaTolerance = Meters.of(1.3);
     private static final Distance speedLimitMinHeight = Meters.of(0.5);
     private static final LinearVelocity nominalSpeedTolerance = MetersPerSecond.of(0.1);
 
@@ -70,6 +71,7 @@ public class RobotState {
     private @AutoLogOutput boolean inReefArea;
     private @AutoLogOutput boolean inProcessorArea;
     private @AutoLogOutput boolean inBargeArea;
+    private @AutoLogOutput boolean underNetArea;
     private Distance elevatorheight = Meters.zero();
     private boolean hasLongCoral;
     private boolean hasWideCoral;
@@ -140,6 +142,12 @@ public class RobotState {
                         ? translation.getY() > FieldConstants.fieldCenter.getY()
                         : translation.getY() < FieldConstants.fieldCenter.getY());
 
+        underNetArea =
+                MathUtil.isNear(translation.getX(), FieldConstants.fieldCenter.getX(), underNetAreaTolerance.in(Meters))
+                        && (isBlue()
+                                ? translation.getY() > FieldConstants.fieldCenter.getY()
+                                : translation.getY() < FieldConstants.fieldCenter.getY());
+
         if (automaticAlgaeModeSelection.get()) {
             if (inReefArea && isFacingReef) {
                 algaeSelection = MathUtil.inputModulus(pose.getRotation().getDegrees() + 30, 0, 360) % 120 > 60
@@ -201,6 +209,10 @@ public class RobotState {
 
     public boolean inBargeArea() {
         return inBargeArea;
+    }
+
+    public boolean underNetArea() {
+        return underNetArea;
     }
 
     public boolean robotSpeedNominal(SuperstructureState state) {
@@ -298,6 +310,56 @@ public class RobotState {
         }
 
         return Optional.ofNullable(closestPose);
+    }
+
+    public Optional<Pose2d> getLeftReefPose() {
+        return getLeftReefPose(poseEstimator.getEstimatedPosition().getRotation());
+    }
+
+    public Optional<Pose2d> getRightReefPose() {
+        return getRightReefPose(poseEstimator.getEstimatedPosition().getRotation());
+    }
+
+    public Optional<Pose2d> getLeftReefPose(Rotation2d robotRotation) {
+        return getReefPose(
+                robotRotation,
+                true,
+                switch (coralSelection) {
+                    case L4_CORAL -> FieldConstants.robotCoralL4Poses();
+                    case L3_CORAL -> FieldConstants.robotCoralL3Poses();
+                    case L2_CORAL -> FieldConstants.robotCoralL2Poses();
+                    case L1_CORAL -> FieldConstants.robotCoralL1Poses();
+                });
+    }
+
+    public Optional<Pose2d> getRightReefPose(Rotation2d robotRotation) {
+        return getReefPose(
+                robotRotation,
+                false,
+                switch (coralSelection) {
+                    case L4_CORAL -> FieldConstants.robotCoralL4Poses();
+                    case L3_CORAL -> FieldConstants.robotCoralL3Poses();
+                    case L2_CORAL -> FieldConstants.robotCoralL2Poses();
+                    case L1_CORAL -> FieldConstants.robotCoralL1Poses();
+                });
+    }
+
+    private Optional<Pose2d> getReefPose(Rotation2d robotRotation, boolean left, Pose2d[] reefPoses) {
+        Pose2d pose = null;
+        var wantsLargest = left && isBlue() || !left && isRed();
+        for (var reefPose : reefPoses) {
+            if (!GeometryUtil.isNear(robotRotation, reefPose.getRotation(), reefPoseAngleTolerance)) {
+                continue;
+            }
+
+            if (pose == null
+                    || (wantsLargest && reefPose.getY() > pose.getY())
+                    || (!wantsLargest && reefPose.getY() < pose.getY())) {
+                pose = reefPose;
+            }
+        }
+
+        return Optional.ofNullable(pose);
     }
 
     public void addDriveMeasurements(DriveMeasurement... measurements) {

@@ -112,10 +112,19 @@ public class Drive extends SubsystemBase {
             DoubleSupplier strafe,
             DoubleSupplier rotation,
             BooleanSupplier fineControl,
-            BooleanSupplier coralTrigger,
+            BooleanSupplier leftCoralTrigger,
+            BooleanSupplier rightCoralTrigger,
             BooleanSupplier algaeTrigger) {
         return new DriveWithJoysticksEnhanced(
-                this, robotState, throttle, strafe, rotation, fineControl, coralTrigger, algaeTrigger);
+                this,
+                robotState,
+                throttle,
+                strafe,
+                rotation,
+                fineControl,
+                leftCoralTrigger,
+                rightCoralTrigger,
+                algaeTrigger);
     }
 
     public DriveToPose toPose(Supplier<Pose2d> poseSupplier, boolean finishAtGoal) {

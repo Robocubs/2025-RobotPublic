@@ -70,6 +70,32 @@ public class LoggedAutoRoutine {
         return routine;
     }
 
+    public LoggedAutoRoutine requireStartingPose(String pathName) {
+        var trajectory = routine.trajectory(pathName);
+        if (trajectory == null) {
+            commands.add(runOnce(() -> System.out.println("Trajectory not found, doing nothing"))
+                    .andThen(idle()));
+            return this;
+        }
+
+        var startingPoseOptional = trajectory.getRawTrajectory().getInitialPose(false);
+        if (startingPoseOptional.isEmpty()) {
+            commands.add(runOnce(() -> System.out.println("Starting pose not found, doing nothing"))
+                    .andThen(idle()));
+            return this;
+        }
+
+        var startingPose = startingPoseOptional.get();
+        commands.add(print("Starting pose too far, doing nothing")
+                .andThen(idle())
+                .unless(() -> robotState
+                                .getPose()
+                                .getTranslation()
+                                .getDistance(GeometryUtil.autoFlip(startingPose.getTranslation()))
+                        < 1.0));
+        return this;
+    }
+
     public LoggedAutoRoutine run(Command command) {
         return this;
     }
