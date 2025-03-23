@@ -36,6 +36,7 @@ public final class Constants {
     public static final Frequency mainLoopFrequency = mainLoopPeriod.asFrequency();
     public static final double epsilon = 1e-12;
 
+    public static final String rioBusName = "rio";
     public static final String canivoreBusName = "canivore";
 
     public static final Mass coralMass = Pounds.of((1.1 + 1.8) / 2);

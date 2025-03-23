@@ -153,9 +153,9 @@ public class RobotState {
                 algaeSelection = MathUtil.inputModulus(pose.getRotation().getDegrees() + 30, 0, 360) % 120 > 60
                         ? (isBlue() ? AlgaeMode.L2 : AlgaeMode.L3)
                         : (isBlue() ? AlgaeMode.L3 : AlgaeMode.L2);
-            } else if (hasAlgae && inProcessorArea && isFacingProcessor) {
+            } else if (inProcessorArea && isFacingProcessor) {
                 algaeSelection = AlgaeMode.PROCESSOR;
-            } else if (hasAlgae && inBargeArea && isFacingBarge) {
+            } else if (inBargeArea && isFacingBarge) {
                 algaeSelection = AlgaeMode.BARGE;
             } else {
                 algaeSelection = AlgaeMode.NONE;

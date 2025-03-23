@@ -93,7 +93,7 @@ public class ArmIOHardware implements ArmIO {
                     .withMagnetSensor(new MagnetSensorConfigs()
                             .withMagnetOffset(Radians.of(encoderOffset.get()))
                             .withSensorDirection(cancoderSensorDirection));
-            cancoder = new CANcoder(10, Constants.canivoreBusName);
+            cancoder = new CANcoder(10, Constants.rioBusName);
             tryUntilOk(() -> cancoder.getConfigurator().apply(cancoderConfig));
 
             feedbackConfigs
@@ -115,7 +115,7 @@ public class ArmIOHardware implements ArmIO {
                             .withAbsoluteSensorOffset(Radians.of(encoderOffset.get()))
                             .withAbsoluteSensorDiscontinuityPoint(angleTolerance)
                             .withSensorDirection(true));
-            candi = new CANdi(1, Constants.canivoreBusName);
+            candi = new CANdi(1, Constants.rioBusName);
             tryUntilOk(() -> candi.getConfigurator().apply(candiConfig));
 
             feedbackConfigs
@@ -177,7 +177,7 @@ public class ArmIOHardware implements ArmIO {
                         .withSupplyCurrentLimit(Amps.of(40))
                         .withSupplyCurrentLowerLimit(30));
 
-        motor = new TalonFX(32, Constants.canivoreBusName);
+        motor = new TalonFX(32, Constants.rioBusName);
         tryUntilOk(() -> motor.getConfigurator().apply(motorConfig));
 
         this.angleSignal = angleSignal.orElse(motor.getPosition());

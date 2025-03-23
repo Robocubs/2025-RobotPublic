@@ -95,7 +95,7 @@ public class RollersIOHardware implements RollersIO {
                         .withStatorCurrentLimit(Amps.of(120))
                         .withSupplyCurrentLimit(Amps.of(30))
                         .withSupplyCurrentLowerLimit(30));
-        coralMotor = new TalonFX(33, Constants.canivoreBusName);
+        coralMotor = new TalonFX(33, Constants.rioBusName);
         tryUntilOk(() -> coralMotor.getConfigurator().apply(coralMotorConfig));
 
         hybridMotorConfig = new TalonFXConfiguration()
@@ -112,13 +112,13 @@ public class RollersIOHardware implements RollersIO {
                         .withStatorCurrentLimit(Amps.of(120))
                         .withSupplyCurrentLimit(Amps.of(30))
                         .withSupplyCurrentLowerLimit(30));
-        hybridMotor = new TalonFX(34, Constants.canivoreBusName);
+        hybridMotor = new TalonFX(34, Constants.rioBusName);
         tryUntilOk(() -> hybridMotor.getConfigurator().apply(hybridMotorConfig));
 
-        coralCanrange = new CANrange(3, Constants.canivoreBusName);
-        algaeCanrange = new CANrange(2, Constants.canivoreBusName);
-        elevatorCanrange = new CANrange(1, Constants.canivoreBusName);
-        funnelCanrange = new CANrange(4, Constants.canivoreBusName);
+        coralCanrange = new CANrange(3, Constants.rioBusName);
+        algaeCanrange = new CANrange(2, Constants.rioBusName);
+        elevatorCanrange = new CANrange(1, Constants.rioBusName);
+        funnelCanrange = new CANrange(4, Constants.rioBusName);
 
         var coralCanrageConfig = new CANrangeConfiguration()
                 .withFovParams(new FovParamsConfigs().withFOVRangeX(6.75).withFOVRangeY(6.75));

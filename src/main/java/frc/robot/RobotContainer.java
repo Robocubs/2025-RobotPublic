@@ -201,12 +201,9 @@ public class RobotContainer {
                         driverController.rightBumper()));
 
         driverController
-                .a()
+                .rightBumper()
                 .and(() -> robotState.isSelected(AlgaeMode.PROCESSOR))
-                .whileTrue(superstructure.score(
-                        SuperstructureState.PROCESSOR,
-                        SuperstructureState.PROCESSOR_SCORE,
-                        driverController.rightBumper()));
+                .whileTrue(superstructure.runState(SuperstructureState.PROCESSOR_SCORE));
         driverController
                 .a()
                 .and(() -> robotState.isSelected(AlgaeMode.L3))
