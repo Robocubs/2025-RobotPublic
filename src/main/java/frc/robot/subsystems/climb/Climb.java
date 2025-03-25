@@ -3,14 +3,17 @@ package frc.robot.subsystems.climb;
 import java.util.Optional;
 
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.CurrentUnit;
+import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -19,11 +22,16 @@ import org.littletonrobotics.junction.Logger;
 
 import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.sequence;
-import static frc.robot.subsystems.climb.ClimbConstants.*;
 
 public class Climb extends SubsystemBase {
     private static final LoggedTunableMeasure<AngleUnit, Angle> climbedPosition =
             new LoggedTunableMeasure<>("Climb/ClimbedPosition", Radians.of(-13));
+    private static final LoggedTunableMeasure<AngleUnit, Angle> preDeployedPosition =
+            new LoggedTunableMeasure<>("Climb/PreDeployedPosition", Radians.of(-18));
+    private static final LoggedTunableMeasure<AngleUnit, Angle> releaseStartPosition =
+            new LoggedTunableMeasure<>("Climb/ReleaseStartPosition", Radians.of(-25));
+    private static final LoggedTunableMeasure<AngleUnit, Angle> releasePosition =
+            new LoggedTunableMeasure<>("Climb/ReleasePosition", Radians.of(-36));
     private static final LoggedTunableMeasure<AngleUnit, Angle> deployedPosition =
             new LoggedTunableMeasure<>("Climb/DeployedPosition", Radians.of(-32));
     private static final LoggedTunableMeasure<AngleUnit, Angle> brakeEngagedAngle =
@@ -36,7 +44,8 @@ public class Climb extends SubsystemBase {
             new LoggedTunableMeasure<>("Climb/ZeroTorqueCurrent", Amps.of(5));
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> zeroVelocityLimit =
             new LoggedTunableMeasure<>("Climb/ZeroVelocityLimit", RadiansPerSecond.of(0.1));
-    private static final Angle positionTolerance = Radians.of(0.1);
+    private static final LoggedTunableMeasure<VoltageUnit, Voltage> retractVoltage =
+            new LoggedTunableMeasure<>("Climb/RetractVoltage", Volts.of(10));
 
     private final ClimbIO io;
     private final ClimbIOInputsAutoLogged inputs = new ClimbIOInputsAutoLogged();
@@ -56,27 +65,26 @@ public class Climb extends SubsystemBase {
     public Command deploy() {
         return sequence(
                         zero().unless(() -> zeroedPosition.isPresent()),
+                        run(() -> io.setBrakeServoAngle(brakeDisengagedAngle.get()))
+                                .withTimeout(0.5),
                         run(() -> {
-                                    io.setPosition(zeroedPosition.get(), NewtonMeters.zero());
-                                    // io.setTorqueCurrent(Amps.of(1.0));
+                                    var position = releasePosition.get().plus(zeroedPosition.get());
+                                    io.setPosition(position, NewtonMeters.zero());
                                     io.setBrakeServoAngle(brakeDisengagedAngle.get());
                                 })
-                                .until(() -> inputs.position.isNear(zeroedPosition.get(), positionTolerance)),
-                        // run(() -> {
-                        //             io.setBrakeServoAngle(brakeDisengagedAngle.get());
-                        //             io.setTorqueCurrent(zeroTorqueCurrent.get());
-                        //         })
-                        // .until(() -> inputs.position.isNear(
-                        //         zeroedPosition.get().plus(Degrees.of(1)), positionTolerance)),
+                                .until(() -> inputs.position.in(Radians)
+                                        < releaseStartPosition.get().in(Radians)),
                         run(() -> {
+                                    var position = releasePosition.get().plus(zeroedPosition.get());
+                                    io.setPosition(position, NewtonMeters.zero());
                                     io.setReleaseServoSpeed(1.0);
                                     io.setBrakeServoAngle(brakeDisengagedAngle.get());
-                                    io.stop();
                                 })
-                                .withTimeout(2.0),
+                                .withTimeout(3.0),
                         run(() -> {
                             var position = deployedPosition.get().plus(zeroedPosition.get());
                             io.setPosition(position, NewtonMeters.zero());
+                            io.setReleaseServoSpeed(1.0);
                             io.setBrakeServoAngle(brakeDisengagedAngle.get());
                         }))
                 .finallyDo(() -> io.stopReleaseServo())
@@ -89,7 +97,7 @@ public class Climb extends SubsystemBase {
                         zero().unless(() -> zeroedPosition.isPresent()),
                         run(() -> {
                                     io.setBrakeServoAngle(brakeEngagedAngle.get());
-                                    io.setVoltage(retractVoltage);
+                                    io.setVoltage(retractVoltage.get());
                                 })
                                 .until(() -> inputs.position.in(Radians)
                                         > zeroedPosition.get().in(Radians)
@@ -109,8 +117,16 @@ public class Climb extends SubsystemBase {
                                 .until(() -> debouncer.calculate(inputs.velocity.lt(zeroVelocityLimit.get()))),
                         runOnce(() -> {
                             zeroedPosition = Optional.of(inputs.position);
-                            io.stop();
-                        }))
+                        }),
+                        run(() -> {
+                                    io.setPosition(
+                                            preDeployedPosition.get().plus(zeroedPosition.get()), NewtonMeters.zero());
+                                })
+                                .until(() -> MathUtil.isNear(
+                                        inputs.position.in(Radians),
+                                        zeroedPosition.get().in(Radians)
+                                                + preDeployedPosition.get().in(Radians),
+                                        1.0)))
                 .withName("ClimbZero");
     }
 

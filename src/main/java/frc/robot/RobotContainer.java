@@ -2,6 +2,8 @@ package frc.robot;
 
 import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -69,7 +71,6 @@ public class RobotContainer {
 
     // On-robot buttons
     private final DigitalInput coastButtonInput = new DigitalInput(0);
-    private final Trigger coastButton = disabled.and(coastButtonInput::get).and(() -> !DriverStation.isFMSAttached());
 
     public RobotContainer() {
         Drive drive = null;
@@ -282,19 +283,24 @@ public class RobotContainer {
 
         /* Miscellaneous */
         teleop.onTrue(drive.resetRotation(robotState::getHeading));
-        coastButton.whileTrue(startEnd(
-                        () -> {
-                            drive.setNeutralMode(NeutralModeValue.Coast);
-                            superstructure.setNeutralMode(NeutralModeValue.Coast);
-                            climb.setNeutralMode(NeutralModeValue.Coast);
-                        },
-                        () -> {
-                            drive.setNeutralMode(NeutralModeValue.Brake);
-                            superstructure.setNeutralMode(NeutralModeValue.Brake);
-                            climb.setNeutralMode(NeutralModeValue.Brake);
-                        })
-                .ignoringDisable(true)
-                .withName("RobotCoastMode"));
+
+        var coastDebouncer = new Debouncer(10.0, DebounceType.kRising);
+        new Trigger(() -> !DriverStation.isFMSAttached()
+                        && coastDebouncer.calculate(DriverStation.isDisabled())
+                        && coastButtonInput.get())
+                .whileTrue(startEnd(
+                                () -> {
+                                    drive.setNeutralMode(NeutralModeValue.Coast);
+                                    superstructure.setNeutralMode(NeutralModeValue.Coast);
+                                    climb.setNeutralMode(NeutralModeValue.Coast);
+                                },
+                                () -> {
+                                    drive.setNeutralMode(NeutralModeValue.Brake);
+                                    superstructure.setNeutralMode(NeutralModeValue.Brake);
+                                    climb.setNeutralMode(NeutralModeValue.Brake);
+                                })
+                        .ignoringDisable(true)
+                        .withName("RobotCoastMode"));
     }
 
     private void configureAutoRoutines() {

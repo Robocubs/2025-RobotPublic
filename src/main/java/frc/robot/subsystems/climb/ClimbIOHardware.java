@@ -63,7 +63,7 @@ public class ClimbIOHardware implements ClimbIO {
                 .withSlot0(new Slot0Configs().withKP(positionKP.get()).withKD(positionKD.get()))
                 .withSlot1(new Slot1Configs().withKP(velocityKP.get()).withKD(velocityKD.get()))
                 .withTorqueCurrent(new TorqueCurrentConfigs()
-                        .withPeakForwardTorqueCurrent(Amps.of(retractVoltage.in(Volts) / 12.0 * 60))
+                        .withPeakForwardTorqueCurrent(Amps.of(60))
                         .withPeakReverseTorqueCurrent(Amps.of(-5)))
                 .withCurrentLimits(new CurrentLimitsConfigs()
                         .withStatorCurrentLimit(Amps.of(40))
