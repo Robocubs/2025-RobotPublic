@@ -28,7 +28,7 @@ public class Rollers {
 
     private final RollersIO io;
     private final RollersIOInputsAutoLogged inputs = new RollersIOInputsAutoLogged();
-    private final ThresholdLatchedBoolean longCoralDetected = ThresholdLatchedBoolean.fromThresholdTolerance(
+    private final ThresholdLatchedBoolean coralDetected = ThresholdLatchedBoolean.fromThresholdTolerance(
             coralDetectionDistance.in(Meters), detectionDistanceTolerance.in(Meters), false);
     private final ThresholdLatchedBoolean algaeDetected = ThresholdLatchedBoolean.fromThresholdTolerance(
             algaeDetectionDistance.in(Meters), detectionDistanceTolerance.in(Meters), false);
@@ -36,15 +36,10 @@ public class Rollers {
             elevatorDetectionDistance.in(Meters), detectionDistanceTolerance.in(Meters), false);
     private final ThresholdLatchedBoolean funnelDetected = ThresholdLatchedBoolean.fromThresholdTolerance(
             funnelDetectionDistance.in(Meters), detectionDistanceTolerance.in(Meters), false);
-    // private final LatchedBoolean wideCoralDetected = new LatchedBoolean(true);
     private final Supplier<Distance> elevatorHeight;
 
     private Angle coralFeedCoralRollerPosition = Radians.of(coralFeedDistance.get() / coralRollerRadius.in(Meters));
     private Angle coralFeedHybridRollerPosition = Radians.of(coralFeedDistance.get() / hybridRollerRadius.in(Meters));
-    // private Angle coralIntakeCoralRollerPosition = Radians.of(coralIntakeDistance.get() /
-    // coralRollerRadius.in(Meters));
-    // private Angle coralIntakeHybridRollerPosition =
-    //         Radians.of(coralIntakeDistance.get() / hybridRollerRadius.in(Meters));
     private Angle algaeIntakeHybridRollerPosition =
             Radians.of(algaeIntakeDistance.get() / hybridRollerRadius.in(Meters));
 
@@ -76,7 +71,7 @@ public class Rollers {
         io.updateInputs(inputs);
         Logger.processInputs("Rollers", inputs);
 
-        longCoralDetected.update(inputs.coralDetectorDistance.in(Meters));
+        coralDetected.update(inputs.coralDetectorDistance.in(Meters));
         algaeDetected.update(inputs.algaeDetectorDistance.in(Meters));
         funnelDetected.update(inputs.funnelDetectorDistance.in(Meters));
 
@@ -86,21 +81,11 @@ public class Rollers {
             elevatorDetected.update(Double.POSITIVE_INFINITY);
         }
 
-        // if (state == State.AUTO_INTAKE_CORAL) {
-        //     wideCoralDetected.update(inputs.coralDetectorDistance.lt(coralDetectionDistance));
-        // } else if (state == State.CORAL_FORWARD || state == State.AUTO_INTAKE_ALGAE) {
-        //     wideCoralDetected.update(false);
-        // }
-
         LoggedTunableValue.ifChanged(
                 0,
                 () -> {
                     coralFeedCoralRollerPosition = Radians.of(coralFeedDistance.get() / coralRollerRadius.in(Meters));
                     coralFeedHybridRollerPosition = Radians.of(coralFeedDistance.get() / hybridRollerRadius.in(Meters));
-                    // coralIntakeCoralRollerPosition =
-                    //         Radians.of(coralIntakeDistance.get() / coralRollerRadius.in(Meters));
-                    // coralIntakeHybridRollerPosition =
-                    //         Radians.of(coralIntakeDistance.get() / hybridRollerRadius.in(Meters));
                     algaeIntakeHybridRollerPosition =
                             Radians.of(algaeIntakeDistance.get() / hybridRollerRadius.in(Meters));
                 },
@@ -112,19 +97,7 @@ public class Rollers {
     public void runState(State state) {
         this.state = state;
 
-        // if (wideCoralDetected.get()) {
-        //     if (autoIntakeCoralCoralPosition.isEmpty() || autoIntakeCoralHybridPosition.isEmpty()) {
-        //         autoIntakeCoralCoralPosition =
-        // Optional.of(inputs.coralPosition.plus(coralIntakeCoralRollerPosition));
-        //         autoIntakeCoralHybridPosition =
-        //                 Optional.of(inputs.hybridPosition.plus(coralIntakeHybridRollerPosition));
-        //     }
-        // } else {
-        //     autoIntakeCoralCoralPosition = Optional.empty();
-        //     autoIntakeCoralHybridPosition = Optional.empty();
-        // }
-
-        if (longCoralDetected.get() && !funnelDetected()) {
+        if (coralDetected.get() && !funnelDetected()) {
             if (autoFeedCoralCoralPosition.isEmpty() || autoFeedCoralHybridPosition.isEmpty()) {
                 autoFeedCoralCoralPosition = Optional.of(inputs.coralPosition.plus(coralFeedCoralRollerPosition));
                 autoFeedCoralHybridPosition = Optional.of(inputs.hybridPosition.minus(coralFeedHybridRollerPosition));
@@ -148,7 +121,7 @@ public class Rollers {
                 if (autoFeedCoralCoralPosition.isPresent() && autoFeedCoralHybridPosition.isPresent()) {
                     io.setCoralPosition(autoFeedCoralCoralPosition.get());
                     io.setHybridPosition(autoFeedCoralHybridPosition.get());
-                } else if (longCoralDetected.get()) {
+                } else if (coralDetected.get()) {
                     io.setCoralVelocity(coralFeedFastCoralRollerVelocity);
                     io.setHybridVelocity(coralFeedFastHybridRollerVelocity);
                 } else {
@@ -221,13 +194,8 @@ public class Rollers {
     }
 
     @AutoLogOutput
-    public boolean longCoralDetected() {
-        return longCoralDetected.get() && inputs.coralSignalStrengthSignal > 2500;
-    }
-
-    @AutoLogOutput
-    public boolean wideCoralDetected() {
-        return false;
+    public boolean coralDetected() {
+        return coralDetected.get() && inputs.coralSignalStrengthSignal > 2500;
     }
 
     @AutoLogOutput

@@ -65,4 +65,8 @@ public class SubsystemScheduler<Subsystem extends SubsystemBase> {
             nextCommand = commandValue;
         });
     }
+
+    public Subsystem getSubsystem() {
+        return subsystem;
+    }
 }

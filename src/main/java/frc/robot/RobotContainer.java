@@ -16,6 +16,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.RobotState.AlgaeMode;
 import frc.robot.RobotState.CoralMode;
 import frc.robot.autonomous.AutoRoutines;
+import frc.robot.commands.AutoScore;
 import frc.robot.commands.SubsystemScheduler;
 import frc.robot.commands.characterization.DriveCharacterization;
 import frc.robot.commands.characterization.SuperstructureCharacterization;
@@ -52,7 +53,7 @@ import frc.robot.subsystems.vision.apriltag.AprilTagIOSim;
 import frc.robot.util.TriggeredAlert;
 
 import static edu.wpi.first.units.Units.*;
-import static edu.wpi.first.wpilibj2.command.Commands.startEnd;
+import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class RobotContainer {
     private final CommandXboxController driverController = new CommandXboxController(0);
@@ -129,7 +130,11 @@ public class RobotContainer {
         }
 
         if (vision == null) {
-            vision = new Vision(new AprilTagIO[] {}, robotState);
+            vision = new Vision(
+                    new AprilTagIO[] {
+                        () -> VisionConstants.frontLeftAprilTagConfig, () -> VisionConstants.frontRightAprilTagConfig
+                    },
+                    robotState);
         }
 
         if (climb == null) {
@@ -175,31 +180,12 @@ public class RobotContainer {
         driverController.x().whileTrue(drive.brake());
         driverController.back().onTrue(superstructure.zeroElevator());
 
-        var eitherCoralTrigger = driverController.rightTrigger().or(driverController.leftTrigger());
-        eitherCoralTrigger
-                .and(() -> robotState.isSelected(CoralMode.L4_CORAL))
-                .whileTrue(superstructure.score(
-                        SuperstructureState.L4_CORAL,
-                        SuperstructureState.L4_CORAL_SCORE,
-                        driverController.rightBumper()));
-        eitherCoralTrigger
-                .and(() -> robotState.isSelected(CoralMode.L3_CORAL))
-                .whileTrue(superstructure.score(
-                        SuperstructureState.L3_CORAL,
-                        SuperstructureState.L3_CORAL_SCORE,
-                        driverController.rightBumper()));
-        eitherCoralTrigger
-                .and(() -> robotState.isSelected(CoralMode.L2_CORAL))
-                .whileTrue(superstructure.score(
-                        SuperstructureState.L2_CORAL,
-                        SuperstructureState.L2_CORAL_SCORE,
-                        driverController.rightBumper()));
-        eitherCoralTrigger
-                .and(() -> robotState.isSelected(CoralMode.L1_CORAL))
-                .whileTrue(superstructure.score(
-                        SuperstructureState.L1_CORAL,
-                        SuperstructureState.L1_CORAL_SCORE,
-                        driverController.rightBumper()));
+        driverController
+                .leftTrigger()
+                .whileTrue(AutoScore.autoScore(drive, superstructure, robotState, robotState::getLeftReefPose));
+        driverController
+                .rightTrigger()
+                .whileTrue(AutoScore.autoScore(drive, superstructure, robotState, robotState::getRightReefPose));
 
         driverController
                 .rightBumper()
@@ -208,11 +194,11 @@ public class RobotContainer {
         driverController
                 .a()
                 .and(() -> robotState.isSelected(AlgaeMode.L3))
-                .whileTrue(superstructure.runState(SuperstructureState.L3_ALGAE).unless(robotState::hasLongCoral));
+                .whileTrue(superstructure.runState(SuperstructureState.L3_ALGAE).unless(robotState::hasCoral));
         driverController
                 .a()
                 .and(() -> robotState.isSelected(AlgaeMode.L2))
-                .whileTrue(superstructure.runState(SuperstructureState.L2_ALGAE).unless(robotState::hasLongCoral));
+                .whileTrue(superstructure.runState(SuperstructureState.L2_ALGAE).unless(robotState::hasCoral));
         driverController
                 .a()
                 .and(() -> robotState.isSelected(AlgaeMode.BARGE))
@@ -283,6 +269,11 @@ public class RobotContainer {
 
         /* Miscellaneous */
         teleop.onTrue(drive.resetRotation(robotState::getHeading));
+        teleop.and(() -> robotState.getMatchTimer() > 20
+                        && robotState.getMatchTimer() < 30
+                        && robotState.isCountingDown()
+                        && !climb.hasBeenZeroed())
+                .onTrue(climbZero);
 
         var coastDebouncer = new Debouncer(10.0, DebounceType.kRising);
         new Trigger(() -> !DriverStation.isFMSAttached()

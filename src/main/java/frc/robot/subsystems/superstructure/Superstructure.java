@@ -102,9 +102,7 @@ public class Superstructure extends SubsystemBase {
         elevatorLigament.setLength(elevator.getHeight().in(Meters));
         armLigament.setAngle(arm.getAngle().in(Degrees) + armAngleOffsetDegrees);
 
-        robotState.setGamePieceStates(
-                rollers.longCoralDetected(), rollers.wideCoralDetected(), rollers.algaeDetected());
-
+        robotState.setGamePieceStates(rollers.coralDetected(), rollers.algaeDetected());
         robotState.updateSuperstructureState(
                 state,
                 atStatePose()
@@ -163,9 +161,9 @@ public class Superstructure extends SubsystemBase {
         rollers.runState(state.getData().getRollerState());
         if (rollerState != Rollers.State.AUTO_FEED_CORAL
                 || !isNear(SuperstructurePose.Preset.FEED.getPose())
-                || (rollers.longCoralDetected() && !rollers.funnelDetected())) {
+                || (rollers.coralDetected() && !rollers.funnelDetected())) {
             funnel.stop();
-        } else if (rollers.longCoralDetected()) {
+        } else if (rollers.coralDetected()) {
             funnel.fastFeed();
         } else {
             funnel.feed();
@@ -205,6 +203,17 @@ public class Superstructure extends SubsystemBase {
                                 : state.getData().getPose().armAngle());
                 break;
         }
+    }
+
+    public Command transitionToCoralPrepState() {
+        return defer(() -> controller.getCommand(
+                this.state,
+                switch (robotState.getCoralSelection()) {
+                    case L4_CORAL -> SuperstructureState.L4_CORAL;
+                    case L3_CORAL -> SuperstructureState.L3_CORAL;
+                    case L2_CORAL -> SuperstructureState.L2_CORAL;
+                    case L1_CORAL -> SuperstructureState.L1_CORAL;
+                }));
     }
 
     public Command transitionToState(SuperstructureState state) {
@@ -267,8 +276,25 @@ public class Superstructure extends SubsystemBase {
                 .withName("SuperstructureRetractArm");
     }
 
+    public Command scoreSelectedCoral(BooleanSupplier release) {
+        return defer(() -> score(
+                        switch (robotState.getCoralSelection()) {
+                            case L4_CORAL -> SuperstructureState.L4_CORAL;
+                            case L3_CORAL -> SuperstructureState.L3_CORAL;
+                            case L2_CORAL -> SuperstructureState.L2_CORAL;
+                            case L1_CORAL -> SuperstructureState.L1_CORAL;
+                        },
+                        switch (robotState.getCoralSelection()) {
+                            case L4_CORAL -> SuperstructureState.L4_CORAL_SCORE;
+                            case L3_CORAL -> SuperstructureState.L3_CORAL_SCORE;
+                            case L2_CORAL -> SuperstructureState.L2_CORAL_SCORE;
+                            case L1_CORAL -> SuperstructureState.L1_CORAL_SCORE;
+                        },
+                        release))
+                .withName("SuperstructureScoreSelected");
+    }
+
     public Command score(SuperstructureState prescoreState, SuperstructureState scoreState, BooleanSupplier release) {
-        // TODO: Ensure the coral doesn't get partially scored
         return sequence(
                         // Wait for the robot to be at the correct speed
                         hold().andThen(maintainState())

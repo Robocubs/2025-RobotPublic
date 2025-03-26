@@ -14,12 +14,13 @@ public final class Constants {
     private static final RobotType simBot = RobotType.SIM_BOT;
     private static final boolean realBotTuningEnabled = true;
     private static final boolean realBotCharacterizationEnabled = false;
+    private static final boolean simBotCharacterizationEnabled = false;
 
     public static final Mode mode = RobotBase.isReal() ? Mode.REAL : simMode;
     public static final RobotType robot = (mode == Mode.REAL || mode == Mode.REPLAY) ? realBot : simBot;
     public static final boolean tuningEnabled = robot == RobotType.SIM_BOT ? true : realBotTuningEnabled;
     public static final boolean characterizationEnabled =
-            robot == RobotType.SIM_BOT ? true : realBotCharacterizationEnabled;
+            robot == RobotType.SIM_BOT ? simBotCharacterizationEnabled : realBotCharacterizationEnabled;
 
     public static enum RobotType {
         COMP_BOT,

@@ -11,7 +11,7 @@ public final class VisionConstants {
     public static final double fieldBorderMargin = 0.0;
     public static final double zMargin = 0.75;
     public static final double linearStdDevBaseline = 0.02; // Meters
-    public static final double angularStdDevBaseline = 0.01; // Radians
+    public static final double angularStdDevBaseline = 0.005; // Radians
 
     public static final SingleTargetMode singleTargetMode = SingleTargetMode.LOWEST_AMBIGUITY;
 

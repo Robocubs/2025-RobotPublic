@@ -24,6 +24,8 @@ public final class FieldConstants {
     public static final Distance distanceBetweenBranches = Inches.of(12.94);
     public static final Distance halfDistanceBetweenBranches = distanceBetweenBranches.div(2);
 
+    public static final Distance reefFaceLength = Inches.of(36.792600);
+
     public static final Translation2d fieldCenter = new Translation2d(fieldLength.div(2), fieldWidth.div(2));
 
     private static final AllianceFieldConstants blueConstants = AllianceFieldConstants.builder()
@@ -182,10 +184,12 @@ public final class FieldConstants {
             var frontFacingRobotTransform =
                     new Transform2d(Constants.halfRobotLength.in(Meters), 0.0, Rotation2d.k180deg);
             var backFacingRobotTransform = new Transform2d(Constants.halfRobotLength.in(Meters), 0.0, Rotation2d.kZero);
+            var l2CoralRobotTransform =
+                    new Transform2d(Constants.halfRobotLength.in(Meters) + 0.12, 0.0, Rotation2d.k180deg);
             var l3CoralRobotTransform =
-                    new Transform2d(Constants.halfRobotLength.in(Meters) + 0.07, 0.0, Rotation2d.k180deg);
+                    new Transform2d(Constants.halfRobotLength.in(Meters) + 0.12, 0.0, Rotation2d.k180deg);
             var l4CoralRobotTransform =
-                    new Transform2d(Constants.halfRobotLength.in(Meters) + 0.27, 0.0, Rotation2d.k180deg);
+                    new Transform2d(Constants.halfRobotLength.in(Meters) + 0.31, 0.0, Rotation2d.k180deg);
             var l3AlgaeRobotTransform =
                     new Transform2d(Constants.halfRobotLength.in(Meters) + 0.1, 0.0, Rotation2d.k180deg);
             var processorRobotTransform =
@@ -195,7 +199,7 @@ public final class FieldConstants {
             robotCoralStationLeftPose = coralStationLeftPose.transformBy(backFacingRobotTransform);
             robotCoralStationRightPose = coralStationRightPose.transformBy(backFacingRobotTransform);
             robotCoralL12Poses = Stream.of(reefBranchPoses)
-                    .map(pose -> pose.transformBy(frontFacingRobotTransform))
+                    .map(pose -> pose.transformBy(l2CoralRobotTransform))
                     .toArray(Pose2d[]::new);
             robotCoralL3Poses = Stream.of(reefBranchPoses)
                     .map(pose -> pose.transformBy(l3CoralRobotTransform))

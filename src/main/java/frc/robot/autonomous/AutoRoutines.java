@@ -5,8 +5,6 @@ import java.util.Set;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.RobotState;
 import frc.robot.RobotState.CoralMode;
@@ -67,15 +65,6 @@ public class AutoRoutines {
 
     private LoggedAutoRoutine create(String name) {
         return new LoggedAutoRoutine(name, factory, robotState, drive, superstructure);
-    }
-
-    public AutoRoutine demoAuto() {
-        return create("Demo Auto")
-                .resetPose("SimplePath")
-                .followPath("SimplePath", 0)
-                .pointModulesWaitSeconds(new Translation2d(8.33, 4), 1.0)
-                .driveToPose(new Pose2d(8.33, 4, Rotation2d.kCCW_90deg))
-                .build();
     }
 
     public AutoRoutine forwardAuto() {

@@ -74,8 +74,8 @@ public final class RollersConstants {
     public static final AngularVelocity algaeIntakeHybridRollerVelocity =
             algaeIntakeHybridRollerPosition.div(algaeIntakeTime);
 
-    public static final AngularVelocity coralForwardCoralRollerVelocity = coralIntakeCoralRollerVelocity.times(-3);
-    public static final AngularVelocity coralForwardHybridRollerVelocity = algaeIntakeHybridRollerVelocity.times(-3);
+    public static final AngularVelocity coralForwardCoralRollerVelocity = coralIntakeCoralRollerVelocity.times(-5);
+    public static final AngularVelocity coralForwardHybridRollerVelocity = algaeIntakeHybridRollerVelocity.times(-4);
     public static final AngularVelocity coralReverseCoralRollerVelocity = coralIntakeCoralRollerVelocity.times(3);
     public static final AngularVelocity coralReverseHybridRollerVelocity = algaeIntakeHybridRollerVelocity.times(3);
 

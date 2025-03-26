@@ -147,7 +147,7 @@ public class AprilTagCamera {
         var linear = linearStdDevBaseline * distance * distance * config.weight / numTargets;
         var rotation = numTargets > 1
                 ? angularStdDevBaseline * distance * distance * config.weight / numTargets
-                : Double.POSITIVE_INFINITY;
+                : angularStdDevBaseline * distance * distance * config.weight * 1000;
         return VecBuilder.fill(linear, linear, rotation);
     }
 }

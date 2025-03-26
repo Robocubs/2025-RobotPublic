@@ -7,10 +7,14 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 
+import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureState;
+import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
+import frc.robot.util.tuning.LoggedTunableMeasure;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +22,12 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
+import static edu.wpi.first.units.Units.*;
+
 public class GraphController implements SuperstructureController {
+    private static final LoggedTunableMeasure<AngleUnit, Angle> l4RetractedAngleTolerance =
+            new LoggedTunableMeasure<>("Superstructure/L4RetractedAngleTolerance", Degrees.of(30));
+
     private final Superstructure superstructure;
     private final Graph<SuperstructureState, EdgeCommand> graph = new DefaultDirectedGraph<>(EdgeCommand.class);
 
@@ -34,7 +43,6 @@ public class GraphController implements SuperstructureController {
         var freeStates = Set.of(
                 SuperstructureState.STOW,
                 SuperstructureState.FEED_RETRACTED,
-                SuperstructureState.L1_CORAL_WIDE,
                 SuperstructureState.L1_CORAL,
                 SuperstructureState.L2_CORAL,
                 SuperstructureState.L3_CORAL,
@@ -43,6 +51,7 @@ public class GraphController implements SuperstructureController {
                 SuperstructureState.L2_ALGAE_RETRACTED,
                 SuperstructureState.L3_ALGAE_RETRACTED,
                 SuperstructureState.ALGAE_INTAKE,
+                SuperstructureState.ALGAE_EJECT,
                 SuperstructureState.PROCESSOR,
                 SuperstructureState.PROCESSOR_SCORE,
                 SuperstructureState.CORAL_INTAKE_1_RETRACTED);
@@ -65,6 +74,9 @@ public class GraphController implements SuperstructureController {
 
                 graph.addEdge(from, to, getEdgeCommand(from, to));
             }
+
+            // L4 Coral still requires retracting
+            graph.addEdge(from, SuperstructureState.L4_CORAL, getEdgeCommand(from, SuperstructureState.L4_CORAL));
         }
 
         // To/from retracting states
@@ -83,7 +95,6 @@ public class GraphController implements SuperstructureController {
         }
 
         var scoringStates = Map.ofEntries(
-                Map.entry(SuperstructureState.L1_CORAL_WIDE_SCORE, SuperstructureState.L1_CORAL_WIDE),
                 Map.entry(SuperstructureState.L1_CORAL_SCORE, SuperstructureState.L1_CORAL),
                 Map.entry(SuperstructureState.L2_CORAL_SCORE, SuperstructureState.L2_CORAL),
                 Map.entry(SuperstructureState.L3_CORAL_SCORE, SuperstructureState.L3_CORAL),
@@ -102,10 +113,6 @@ public class GraphController implements SuperstructureController {
         graph.addEdge(SuperstructureState.CORAL_INTAKE_1, SuperstructureState.CORAL_INTAKE_1_RETRACTED);
         graph.addEdge(SuperstructureState.CORAL_INTAKE_1, SuperstructureState.CORAL_INTAKE_2);
         graph.addEdge(SuperstructureState.CORAL_INTAKE_2, SuperstructureState.CORAL_INTAKE_1);
-
-        // Eject states
-        graph.addEdge(SuperstructureState.STOW, SuperstructureState.ALGAE_EJECT);
-        graph.addEdge(SuperstructureState.ALGAE_EJECT, SuperstructureState.STOW);
     }
 
     @Override
@@ -173,6 +180,18 @@ public class GraphController implements SuperstructureController {
     }
 
     private Command runState(SuperstructureState state) {
+        // L4 Retract special case that allows wider range of angles
+        if (state == SuperstructureState.L4_CORAL_RETRACTED) {
+            var pose = state.getData().getPose();
+            var minAngle = pose.armAngle().minus(l4RetractedAngleTolerance.get());
+            return superstructure
+                    .run(() -> superstructure.runStatePeriodic(state))
+                    .until(() -> superstructure.getArmAngle().gt(minAngle)
+                            && superstructure
+                                    .getElevatorHeight()
+                                    .isNear(pose.elevatorHeight(), ElevatorConstants.positionTolerance));
+        }
+
         return superstructure
                 .run(() -> superstructure.runStatePeriodic(state))
                 .until(() -> superstructure.isNear(state));

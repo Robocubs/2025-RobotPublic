@@ -127,8 +127,8 @@ public class Drive extends SubsystemBase {
                 algaeTrigger);
     }
 
-    public DriveToPose toPose(Supplier<Pose2d> poseSupplier, boolean finishAtGoal) {
-        return new DriveToPose(this, robotState, poseSupplier, finishAtGoal);
+    public DriveToPose toPose(Supplier<Pose2d> poseSupplier, boolean finishAtGoal, boolean slowMode) {
+        return new DriveToPose(this, robotState, poseSupplier, finishAtGoal, slowMode);
     }
 
     public Command brake() {

@@ -32,15 +32,9 @@ public enum SuperstructureState {
             .pose(Preset.FEED.getPose())
             .rollerState(Rollers.State.AUTO_FEED_CORAL)
             .build()),
-    L1_CORAL_WIDE(
-            SuperstructureStateData.builder().pose(Preset.L1_WIDE.getPose()).build()),
-    L1_CORAL_WIDE_SCORE(SuperstructureStateData.builder()
-            .pose(Preset.L1_WIDE.getPose())
-            .rollerState(Rollers.State.CORAL_FORWARD)
-            .build()),
-    L1_CORAL(SuperstructureStateData.builder().pose(Preset.L1_LONG.getPose()).build()),
+    L1_CORAL(SuperstructureStateData.builder().pose(Preset.L1.getPose()).build()),
     L1_CORAL_SCORE(SuperstructureStateData.builder()
-            .pose(Preset.L1_LONG.getPose())
+            .pose(Preset.L1.getPose())
             .rollerState(Rollers.State.CORAL_FORWARD)
             .build()),
     L2_CORAL(SuperstructureStateData.builder().pose(Preset.L2.getPose()).build()),

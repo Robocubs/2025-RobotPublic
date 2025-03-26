@@ -9,6 +9,7 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.units.measure.Distance;
@@ -58,6 +59,8 @@ public class RobotState {
             );
     private final Field2d field;
 
+    private @AutoLogOutput @Getter double matchTimer;
+    private @Getter boolean countingDown;
     private @AutoLogOutput @Getter CoralMode coralSelection = CoralMode.L4_CORAL;
     private @AutoLogOutput @Getter AlgaeMode algaeSelection = AlgaeMode.NONE;
     private @AutoLogOutput @Getter ChassisSpeeds robotVelocity = new ChassisSpeeds();
@@ -73,8 +76,7 @@ public class RobotState {
     private @AutoLogOutput boolean inBargeArea;
     private @AutoLogOutput boolean underNetArea;
     private Distance elevatorheight = Meters.zero();
-    private boolean hasLongCoral;
-    private boolean hasWideCoral;
+    private boolean hasCoral;
     private boolean hasAlgae;
 
     public static enum CoralMode {
@@ -112,6 +114,16 @@ public class RobotState {
     }
 
     public void periodic() {
+        var matchTimer = DriverStation.getMatchTime();
+        if (DriverStation.isDisabled()) {
+            countingDown = false;
+        } else if (matchTimer < matchTimer) {
+            countingDown = true;
+        }
+        this.matchTimer = matchTimer;
+
+        SmartDashboard.putNumber("MatchTimer", matchTimer);
+
         field.setRobotPose(poseEstimator.getEstimatedPosition());
 
         var pose = poseEstimator.getEstimatedPosition();
@@ -164,11 +176,6 @@ public class RobotState {
     }
 
     @AutoLogOutput
-    public double getMatchTime() {
-        return DriverStation.getMatchTime();
-    }
-
-    @AutoLogOutput
     public Pose2d getPose() {
         return poseEstimator.getEstimatedPosition();
     }
@@ -185,6 +192,14 @@ public class RobotState {
     @AutoLogOutput
     public Rotation2d getHeading() {
         return poseEstimator.getEstimatedPosition().getRotation();
+    }
+
+    public Distance getDistanceTo(Translation2d translation) {
+        return Meters.of(poseEstimator.getEstimatedPosition().getTranslation().getDistance(translation));
+    }
+
+    public Distance getDistanceTo(Pose2d pose) {
+        return getDistanceTo(pose.getTranslation());
     }
 
     public boolean isFacingReef() {
@@ -239,12 +254,8 @@ public class RobotState {
         return speedNominal;
     }
 
-    public boolean hasLongCoral() {
-        return hasLongCoral;
-    }
-
-    public boolean hasWideCoral() {
-        return hasWideCoral;
+    public boolean hasCoral() {
+        return hasCoral;
     }
 
     public boolean hasAlgae() {
@@ -252,7 +263,7 @@ public class RobotState {
     }
 
     public boolean hasGamePiece() {
-        return hasLongCoral || hasWideCoral || hasAlgae;
+        return hasCoral || hasAlgae;
     }
 
     public Optional<Pose2d> getClosestReefBranch() {
@@ -384,9 +395,8 @@ public class RobotState {
         }
     }
 
-    public void setGamePieceStates(boolean hasLongCoral, boolean hasWideCoral, boolean hasAlgae) {
-        this.hasLongCoral = hasLongCoral;
-        this.hasWideCoral = hasWideCoral;
+    public void setGamePieceStates(boolean hasCoral, boolean hasAlgae) {
+        this.hasCoral = hasCoral;
         this.hasAlgae = hasAlgae;
     }
 

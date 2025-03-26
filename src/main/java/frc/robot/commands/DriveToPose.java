@@ -11,57 +11,90 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.AngularAccelerationUnit;
+import edu.wpi.first.units.AngularVelocityUnit;
+import edu.wpi.first.units.DistanceUnit;
+import edu.wpi.first.units.LinearAccelerationUnit;
+import edu.wpi.first.units.LinearVelocityUnit;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularAcceleration;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearAcceleration;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.util.tuning.LoggedTunableMeasure;
+import frc.robot.util.tuning.LoggedTunableNumber;
 import org.littletonrobotics.junction.Logger;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.subsystems.drive.DriveConstants.*;
 
 public class DriveToPose extends Command {
-    private static final double maxSpeedPercent = 0.8;
-    private static final double maxAccelerationPercent = 0.8;
-
-    private static final double translationTolerance = 0.05;
-    private static final double rotationTolerance = Units.degreesToRadians(1.5);
-    private static final double ffMinRadius = 0.2;
-    private static final double ffMaxRadius = 0.8;
     private static final ChassisSpeeds zeroSpeeds = new ChassisSpeeds();
 
+    private static final LoggedTunableNumber translationP = new LoggedTunableNumber("DriveToPose/TranslationKP", 5.0);
+    private static final LoggedTunableNumber rotationP = new LoggedTunableNumber("DriveToPose/RotationKP", 4.0);
+    private static final LoggedTunableMeasure<LinearVelocityUnit, LinearVelocity> maxLinearVelocity =
+            new LoggedTunableMeasure<>("DriveToPose/MaxLinearVelocity", MetersPerSecond.of(3.5));
+    private static final LoggedTunableMeasure<LinearAccelerationUnit, LinearAcceleration> maxLinearAcceleration =
+            new LoggedTunableMeasure<>("DriveToPose/MaxLinearAcceleration", MetersPerSecondPerSecond.of(4.0));
+    private static final LoggedTunableMeasure<LinearVelocityUnit, LinearVelocity> slowModeMaxLinearVelocity =
+            new LoggedTunableMeasure<>("DriveToPose/SlowModeMaxLinearVelocity", MetersPerSecond.of(0.7));
+    private static final LoggedTunableMeasure<LinearAccelerationUnit, LinearAcceleration>
+            slowModeMaxLinearAcceleration = new LoggedTunableMeasure<>(
+                    "DriveToPose/SlowModeMaxLinearAcceleration", MetersPerSecondPerSecond.of(0.7));
+    private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> maxAngularRate =
+            new LoggedTunableMeasure<>("DriveToPose/MaxAngularRate", RadiansPerSecond.of(1.0));
+    private static final LoggedTunableMeasure<AngularAccelerationUnit, AngularAcceleration> maxAngularAcceleration =
+            new LoggedTunableMeasure<>("DriveToPose/MaxAngularAcceleration", RadiansPerSecondPerSecond.of(2.0));
+    private static final LoggedTunableMeasure<DistanceUnit, Distance> translationTolerance =
+            new LoggedTunableMeasure<>("DriveToPose/TranslationTolerance", Inches.of(1.0));
+    private static final LoggedTunableMeasure<AngleUnit, Angle> rotationTolerance =
+            new LoggedTunableMeasure<>("DriveToPose/RotationTolerance", Degrees.of(1.0));
+    private static final LoggedTunableMeasure<DistanceUnit, Distance> ffMinRadius =
+            new LoggedTunableMeasure<>("DriveToPose/FFMinRadius", Meters.of(0.2));
+    private static final LoggedTunableMeasure<DistanceUnit, Distance> ffMaxRadius =
+            new LoggedTunableMeasure<>("DriveToPose/FFMaxRadius", Meters.of(0.8));
+
     private final SwerveRequest.ApplyRobotSpeeds applyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
+    private final SwerveRequest.PointWheelsAt pointWheels = new SwerveRequest.PointWheelsAt();
 
     private final Drive drive;
     private final RobotState robotState;
     private final Supplier<Pose2d> targetPose;
     private final boolean finishAtGoal;
-    private final ProfiledPIDController translationController;
-    private final ProfiledPIDController rotationController;
+    private final ProfiledPIDController translationController = new ProfiledPIDController(
+            translationP.get(),
+            0.0,
+            0.0,
+            new TrapezoidProfile.Constraints(
+                    maxLinearVelocity.get().in(MetersPerSecond),
+                    maxLinearAcceleration.get().in(MetersPerSecondPerSecond)),
+            Constants.mainLoopPeriod.in(Seconds));
+    private final ProfiledPIDController rotationController = new ProfiledPIDController(
+            rotationP.get(),
+            0.0,
+            0.0,
+            new TrapezoidProfile.Constraints(
+                    maxAngularRate.get().in(RadiansPerSecond),
+                    maxAngularAcceleration.get().in(RadiansPerSecondPerSecond)),
+            Constants.mainLoopPeriod.in(Seconds));
+    private final boolean slowMode;
 
     private Translation2d translationSetpoint = Translation2d.kZero;
 
-    public DriveToPose(Drive drive, RobotState robotState, Supplier<Pose2d> targetPose, boolean finishAtGoal) {
+    public DriveToPose(
+            Drive drive, RobotState robotState, Supplier<Pose2d> targetPose, boolean finishAtGoal, boolean slowMode) {
         this.drive = drive;
         this.robotState = robotState;
         this.targetPose = targetPose;
         this.finishAtGoal = finishAtGoal;
+        this.slowMode = slowMode;
 
-        translationController = new ProfiledPIDController(
-                translationP,
-                translationI,
-                translationD,
-                new TrapezoidProfile.Constraints(
-                        maxSpeed.in(MetersPerSecond) * maxSpeedPercent,
-                        maxAcceleration.in(MetersPerSecondPerSecond) * maxAccelerationPercent),
-                0.02);
-        rotationController = new ProfiledPIDController(
-                rotationP,
-                rotationI,
-                rotationD,
-                new TrapezoidProfile.Constraints(
-                        maxAngularRate.in(RadiansPerSecond), maxAngularAcceleration.in(RadiansPerSecondPerSecond)),
-                0.02);
         rotationController.enableContinuousInput(-Math.PI, Math.PI);
 
         addRequirements(drive);
@@ -69,6 +102,19 @@ public class DriveToPose extends Command {
 
     @Override
     public void initialize() {
+        translationController.setP(translationP.get());
+        rotationController.setP(rotationP.get());
+        translationController.setConstraints(new TrapezoidProfile.Constraints(
+                (slowMode ? slowModeMaxLinearVelocity : maxLinearVelocity).get().in(MetersPerSecond),
+                (slowMode ? slowModeMaxLinearAcceleration : maxLinearAcceleration)
+                        .get()
+                        .in(MetersPerSecondPerSecond)));
+        rotationController.setConstraints(new TrapezoidProfile.Constraints(
+                maxAngularRate.get().in(RadiansPerSecond),
+                maxAngularAcceleration.get().in(RadiansPerSecondPerSecond)));
+        translationController.setTolerance(translationTolerance.get().in(Meters));
+        rotationController.setTolerance(rotationTolerance.get().in(Radians));
+
         var currentPose = robotState.getPose();
         var targetPose = this.targetPose.get();
         var rotationToTarget =
@@ -77,9 +123,9 @@ public class DriveToPose extends Command {
         var velocityToTarget = ChassisSpeeds.fromFieldRelativeSpeeds(fieldVelocity, rotationToTarget).vxMetersPerSecond;
         var currentDistance = currentPose.getTranslation().getDistance(targetPose.getTranslation());
         translationController.reset(currentDistance, -velocityToTarget);
-        translationController.setTolerance(translationTolerance);
+        translationController.setTolerance(translationTolerance.get().in(Meters));
         rotationController.reset(currentPose.getRotation().getRadians(), fieldVelocity.omegaRadiansPerSecond);
-        rotationController.setTolerance(rotationTolerance);
+        rotationController.setTolerance(rotationTolerance.get().in(Radians));
         translationSetpoint = currentPose.getTranslation();
     }
 
@@ -91,19 +137,19 @@ public class DriveToPose extends Command {
         var currentDistance = currentPose.getTranslation().getDistance(targetPose.getTranslation());
         var previousSetpointDistance = translationSetpoint.getDistance(targetPose.getTranslation());
         var ffScalar = MathUtil.clamp(
-                (currentDistance - ffMinRadius) / (ffMaxRadius - ffMinRadius),
-                0.5,
+                (currentDistance - ffMinRadius.get().in(Meters))
+                        / (ffMaxRadius.get().in(Meters) - ffMinRadius.get().in(Meters)),
+                0.0,
                 1.0); // Fudge factor to prevent overdriving
         translationController.reset(
                 Math.min(currentDistance, previousSetpointDistance), translationController.getSetpoint().velocity);
         var targetSpeed = translationController.calculate(currentDistance)
                 + translationController.getSetpoint().velocity * ffScalar;
-        if (translationController.atGoal()) {
-            targetSpeed = 0.0;
-        }
 
-        var maxSpeed = robotState.getMaxSpeed();
-        targetSpeed = MathUtil.clamp(targetSpeed, -maxSpeed.in(MetersPerSecond), maxSpeed.in(MetersPerSecond));
+        var maxSpeed = Math.min(
+                robotState.getMaxSpeed().in(MetersPerSecond),
+                maxLinearVelocity.get().in(MetersPerSecond));
+        targetSpeed = MathUtil.clamp(targetSpeed, -maxSpeed, maxSpeed);
 
         var rotationTargetToRobot =
                 currentPose.getTranslation().minus(targetPose.getTranslation()).getAngle();
@@ -116,15 +162,16 @@ public class DriveToPose extends Command {
                         currentPose.getRotation().getRadians(),
                         targetPose.getRotation().getRadians())
                 + rotationController.getSetpoint().velocity;
-        if (rotationController.atGoal()) {
-            rotationalVelocity = 0.0;
-        }
 
-        drive.setRequest(applyRobotSpeeds.withSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
-                translationalVelocity.getX(),
-                translationalVelocity.getY(),
-                rotationalVelocity,
-                currentPose.getRotation())));
+        if (rotationController.atGoal() && translationController.atGoal()) {
+            drive.setRequest(pointWheels.withModuleDirection(Rotation2d.kZero));
+        } else {
+            drive.setRequest(applyRobotSpeeds.withSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
+                    translationalVelocity.getX(),
+                    translationalVelocity.getY(),
+                    rotationalVelocity,
+                    currentPose.getRotation())));
+        }
 
         Logger.recordOutput(
                 "Commands/DriveToPose/SetpointPose",

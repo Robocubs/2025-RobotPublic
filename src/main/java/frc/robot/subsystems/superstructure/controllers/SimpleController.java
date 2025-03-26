@@ -16,7 +16,6 @@ public class SimpleController implements SuperstructureController {
     private final Superstructure superstructure;
 
     private final Map<SuperstructureState, SuperstructureState> scoringStateMoves = Map.ofEntries(
-            Map.entry(SuperstructureState.L1_CORAL_WIDE_SCORE, SuperstructureState.L1_CORAL_WIDE),
             Map.entry(SuperstructureState.L1_CORAL_SCORE, SuperstructureState.L1_CORAL),
             Map.entry(SuperstructureState.L2_CORAL_SCORE, SuperstructureState.L2_CORAL),
             Map.entry(SuperstructureState.L3_CORAL_SCORE, SuperstructureState.L3_CORAL),

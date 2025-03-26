@@ -2,19 +2,20 @@ package frc.robot.autonomous;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
-import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.DistanceUnit;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.CoralMode;
+import frc.robot.commands.AutoScore;
 import frc.robot.commands.SubsystemScheduler;
 import frc.robot.commands.logging.LoggedCommands;
 import frc.robot.subsystems.drive.Drive;
@@ -22,11 +23,16 @@ import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureState;
 import frc.robot.util.GeometryUtil;
 import frc.robot.util.PathBuilder;
+import frc.robot.util.tuning.LoggedTunableMeasure;
 import org.littletonrobotics.junction.Logger;
 
+import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class LoggedAutoRoutine {
+    private static final LoggedTunableMeasure<DistanceUnit, Distance> scoreDriveToPoseDistance =
+            new LoggedTunableMeasure<>("Auto/ScoreDriveToPoseDistance", Meters.of(1.5));
+
     private final AutoFactory factory;
     private final AutoRoutine routine;
     private final String name;
@@ -71,6 +77,10 @@ public class LoggedAutoRoutine {
     }
 
     public LoggedAutoRoutine requireStartingPose(String pathName) {
+        if (Constants.mode == Constants.Mode.SIM) {
+            return this.resetPose(pathName);
+        }
+
         var trajectory = routine.trajectory(pathName);
         if (trajectory == null) {
             commands.add(runOnce(() -> System.out.println("Trajectory not found, doing nothing"))
@@ -131,7 +141,7 @@ public class LoggedAutoRoutine {
     }
 
     public LoggedAutoRoutine driveToPose(Pose2d pose) {
-        commands.add(drive.toPose(() -> GeometryUtil.autoFlip(pose), true));
+        commands.add(drive.toPose(() -> GeometryUtil.autoFlip(pose), true, true));
         pathBuilder.add(pose);
         return this;
     }
@@ -156,37 +166,21 @@ public class LoggedAutoRoutine {
     public LoggedAutoRoutine scoreCoral(Pose2d pose) {
         var flippedPose = GeometryUtil.autoFlip(pose);
         var goalPose = robotState.getClosestReefBranch(flippedPose).orElse(flippedPose);
-        var debouncer = new Debouncer(0.3, DebounceType.kRising);
-        var driveToPose = drive.toPose(() -> goalPose, false);
-        var score = superstructure.schedule(s -> Commands.defer(
-                () -> s.score(
-                        switch (robotState.getCoralSelection()) {
-                            case L4_CORAL -> SuperstructureState.L4_CORAL;
-                            case L3_CORAL -> SuperstructureState.L3_CORAL;
-                            case L2_CORAL -> SuperstructureState.L2_CORAL;
-                            case L1_CORAL -> SuperstructureState.L1_CORAL;
-                        },
-                        switch (robotState.getCoralSelection()) {
-                            case L4_CORAL -> SuperstructureState.L4_CORAL_SCORE;
-                            case L3_CORAL -> SuperstructureState.L3_CORAL_SCORE;
-                            case L2_CORAL -> SuperstructureState.L2_CORAL_SCORE;
-                            case L1_CORAL -> SuperstructureState.L1_CORAL_SCORE;
-                        },
-                        () -> debouncer.calculate(driveToPose.atGoal())),
-                Set.of()));
-        commands.add(sequence(
-                runOnce(() -> debouncer.calculate(false)),
-                parallel(driveToPose, score).until(() -> !robotState.hasLongCoral()),
-                superstructure.schedule(s -> s.runState(SuperstructureState.STOW))));
-        pathBuilder.add(goalPose);
+
+        commands.add(AutoScore.autoScore(drive, superstructure, robotState, goalPose));
+        pathBuilder.add(GeometryUtil.autoFlip(goalPose));
+
+        commands.add(superstructure.schedule(s -> s.runState(SuperstructureState.FEED)));
+
         return this;
     }
 
     public LoggedAutoRoutine waitForCoral(Pose2d pose) {
         commands.add(parallel(
-                        drive.toPose(() -> GeometryUtil.autoFlip(pose), false),
+                        drive.toPose(() -> GeometryUtil.autoFlip(pose), false, true),
                         superstructure.schedule(s -> s.runState(SuperstructureState.FEED)))
-                .until(robotState::hasLongCoral));
+                .until(robotState::hasCoral)
+                .withTimeout(1.0));
         pathBuilder.add(pose);
         return this;
     }
@@ -205,7 +199,12 @@ public class LoggedAutoRoutine {
 
     public LoggedAutoRoutine followPathAndScore(String pathName, int splitIndex) {
         var path = routine.trajectory(pathName, splitIndex);
-        commands.add(path.cmd());
+        var finalPose = path.getRawTrajectory().getFinalPose(false);
+        commands.add(path.cmd()
+                .until(() -> finalPose.isPresent()
+                        && robotState
+                                .getDistanceTo(GeometryUtil.autoFlip(finalPose.get()))
+                                .lt(scoreDriveToPoseDistance.get())));
 
         var poses = path.getRawTrajectory().getPoses();
         pathBuilder.add(poses);

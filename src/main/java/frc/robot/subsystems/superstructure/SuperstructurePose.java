@@ -6,7 +6,6 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import frc.robot.subsystems.superstructure.arm.ArmConstants;
-import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -34,13 +33,12 @@ public record SuperstructurePose(Distance elevatorHeight, Angle armAngle) {
     @Getter
     public static enum Preset {
         STOW(Inches.zero(), ArmConstants.safeTravelAngle, ArmConstants.algaeSafeTravelAngle),
-        L1_LONG(Inches.of(5), Degrees.of(90)),
-        L1_WIDE(Inches.of(2), Degrees.of(70)),
-        L2(Inches.of(13), Degrees.of(85)),
-        L3(Inches.of(29.5), Degrees.of(85)),
-        L4(Inches.of(61), Degrees.of(42.819)),
-        BARGE(ElevatorConstants.maximumHeight, Degrees.of(70)),
-        L2_ALGAE(Inches.of(17.5), Degrees.of(70)),
+        L1(Inches.of(5), Degrees.of(90)),
+        L2(Inches.of(16.5), Degrees.of(75)),
+        L3(Inches.of(31.5), Degrees.of(75)),
+        L4(Inches.of(64.5), Degrees.of(42.819)),
+        BARGE(Inches.of(78), Degrees.of(70)),
+        L2_ALGAE(Inches.of(19), Degrees.of(70)),
         L3_ALGAE(Inches.of(33.0), Degrees.of(65)),
         ALGAE_INTAKE(Inches.zero(), Degrees.of(20.0)),
         CORAL_INTAKE_1(Inches.of(11.288), Degrees.of(-55.752)),

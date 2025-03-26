@@ -27,7 +27,7 @@ public class Climb extends SubsystemBase {
     private static final LoggedTunableMeasure<AngleUnit, Angle> climbedPosition =
             new LoggedTunableMeasure<>("Climb/ClimbedPosition", Radians.of(-13));
     private static final LoggedTunableMeasure<AngleUnit, Angle> preDeployedPosition =
-            new LoggedTunableMeasure<>("Climb/PreDeployedPosition", Radians.of(-18));
+            new LoggedTunableMeasure<>("Climb/PreDeployedPosition", Radians.of(-13));
     private static final LoggedTunableMeasure<AngleUnit, Angle> releaseStartPosition =
             new LoggedTunableMeasure<>("Climb/ReleaseStartPosition", Radians.of(-25));
     private static final LoggedTunableMeasure<AngleUnit, Angle> releasePosition =
@@ -51,6 +51,7 @@ public class Climb extends SubsystemBase {
     private final ClimbIOInputsAutoLogged inputs = new ClimbIOInputsAutoLogged();
 
     private Optional<Angle> zeroedPosition = Optional.empty();
+    private boolean deployed = false;
 
     public Climb(ClimbIO io) {
         this.io = io;
@@ -62,9 +63,13 @@ public class Climb extends SubsystemBase {
         Logger.processInputs("Climb", inputs);
     }
 
+    public boolean hasBeenZeroed() {
+        return zeroedPosition.isPresent();
+    }
+
     public Command deploy() {
         return sequence(
-                        zero().unless(() -> zeroedPosition.isPresent()),
+                        zero().unless(() -> hasBeenZeroed()),
                         run(() -> io.setBrakeServoAngle(brakeDisengagedAngle.get()))
                                 .withTimeout(0.5),
                         run(() -> {
@@ -73,7 +78,8 @@ public class Climb extends SubsystemBase {
                                     io.setBrakeServoAngle(brakeDisengagedAngle.get());
                                 })
                                 .until(() -> inputs.position.in(Radians)
-                                        < releaseStartPosition.get().in(Radians)),
+                                        < releaseStartPosition.get().in(Radians)
+                                                + zeroedPosition.get().in(Radians)),
                         run(() -> {
                                     var position = releasePosition.get().plus(zeroedPosition.get());
                                     io.setPosition(position, NewtonMeters.zero());
@@ -86,6 +92,7 @@ public class Climb extends SubsystemBase {
                             io.setPosition(position, NewtonMeters.zero());
                             io.setReleaseServoSpeed(1.0);
                             io.setBrakeServoAngle(brakeDisengagedAngle.get());
+                            deployed = true;
                         }))
                 .finallyDo(() -> io.stopReleaseServo())
                 .unless(() -> DriverStation.getMatchTime() > 20)
@@ -94,15 +101,16 @@ public class Climb extends SubsystemBase {
 
     public Command retract() {
         return sequence(
-                        zero().unless(() -> zeroedPosition.isPresent()),
                         run(() -> {
                                     io.setBrakeServoAngle(brakeEngagedAngle.get());
                                     io.setVoltage(retractVoltage.get());
+                                    deployed = false;
                                 })
                                 .until(() -> inputs.position.in(Radians)
                                         > zeroedPosition.get().in(Radians)
                                                 + climbedPosition.get().in(Radians)),
                         runOnce(() -> io.stop()))
+                .unless(() -> !deployed || !hasBeenZeroed())
                 .withName("ClimbClimb");
     }
 
@@ -113,6 +121,7 @@ public class Climb extends SubsystemBase {
                         run(() -> {
                                     io.setTorqueCurrent(zeroTorqueCurrent.get());
                                     io.setBrakeServoAngle(brakeDisengagedAngle.get());
+                                    deployed = false;
                                 })
                                 .until(() -> debouncer.calculate(inputs.velocity.lt(zeroVelocityLimit.get()))),
                         runOnce(() -> {

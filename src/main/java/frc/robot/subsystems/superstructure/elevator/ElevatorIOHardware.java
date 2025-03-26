@@ -110,10 +110,10 @@ public class ElevatorIOHardware implements ElevatorIO {
                         .withForwardSoftLimitEnable(true)
                         .withForwardSoftLimitThreshold(toMotorPosition(maximumHeight)))
                 .withTorqueCurrent(new TorqueCurrentConfigs()
-                        .withPeakForwardTorqueCurrent(Amps.of(120))
-                        .withPeakReverseTorqueCurrent(Amps.of(40)))
+                        .withPeakForwardTorqueCurrent(Amps.of(90))
+                        .withPeakReverseTorqueCurrent(Amps.of(20)))
                 .withCurrentLimits(new CurrentLimitsConfigs()
-                        .withStatorCurrentLimit(Amps.of(120))
+                        .withStatorCurrentLimit(Amps.of(90))
                         .withSupplyCurrentLimit(60)
                         .withSupplyCurrentLowerLimit(Amps.of(40)));
 
