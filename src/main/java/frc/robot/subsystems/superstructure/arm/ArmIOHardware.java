@@ -45,7 +45,7 @@ import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 public class ArmIOHardware implements ArmIO {
     protected static final FeedbackSensorSourceValue feedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
-    protected static final LoggedTunableNumber encoderOffset = new LoggedTunableNumber("Arm/EncoderOffset", -0.3074);
+    protected static final LoggedTunableNumber encoderOffset = new LoggedTunableNumber("Arm/EncoderOffset", 3.6);
     private static final LoggedTunableNumber kG = new LoggedTunableNumber("Arm/KG", 0.4);
     private static final LoggedTunableNumber motionMagicMaxVelocity =
             new LoggedTunableNumber("Arm/MotionMagicMaxVelocity", maximumVelocity.in(RotationsPerSecond));

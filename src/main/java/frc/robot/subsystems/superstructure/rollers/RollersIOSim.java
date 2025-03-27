@@ -13,54 +13,35 @@ import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.superstructure.rollers.RollersConstants.*;
 
 public class RollersIOSim extends RollersIOHardware {
-    private Angle coralMotorPosition = Radians.zero();
-    private Angle hybridMotorPosition = Radians.zero();
+    private Angle motorPosition = Radians.zero();
 
     public RollersIOSim(SimState simState) {
-        var coralGearbox = CustomDCMotor.getKrakenX44(1);
-        var coralMotorSim = new FlywheelSim(
+        var gearbox = CustomDCMotor.getKrakenX44(1);
+        var motorSim = new FlywheelSim(
                 LinearSystemId.createFlywheelSystem(
-                        coralGearbox,
+                        gearbox,
                         Constants.algaeMass.in(Kilograms) * Math.pow(coralRollerRadius.in(Meters) / 2.0, 2),
-                        coralRollerReduction),
-                coralGearbox);
+                        reduction),
+                gearbox);
 
-        var hybridGearbox = CustomDCMotor.getKrakenX44(1);
-        var hybridMotorSim = new FlywheelSim(
-                LinearSystemId.createFlywheelSystem(
-                        hybridGearbox,
-                        Constants.algaeMass.in(Kilograms) * Math.pow(hybridRollerRadius.in(Meters) / 2.0, 2),
-                        hybridRollerReduction),
-                hybridGearbox);
-
-        var coralMotorSimState = coralMotor.getSimState();
-        var hybridMotorSimState = hybridMotor.getSimState();
+        var motorSimState = motor.getSimState();
         var coralCanrageSimState = coralCanrange.getSimState();
         var algaeCanrangeSimState = algaeCanrange.getSimState();
         var elevatorCanrangeSimState = elevatorCanrange.getSimState();
+        var funnelCanrangeSimState = funnelCanrange.getSimState();
 
         SimNotifier.register(deltaTime -> {
             var batteryVoltage = RobotController.getBatteryVoltage();
 
-            coralMotorSim.setInputVoltage(coralMotorSimState.getMotorVoltage());
-            coralMotorSim.update(deltaTime.in(Seconds));
+            motorSim.setInputVoltage(motorSimState.getMotorVoltage());
+            motorSim.update(deltaTime.in(Seconds));
 
-            var coralMotorVelocity = coralMotorSim.getAngularVelocity().times(coralRollerReduction);
-            coralMotorPosition = coralMotorPosition.plus(coralMotorVelocity.times(deltaTime));
+            var motorVelocity = motorSim.getAngularVelocity().times(reduction);
+            motorPosition = motorPosition.plus(motorVelocity.times(deltaTime));
 
-            coralMotorSimState.setRawRotorPosition(coralMotorPosition);
-            coralMotorSimState.setRotorVelocity(coralMotorVelocity);
-            coralMotorSimState.setSupplyVoltage(batteryVoltage);
-
-            hybridMotorSim.setInputVoltage(hybridMotorSimState.getMotorVoltage());
-            hybridMotorSim.update(deltaTime.in(Seconds));
-
-            var hybridMotorVelocity = hybridMotorSim.getAngularVelocity().times(hybridRollerReduction);
-            hybridMotorPosition = hybridMotorPosition.plus(hybridMotorVelocity.times(deltaTime));
-
-            hybridMotorSimState.setRawRotorPosition(hybridMotorPosition);
-            hybridMotorSimState.setRotorVelocity(hybridMotorVelocity);
-            hybridMotorSimState.setSupplyVoltage(batteryVoltage);
+            motorSimState.setRawRotorPosition(motorPosition);
+            motorSimState.setRotorVelocity(motorVelocity);
+            motorSimState.setSupplyVoltage(batteryVoltage);
 
             coralCanrageSimState.setDistance(simState.getCoralSensorDistance());
             coralCanrageSimState.setSupplyVoltage(batteryVoltage);
@@ -68,6 +49,8 @@ public class RollersIOSim extends RollersIOHardware {
             algaeCanrangeSimState.setSupplyVoltage(batteryVoltage);
             elevatorCanrangeSimState.setDistance(simState.getElevatorSensorDistance());
             elevatorCanrangeSimState.setSupplyVoltage(batteryVoltage);
+            funnelCanrangeSimState.setDistance(simState.getFunnelSensorDistance());
+            funnelCanrangeSimState.setSupplyVoltage(batteryVoltage);
         });
     }
 }

@@ -189,11 +189,11 @@ public final class FieldConstants {
             var l3CoralRobotTransform =
                     new Transform2d(Constants.halfRobotLength.in(Meters) + 0.12, 0.0, Rotation2d.k180deg);
             var l4CoralRobotTransform =
-                    new Transform2d(Constants.halfRobotLength.in(Meters) + 0.31, 0.0, Rotation2d.k180deg);
+                    new Transform2d(Constants.halfRobotLength.in(Meters) + 0.25, 0.0, Rotation2d.k180deg);
             var l3AlgaeRobotTransform =
                     new Transform2d(Constants.halfRobotLength.in(Meters) + 0.1, 0.0, Rotation2d.k180deg);
             var processorRobotTransform =
-                    new Transform2d(Constants.halfRobotLength.in(Meters) + 0.05, 0.0, Rotation2d.k180deg);
+                    new Transform2d(Constants.halfRobotLength.in(Meters) + 0.1, 0.0, Rotation2d.k180deg);
 
             robotProcessorPose = processorPose.transformBy(processorRobotTransform);
             robotCoralStationLeftPose = coralStationLeftPose.transformBy(backFacingRobotTransform);

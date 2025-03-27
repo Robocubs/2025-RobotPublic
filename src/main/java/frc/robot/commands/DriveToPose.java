@@ -43,10 +43,10 @@ public class DriveToPose extends Command {
     private static final LoggedTunableMeasure<LinearAccelerationUnit, LinearAcceleration> maxLinearAcceleration =
             new LoggedTunableMeasure<>("DriveToPose/MaxLinearAcceleration", MetersPerSecondPerSecond.of(4.0));
     private static final LoggedTunableMeasure<LinearVelocityUnit, LinearVelocity> slowModeMaxLinearVelocity =
-            new LoggedTunableMeasure<>("DriveToPose/SlowModeMaxLinearVelocity", MetersPerSecond.of(0.7));
+            new LoggedTunableMeasure<>("DriveToPose/SlowModeMaxLinearVelocity", MetersPerSecond.of(2.0));
     private static final LoggedTunableMeasure<LinearAccelerationUnit, LinearAcceleration>
             slowModeMaxLinearAcceleration = new LoggedTunableMeasure<>(
-                    "DriveToPose/SlowModeMaxLinearAcceleration", MetersPerSecondPerSecond.of(0.7));
+                    "DriveToPose/SlowModeMaxLinearAcceleration", MetersPerSecondPerSecond.of(2.0));
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> maxAngularRate =
             new LoggedTunableMeasure<>("DriveToPose/MaxAngularRate", RadiansPerSecond.of(1.0));
     private static final LoggedTunableMeasure<AngularAccelerationUnit, AngularAcceleration> maxAngularAcceleration =
@@ -59,6 +59,8 @@ public class DriveToPose extends Command {
             new LoggedTunableMeasure<>("DriveToPose/FFMinRadius", Meters.of(0.2));
     private static final LoggedTunableMeasure<DistanceUnit, Distance> ffMaxRadius =
             new LoggedTunableMeasure<>("DriveToPose/FFMaxRadius", Meters.of(0.8));
+    private static final LoggedTunableNumber ffMinMultiplier =
+            new LoggedTunableNumber("DriveToPose/FFMinMultiplier", 0.5);
 
     private final SwerveRequest.ApplyRobotSpeeds applyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
     private final SwerveRequest.PointWheelsAt pointWheels = new SwerveRequest.PointWheelsAt();
@@ -139,7 +141,7 @@ public class DriveToPose extends Command {
         var ffScalar = MathUtil.clamp(
                 (currentDistance - ffMinRadius.get().in(Meters))
                         / (ffMaxRadius.get().in(Meters) - ffMinRadius.get().in(Meters)),
-                0.0,
+                ffMinMultiplier.get(),
                 1.0); // Fudge factor to prevent overdriving
         translationController.reset(
                 Math.min(currentDistance, previousSetpointDistance), translationController.getSetpoint().velocity);

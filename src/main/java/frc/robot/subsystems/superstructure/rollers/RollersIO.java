@@ -12,19 +12,12 @@ import static edu.wpi.first.units.Units.*;
 public interface RollersIO {
     @AutoLog
     public class RollersIOInputs {
-        public Angle coralPosition = Radians.zero();
-        public AngularVelocity coralVelocity = RadiansPerSecond.zero();
-        public Voltage coralVoltage = Volts.zero();
-        public Current coralSupplyCurrent = Amps.zero();
-        public Current coralTorqueCurrent = Amps.zero();
-        public double coralClosedLoopReferenceSignal = 0.0;
-
-        public Angle hybridPosition = Radians.zero();
-        public AngularVelocity hybridVelocity = RadiansPerSecond.zero();
-        public Voltage hybridVoltage = Volts.zero();
-        public Current hybridSupplyCurrent = Amps.zero();
-        public Current hybridTorqueCurrent = Amps.zero();
-        public double hybridClosedLoopReferenceSignal = 0.0;
+        public Angle position = Radians.zero();
+        public AngularVelocity velocity = RadiansPerSecond.zero();
+        public Voltage voltage = Volts.zero();
+        public Current supplyCurrent = Amps.zero();
+        public Current torqueCurrent = Amps.zero();
+        public double closedLoopReferenceSignal = 0.0;
 
         public Distance coralDetectorDistance = Meters.zero();
         public double coralSignalStrengthSignal = 0;
@@ -39,15 +32,9 @@ public interface RollersIO {
 
     public default void updateInputs(RollersIOInputs inputs) {}
 
-    public default void setCoralVelocity(AngularVelocity velocity) {}
+    public default void setVelocity(AngularVelocity velocity) {}
 
-    public default void setCoralPosition(Angle position) {}
+    public default void setPosition(Angle position) {}
 
-    public default void stopCoral() {}
-
-    public default void setHybridVelocity(AngularVelocity velocity) {}
-
-    public default void setHybridPosition(Angle position) {}
-
-    public default void stopHybrid() {}
+    public default void stop() {}
 }

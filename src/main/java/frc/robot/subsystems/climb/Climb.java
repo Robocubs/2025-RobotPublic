@@ -86,7 +86,7 @@ public class Climb extends SubsystemBase {
                                     io.setReleaseServoSpeed(1.0);
                                     io.setBrakeServoAngle(brakeDisengagedAngle.get());
                                 })
-                                .withTimeout(3.0),
+                                .withTimeout(4.0),
                         run(() -> {
                             var position = deployedPosition.get().plus(zeroedPosition.get());
                             io.setPosition(position, NewtonMeters.zero());

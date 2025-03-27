@@ -22,15 +22,19 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.LinearAccelerationUnit;
+import edu.wpi.first.units.LinearVelocityUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Force;
+import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants;
 import frc.robot.util.tuning.LoggedTunableBoolean;
+import frc.robot.util.tuning.LoggedTunableMeasure;
 import frc.robot.util.tuning.LoggedTunableNumber;
 import frc.robot.util.tuning.LoggedTunableValue;
 
@@ -53,6 +57,12 @@ public class ElevatorIOHardware implements ElevatorIO {
     private static final LoggedTunableNumber velocityKD = new LoggedTunableNumber("Elevator/VelocityKD", 0.0);
     private static final LoggedTunableBoolean useMotionMagic =
             new LoggedTunableBoolean("Elevator/UseMotionMagic", true);
+
+    private static final LoggedTunableMeasure<LinearVelocityUnit, LinearVelocity> maximumVelocity =
+            new LoggedTunableMeasure<>("Elevator/MaximumVelocity", FeetPerSecond.of(10));
+    private static final LoggedTunableMeasure<LinearAccelerationUnit, LinearAcceleration> maximumAcceleration =
+            new LoggedTunableMeasure<>(
+                    "Elevator/MaximumAcceleration", maximumVelocity.get().div(Seconds.of(0.4)));
 
     protected final TalonFX masterMotor;
     protected final TalonFX followerMotor;
@@ -84,11 +94,13 @@ public class ElevatorIOHardware implements ElevatorIO {
                         .withInverted(motorInvertedValue))
                 .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(reduction))
                 .withMotionMagic(new MotionMagicConfigs()
-                        .withMotionMagicCruiseVelocity(toMotorVelocity(maximumVelocity))
+                        .withMotionMagicCruiseVelocity(toMotorVelocity(maximumVelocity.get()))
                         .withMotionMagicAcceleration(RadiansPerSecondPerSecond.of(
-                                maximumAcceleration.in(MetersPerSecondPerSecond) / sprocketRadius.in(Meters)))
-                        .withMotionMagicJerk(RadiansPerSecondPerSecond.per(Second)
-                                .of(maximumJerk.in(MetersPerSecondPerSecond.per(Second)) / sprocketRadius.in(Meters)))
+                                maximumAcceleration.get().in(MetersPerSecondPerSecond) / sprocketRadius.in(Meters)))
+                        .withMotionMagicJerk((RadiansPerSecondPerSecond.of(
+                                        maximumAcceleration.get().in(MetersPerSecondPerSecond)
+                                                / sprocketRadius.in(Meters)))
+                                .div(Seconds.of(0.1)))
                         .withMotionMagicExpo_kV(motionMagicExpoKV.get())
                         .withMotionMagicExpo_kA(motionMagicExpoKA.get()))
                 .withSlot0(new Slot0Configs()
@@ -182,6 +194,12 @@ public class ElevatorIOHardware implements ElevatorIO {
         LoggedTunableValue.ifChanged(
                 0,
                 () -> {
+                    motorConfig.MotionMagic.withMotionMagicCruiseVelocity(toMotorVelocity(maximumVelocity.get()));
+                    motorConfig.MotionMagic.withMotionMagicAcceleration(RadiansPerSecondPerSecond.of(
+                            maximumAcceleration.get().in(MetersPerSecondPerSecond) / sprocketRadius.in(Meters)));
+                    motorConfig.MotionMagic.withMotionMagicJerk((RadiansPerSecondPerSecond.of(
+                                    maximumAcceleration.get().in(MetersPerSecondPerSecond) / sprocketRadius.in(Meters)))
+                            .div(Seconds.of(0.1)));
                     motorConfig.MotionMagic.MotionMagicExpo_kV = motionMagicExpoKV.get();
                     motorConfig.MotionMagic.MotionMagicExpo_kA = motionMagicExpoKA.get();
                     motorConfig.Slot0.kG = kGCurrent.get();
@@ -196,6 +214,8 @@ public class ElevatorIOHardware implements ElevatorIO {
                     tryUntilOk(() -> masterMotor.getConfigurator().apply(motorConfig));
                     tryUntilOk(() -> followerMotor.getConfigurator().apply(motorConfig));
                 },
+                maximumVelocity,
+                maximumAcceleration,
                 kGCurrent,
                 kGVoltage,
                 motionMagicExpoKV,
