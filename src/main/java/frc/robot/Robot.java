@@ -3,14 +3,13 @@ package frc.robot;
 import java.nio.file.Paths;
 
 import com.ctre.phoenix6.SignalLogger;
+import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.commands.logging.CommandLogger;
-import io.javalin.Javalin;
-import io.javalin.http.staticfiles.Location;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -78,14 +77,10 @@ public class Robot extends LoggedRobot {
         CommandLogger.getInstance();
 
         // Launch web server
-        Javalin.create(config -> {
-                    config.staticFiles.add(
-                            Paths.get(Filesystem.getDeployDirectory().getAbsolutePath(), "web")
-                                    .toString(),
-                            Location.EXTERNAL);
-                })
-                .get("/", ctx -> ctx.redirect("/dashboard"))
-                .start(5800);
+        WebServer.start(
+                5800,
+                Paths.get(Filesystem.getDeployDirectory().getAbsolutePath(), "web")
+                        .toString());
     }
 
     @Override

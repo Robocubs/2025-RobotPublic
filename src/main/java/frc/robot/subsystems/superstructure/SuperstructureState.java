@@ -86,15 +86,11 @@ public enum SuperstructureState {
             .pose(Preset.STOW.getAlgaePose())
             .rollerState(Rollers.State.ALGAE_FORWARD)
             .build()),
-    CORAL_INTAKE_1_RETRACTED(SuperstructureStateData.builder()
-            .pose(Preset.CORAL_INTAKE_1.getRetractPose())
+    CORAL_INTAKE_RETRACTED(SuperstructureStateData.builder()
+            .pose(Preset.CORAL_INTAKE.getRetractPose())
             .build()),
-    CORAL_INTAKE_1(SuperstructureStateData.builder()
-            .pose(Preset.CORAL_INTAKE_1.getPose())
-            .rollerState(Rollers.State.AUTO_INTAKE_CORAL)
-            .build()),
-    CORAL_INTAKE_2(SuperstructureStateData.builder()
-            .pose(Preset.CORAL_INTAKE_2.getPose())
+    CORAL_INTAKE(SuperstructureStateData.builder()
+            .pose(Preset.CORAL_INTAKE.getPose())
             .rollerState(Rollers.State.AUTO_INTAKE_CORAL)
             .build()),
     PROCESSOR(SuperstructureStateData.builder().pose(Preset.PROCESSOR.getPose()).build()),

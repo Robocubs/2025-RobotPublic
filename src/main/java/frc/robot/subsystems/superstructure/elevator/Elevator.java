@@ -3,13 +3,20 @@ package frc.robot.subsystems.superstructure.elevator;
 import java.util.Optional;
 
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.units.DistanceUnit;
+import edu.wpi.first.units.LinearVelocityUnit;
+import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Force;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
+import frc.robot.util.tuning.LoggedTunableMeasure;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -17,6 +24,13 @@ import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.superstructure.elevator.ElevatorConstants.*;
 
 public class Elevator {
+    private final LoggedTunableMeasure<VoltageUnit, Voltage> zeroRoutineVolts =
+            new LoggedTunableMeasure<>("Elevator/ZeroRoutineVolts", Volts.of(-0.5));
+    private final LoggedTunableMeasure<LinearVelocityUnit, LinearVelocity> zeroVelocityTolerance =
+            new LoggedTunableMeasure<>("Elevator/ZeroVelocityTolerance", MetersPerSecond.of(0.1));
+    private final LoggedTunableMeasure<DistanceUnit, Distance> zeroPosition =
+            new LoggedTunableMeasure<>("Elevator/ZeroPosition", Meters.of(-0.018));
+
     private final ElevatorIO io;
     private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
 
@@ -97,18 +111,23 @@ public class Elevator {
     }
 
     public Command setZeroPosition() {
+        return setZeroPosition(Meters.zero());
+    }
+
+    public Command setZeroPosition(Distance height) {
         return Commands.run(() -> {
                     io.stop();
-                    io.zeroPosition();
+                    io.zeroPosition(height);
                 })
-                .until(() -> isNear(Meters.zero()));
+                .until(() -> isNear(height));
     }
 
     public Command zeroRoutine() {
-        var voltage = Volts.of(-1.0);
-        var maxCurrent = Amps.of(-60);
-        return Commands.run(() -> io.setVoltage(voltage))
-                .until(() -> inputs.masterTorqueCurrent.lt(maxCurrent))
-                .andThen(setZeroPosition());
+        var debouncer = new Debouncer(0.5, DebounceType.kRising);
+        return Commands.runOnce(() -> debouncer.calculate(false))
+                .andThen(Commands.run(() -> io.setVoltage(zeroRoutineVolts.get())))
+                .until(() -> debouncer.calculate(
+                        inputs.masterVelocity.isNear(MetersPerSecond.zero(), zeroVelocityTolerance.get())))
+                .andThen(setZeroPosition(zeroPosition.get()));
     }
 }

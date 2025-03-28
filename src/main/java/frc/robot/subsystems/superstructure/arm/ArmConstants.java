@@ -27,12 +27,12 @@ public final class ArmConstants {
 
     public static final Angle angleTolerance = Degrees.of(3);
     public static final Angle maximumAngle = Degrees.of(95.25);
-    public static final Angle minimumAngle = Degrees.of(0);
+    public static final Angle minimumAngle = Degrees.of(-68);
 
     public static final AngularVelocity maximumVelocity = RotationsPerSecond.of(1.0);
     public static final AngularAcceleration maximumAcceleration = maximumVelocity.div(Seconds.of(0.2));
     public static final Velocity<AngularAccelerationUnit> maximumJerk = maximumAcceleration.div(Seconds.of(0.05));
 
-    public static final Angle safeTravelAngle = Degrees.of(85);
+    public static final Angle safeTravelAngle = Degrees.of(75);
     public static final Angle algaeSafeTravelAngle = Degrees.of(70);
 }

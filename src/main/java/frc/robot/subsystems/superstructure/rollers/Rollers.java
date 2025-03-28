@@ -21,25 +21,25 @@ import static frc.robot.subsystems.superstructure.rollers.RollersConstants.*;
 
 public class Rollers {
     private static final LoggedTunableMeasure<DistanceUnit, Distance> coralFeedDistance =
-            new LoggedTunableMeasure<>("Rollers/CoralFeedDistance", Meters.of(0.05));
+            new LoggedTunableMeasure<>("Rollers/CoralFeedDistance", Meters.of(0.1));
     private static final LoggedTunableMeasure<DistanceUnit, Distance> coralIntakeDistance =
-            new LoggedTunableMeasure<>("Rollers/CoralIntakeDistance", Meters.of(0.05));
+            new LoggedTunableMeasure<>("Rollers/CoralIntakeDistance", Meters.of(-0.05));
     private static final LoggedTunableMeasure<DistanceUnit, Distance> algaeIntakeDistance =
             new LoggedTunableMeasure<>("Rollers/AlgaeIntakeDistance", Meters.of(0.05));
     public static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> coralFeedVelocity =
-            new LoggedTunableMeasure<>("Rollers/CoralFeedVelocity", maxAngularVelocity.times(0.3));
+            new LoggedTunableMeasure<>("Rollers/CoralFeedVelocity", RadiansPerSecond.of(30));
     public static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> coralFastFeedVelocity =
-            new LoggedTunableMeasure<>("Rollers/CoralFastFeedVelocity", maxAngularVelocity.times(0.4));
+            new LoggedTunableMeasure<>("Rollers/CoralFastFeedVelocity", RadiansPerSecond.of(30));
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> coralIntakeVelocity =
-            new LoggedTunableMeasure<>("Rollers/CoralIntakeVelocity", maxAngularVelocity.times(0.5));
+            new LoggedTunableMeasure<>("Rollers/CoralIntakeVelocity", RadiansPerSecond.of(40));
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> coralForwardVelocity =
-            new LoggedTunableMeasure<>("Rollers/CoralForwardVelocity", maxAngularVelocity.times(0.4));
+            new LoggedTunableMeasure<>("Rollers/CoralForwardVelocity", RadiansPerSecond.of(40));
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> coralReverseVelocity =
-            new LoggedTunableMeasure<>("Rollers/CoralReverseVelocity", maxAngularVelocity.times(-0.5));
+            new LoggedTunableMeasure<>("Rollers/CoralReverseVelocity", RadiansPerSecond.of(-40));
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> algaeIntakeVelocity =
-            new LoggedTunableMeasure<>("Rollers/AlgaeIntakeVelocity", maxAngularVelocity.times(0.5));
+            new LoggedTunableMeasure<>("Rollers/AlgaeIntakeVelocity", RadiansPerSecond.of(45));
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> algaeForwardVelocity =
-            new LoggedTunableMeasure<>("Rollers/AlgaeForwardVelocity", maxAngularVelocity.times(-0.5));
+            new LoggedTunableMeasure<>("Rollers/AlgaeForwardVelocity", RadiansPerSecond.of(-45));
 
     private static final Angle positionTolerance = Radians.of(0.2);
 
@@ -128,6 +128,8 @@ public class Rollers {
         } else {
             autoRollerPosition = Optional.empty();
         }
+
+        Logger.recordOutput("Rollers/AuotRollerPosition", autoRollerPosition.orElse(Radians.zero()));
 
         switch (state) {
             case AUTO_FEED_CORAL:

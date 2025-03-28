@@ -80,8 +80,8 @@ public class StreamDeck extends SubsystemBase {
         ALGAE_EJECT(2, 2, "algaeEjectButton", "ArrowUpward", "Algae Out"),
         FEED(0, 2, "feedButton", "Feed", "Feed"),
         STOW(1, 2, "stowButton", "Stow", "Stow"),
-        PROCESSOR(1, 3, "processorButton", "Processor", "Processor"),
-        BARGE(0, 3, "bargeButton", "Barge", "Barge"),
+        CORAL_INTAKE(1, 3, "coralIntake", "ArrowDownward", "Coral In"),
+        CORAL_REJECT(0, 3, "coralReject", "ArrowUpward", "Coral Out"),
         DEPLOY(0, 4, "deployClimbButton", "Circle", "Deploy"),
         RETRACT(1, 4, "retractClimbButton", "Circle", "Retract"),
         ZERO(2, 4, "zeroClimbButton", "Circle", "Zero");

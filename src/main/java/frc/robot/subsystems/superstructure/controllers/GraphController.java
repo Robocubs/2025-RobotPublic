@@ -8,16 +8,15 @@ import java.util.Queue;
 import java.util.Set;
 
 import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.util.tuning.LoggedTunableMeasure;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -27,9 +26,11 @@ import static edu.wpi.first.units.Units.*;
 public class GraphController implements SuperstructureController {
     private static final LoggedTunableMeasure<AngleUnit, Angle> l4RetractedAngleTolerance =
             new LoggedTunableMeasure<>("Superstructure/L4RetractedAngleTolerance", Degrees.of(30));
+    private static final LoggedTunableMeasure<DistanceUnit, Distance> coralIntakeElevatorHeightTolerance =
+            new LoggedTunableMeasure<>("Superstructure/CoralIntakeHeightTolerance", Inches.of(3));
 
     private final Superstructure superstructure;
-    private final Graph<SuperstructureState, EdgeCommand> graph = new DefaultDirectedGraph<>(EdgeCommand.class);
+    private final Graph<SuperstructureState, DefaultEdge> graph = new DefaultDirectedGraph<>(DefaultEdge.class);
 
     public GraphController(Superstructure superstructure) {
         this.superstructure = superstructure;
@@ -47,14 +48,14 @@ public class GraphController implements SuperstructureController {
                 SuperstructureState.L2_CORAL,
                 SuperstructureState.L3_CORAL,
                 SuperstructureState.L4_CORAL_RETRACTED,
+                SuperstructureState.CORAL_INTAKE_RETRACTED,
                 SuperstructureState.BARGE_RETRACTED,
                 SuperstructureState.L2_ALGAE_RETRACTED,
                 SuperstructureState.L3_ALGAE_RETRACTED,
                 SuperstructureState.ALGAE_INTAKE,
                 SuperstructureState.ALGAE_EJECT,
                 SuperstructureState.PROCESSOR,
-                SuperstructureState.PROCESSOR_SCORE,
-                SuperstructureState.CORAL_INTAKE_1_RETRACTED);
+                SuperstructureState.PROCESSOR_SCORE);
 
         // Special states to free states
         for (var state : specialStates) {
@@ -72,11 +73,11 @@ public class GraphController implements SuperstructureController {
                     continue;
                 }
 
-                graph.addEdge(from, to, getEdgeCommand(from, to));
+                graph.addEdge(from, to);
             }
 
             // L4 Coral still requires retracting
-            graph.addEdge(from, SuperstructureState.L4_CORAL, getEdgeCommand(from, SuperstructureState.L4_CORAL));
+            graph.addEdge(from, SuperstructureState.L4_CORAL);
         }
 
         // To/from retracting states
@@ -85,7 +86,6 @@ public class GraphController implements SuperstructureController {
                 Map.entry(SuperstructureState.L4_CORAL, SuperstructureState.L4_CORAL_RETRACTED),
                 Map.entry(SuperstructureState.L4_CORAL_SCORE, SuperstructureState.L4_CORAL_RETRACTED),
                 Map.entry(SuperstructureState.BARGE, SuperstructureState.BARGE_RETRACTED),
-                Map.entry(SuperstructureState.CORAL_INTAKE_1, SuperstructureState.CORAL_INTAKE_1_RETRACTED),
                 Map.entry(SuperstructureState.L2_ALGAE, SuperstructureState.L2_ALGAE_RETRACTED),
                 Map.entry(SuperstructureState.L3_ALGAE, SuperstructureState.L3_ALGAE_RETRACTED));
 
@@ -108,11 +108,9 @@ public class GraphController implements SuperstructureController {
             graph.addEdge(entry.getValue(), entry.getKey());
         }
 
-        // Floor states
-        graph.addEdge(SuperstructureState.CORAL_INTAKE_1_RETRACTED, SuperstructureState.CORAL_INTAKE_1);
-        graph.addEdge(SuperstructureState.CORAL_INTAKE_1, SuperstructureState.CORAL_INTAKE_1_RETRACTED);
-        graph.addEdge(SuperstructureState.CORAL_INTAKE_1, SuperstructureState.CORAL_INTAKE_2);
-        graph.addEdge(SuperstructureState.CORAL_INTAKE_2, SuperstructureState.CORAL_INTAKE_1);
+        // To/from intake states
+        graph.addEdge(SuperstructureState.CORAL_INTAKE_RETRACTED, SuperstructureState.CORAL_INTAKE);
+        graph.addEdge(SuperstructureState.CORAL_INTAKE, SuperstructureState.CORAL_INTAKE_RETRACTED);
     }
 
     @Override
@@ -135,9 +133,7 @@ public class GraphController implements SuperstructureController {
                 break;
             }
             // Process valid neighbors
-            for (var edge : graph.outgoingEdgesOf(current).stream()
-                    .filter(edge -> isEdgeAllowed(edge, goal))
-                    .toList()) {
+            for (var edge : graph.outgoingEdgesOf(current)) {
                 var neighbor = graph.getEdgeTarget(edge);
                 // Only process unvisited neighbors
                 if (!parents.containsKey(neighbor)) {
@@ -165,46 +161,47 @@ public class GraphController implements SuperstructureController {
                 break;
             }
 
-            command = runState(parent).andThen(command);
+            command = runState(nextState, parent).andThen(command);
             nextState = parent;
         }
         return Optional.of(command);
     }
 
-    private boolean isEdgeAllowed(EdgeCommand edge, SuperstructureState goal) {
-        return true;
-    }
-
-    private EdgeCommand getEdgeCommand(SuperstructureState from, SuperstructureState to) {
-        return EdgeCommand.builder().command(runState(to)).build();
-    }
-
-    private Command runState(SuperstructureState state) {
-        // L4 Retract special case that allows wider range of angles
-        if (state == SuperstructureState.L4_CORAL_RETRACTED) {
-            var pose = state.getData().getPose();
+    private Command runState(SuperstructureState from, SuperstructureState to) {
+        // For moving from L4, allow elevator to start moving before arm is fully retracted
+        if (to == SuperstructureState.L4_CORAL_RETRACTED) {
+            var pose = to.getData().getPose();
             var minAngle = pose.armAngle().minus(l4RetractedAngleTolerance.get());
             return superstructure
-                    .run(() -> superstructure.runStatePeriodic(state))
+                    .run(() -> superstructure.runStatePeriodic(to))
                     .until(() -> superstructure.getArmAngle().gt(minAngle)
                             && superstructure
                                     .getElevatorHeight()
                                     .isNear(pose.elevatorHeight(), ElevatorConstants.positionTolerance));
         }
 
+        // For moving to coral intake, allow arm to start moving before elevator is fully extended
+        // Also allow immediate movement of arm if coming from a higher state
+        if (from != SuperstructureState.CORAL_INTAKE && to == SuperstructureState.CORAL_INTAKE_RETRACTED) {
+            var minHeight = to.getData().getPose().elevatorHeight().minus(coralIntakeElevatorHeightTolerance.get());
+            return superstructure
+                    .run(() -> superstructure.runStatePeriodic(to))
+                    .until(() -> superstructure.getElevatorHeight().gt(minHeight));
+        }
+
+        // For moving from coral intake, allow elevator to start moving as soon as arm is out of the way
+        if (from == SuperstructureState.CORAL_INTAKE && to == SuperstructureState.CORAL_INTAKE_RETRACTED) {
+            return superstructure
+                    .run(() -> superstructure.runStatePeriodic(to))
+                    .until(() -> superstructure.getArmAngle().gt(Radians.zero()));
+        }
+
+        return runState(to);
+    }
+
+    private Command runState(SuperstructureState state) {
         return superstructure
                 .run(() -> superstructure.runStatePeriodic(state))
                 .until(() -> superstructure.isNear(state));
-    }
-
-    @AllArgsConstructor
-    @Builder(toBuilder = true)
-    @Getter
-    public static class EdgeCommand extends DefaultEdge {
-        public EdgeCommand() {
-            this.command = null;
-        }
-
-        private final Command command;
     }
 }

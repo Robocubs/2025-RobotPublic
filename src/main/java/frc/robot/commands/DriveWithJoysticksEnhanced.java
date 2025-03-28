@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
-import frc.robot.RobotState.CoralMode;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.tuning.LoggedTunableMeasure;
 import frc.robot.util.tuning.LoggedTunableNumber;
@@ -48,8 +47,6 @@ public class DriveWithJoysticksEnhanced extends Command {
     private final DoubleSupplier strafe;
     private final DoubleSupplier rotation;
     private final BooleanSupplier fineControl;
-    private final BooleanSupplier leftCoralTrigger;
-    private final BooleanSupplier rightCoralTrigger;
     private final BooleanSupplier algaeTrigger;
     private final PIDController translationController =
             new PIDController(translationKP.get(), 0.0, 0, Constants.mainLoopPeriod.in(Seconds));
@@ -64,8 +61,6 @@ public class DriveWithJoysticksEnhanced extends Command {
             DoubleSupplier strafe,
             DoubleSupplier rotation,
             BooleanSupplier fineControl,
-            BooleanSupplier leftCoralTrigger,
-            BooleanSupplier rightCoralTrigger,
             BooleanSupplier algaeTrigger) {
         this.drive = drive;
         this.robotState = robotState;
@@ -73,8 +68,6 @@ public class DriveWithJoysticksEnhanced extends Command {
         this.strafe = strafe;
         this.rotation = rotation;
         this.fineControl = fineControl;
-        this.leftCoralTrigger = leftCoralTrigger;
-        this.rightCoralTrigger = rightCoralTrigger;
         this.algaeTrigger = algaeTrigger;
 
         addRequirements(drive);
@@ -120,28 +113,18 @@ public class DriveWithJoysticksEnhanced extends Command {
         Logger.recordOutput("Commands/DriveWithJoysticksEnhanced/HeadingLocked", headingLocked);
 
         if (headingLocked) {
-            var leftCoralTrigger = this.leftCoralTrigger.getAsBoolean();
-            var rightCoralTrigger = this.rightCoralTrigger.getAsBoolean();
             var algaeTrigger = this.algaeTrigger.getAsBoolean();
 
             Optional<Pose2d> targetPose = Optional.empty();
             // Target scoring coral
-            if (leftCoralTrigger && !robotState.isSelected(CoralMode.L1_CORAL) && robotState.isFacingReef()) {
-                targetPose = robotState
-                        .getLeftReefPose()
-                        .filter(tp -> tp.getTranslation().getDistance(pose.getTranslation()) < 2.0);
-                headingSetpoint = targetPose.map(Pose2d::getRotation);
-            } else if (rightCoralTrigger && !robotState.isSelected(CoralMode.L1_CORAL) && robotState.isFacingReef()) {
-                targetPose = robotState
-                        .getRightReefPose()
-                        .filter(tp -> tp.getTranslation().getDistance(pose.getTranslation()) < 2.0);
-                headingSetpoint = targetPose.map(Pose2d::getRotation);
-            }
+            // if (robotState.hasCoral()) {
+            //     var reefSides = FieldConstants.reefAlgaePoses();
+            //     var closest3 = Stream.of(reefSides).sorted((p1, p2) ->
+            // robotState.getDistanceTo(p1).compareTo(robotState.getDistanceTo(p2))).limit(3);
+            //     var targetPoses = closest3.map();
+            // }
             // Target algae pickup
-            else if (algaeTrigger
-                    && !robotState.hasGamePiece()
-                    && robotState.inReefArea()
-                    && robotState.isFacingReef()) {
+            if (algaeTrigger && !robotState.hasGamePiece() && robotState.inReefArea() && robotState.isFacingReef()) {
                 targetPose = robotState.getClosestReefAlgae();
                 headingSetpoint = targetPose.map(Pose2d::getRotation);
             }

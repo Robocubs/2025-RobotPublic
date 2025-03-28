@@ -14,7 +14,6 @@ public class SubsystemScheduler<Subsystem extends SubsystemBase> {
     private Command defaultCommand;
     private Command command;
     private Command nextCommand = null;
-    private int loop = 0;
 
     public SubsystemScheduler(Subsystem subsystem, Command defaultCommand) {
         this.subsystem = subsystem;
@@ -30,9 +29,6 @@ public class SubsystemScheduler<Subsystem extends SubsystemBase> {
     }
 
     public final void execute() {
-        Logger.recordOutput("SubsystemScheduler/Loops", loop++);
-        Logger.recordOutput("SubsystemScheduler/Command", command.getName());
-
         if (nextCommand != null) {
             command.end(true);
             command = nextCommand;
@@ -47,6 +43,8 @@ public class SubsystemScheduler<Subsystem extends SubsystemBase> {
             command = defaultCommand;
             command.initialize();
         }
+
+        Logger.recordOutput("SubsystemScheduler/" + subsystem.getName() + "/Command", command.getName());
     }
 
     public final void end(boolean interrupted) {
@@ -60,10 +58,7 @@ public class SubsystemScheduler<Subsystem extends SubsystemBase> {
     public final Command schedule(Function<Subsystem, Command> command) {
         var commandValue = command.apply(subsystem);
         CommandScheduler.getInstance().registerComposedCommands(commandValue);
-        return Commands.runOnce(() -> {
-            System.out.println("Scheduling command " + commandValue.getName());
-            nextCommand = commandValue;
-        });
+        return Commands.runOnce(() -> nextCommand = commandValue);
     }
 
     public Subsystem getSubsystem() {

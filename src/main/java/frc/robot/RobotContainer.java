@@ -16,7 +16,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.RobotState.AlgaeMode;
 import frc.robot.RobotState.CoralMode;
 import frc.robot.autonomous.AutoRoutines;
-import frc.robot.commands.AutoScore;
+import frc.robot.commands.AutoScoreV2;
 import frc.robot.commands.SubsystemScheduler;
 import frc.robot.commands.characterization.DriveCharacterization;
 import frc.robot.commands.characterization.SuperstructureCharacterization;
@@ -30,6 +30,9 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIO;
 import frc.robot.subsystems.drive.DriveIOHardware;
 import frc.robot.subsystems.drive.DriveIOSim;
+import frc.robot.subsystems.leds.LED;
+import frc.robot.subsystems.leds.LEDIO;
+import frc.robot.subsystems.leds.LEDIOHardware;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.arm.ArmIO;
@@ -41,7 +44,6 @@ import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
 import frc.robot.subsystems.superstructure.funnel.FunnelIO;
 import frc.robot.subsystems.superstructure.funnel.FunnelIOHardware;
 import frc.robot.subsystems.superstructure.funnel.FunnelIOSim;
-import frc.robot.subsystems.superstructure.leds.LED;
 import frc.robot.subsystems.superstructure.rollers.RollersIO;
 import frc.robot.subsystems.superstructure.rollers.RollersIOHardware;
 import frc.robot.subsystems.superstructure.rollers.RollersIOSim;
@@ -97,7 +99,7 @@ public class RobotContainer {
                             new FunnelIOHardware(),
                             robotState);
                     climb = new Climb(new ClimbIOHardware());
-                    led = new LED();
+                    led = new LED(new LEDIOHardware());
                     break;
                 case SIM_BOT:
                     var simState = new SimState();
@@ -116,7 +118,6 @@ public class RobotContainer {
                             new FunnelIOSim(),
                             robotState);
                     climb = new Climb(new ClimbIOSim());
-                    led = new LED();
             }
         }
 
@@ -142,7 +143,7 @@ public class RobotContainer {
         }
 
         if (led == null) {
-            led = new LED();
+            led = new LED(new LEDIO() {});
         }
 
         this.drive = drive;
@@ -151,6 +152,7 @@ public class RobotContainer {
 
         SmartDashboard.putData("Drive", drive);
         SmartDashboard.putData("Superstructure", superstructure);
+        SmartDashboard.putData("Climb", climb);
 
         configureBindings();
         configureAutoRoutines();
@@ -182,10 +184,10 @@ public class RobotContainer {
 
         driverController
                 .leftTrigger()
-                .whileTrue(AutoScore.autoScore(drive, superstructure, robotState, robotState::getLeftReefPose));
+                .whileTrue(AutoScoreV2.autoScore(drive, superstructure, robotState, robotState::getLeftReefPose));
         driverController
                 .rightTrigger()
-                .whileTrue(AutoScore.autoScore(drive, superstructure, robotState, robotState::getRightReefPose));
+                .whileTrue(AutoScoreV2.autoScore(drive, superstructure, robotState, robotState::getRightReefPose));
 
         driverController
                 .rightBumper()
@@ -209,26 +211,38 @@ public class RobotContainer {
                                 driverController.rightBumper())
                         .unless(robotState::underNetArea));
 
-        /* Stream Dech Buttons */
+        /* Stream Deck Buttons */
+        var stow = superstructure.runState(SuperstructureState.STOW);
+        var feed = superstructure.runState(SuperstructureState.FEED);
         var l4CoralScore = robotState.setCoralSelection(CoralMode.L4_CORAL);
         var l3CoralScore = robotState.setCoralSelection(CoralMode.L3_CORAL);
         var l2CoralScore = robotState.setCoralSelection(CoralMode.L2_CORAL);
         var l1CoralScore = robotState.setCoralSelection(CoralMode.L1_CORAL);
-        var algaeIntake = superstructure.runState(SuperstructureState.ALGAE_INTAKE);
+        var algaeIntake = superstructure
+                .runState(SuperstructureState.ALGAE_INTAKE)
+                .until(robotState::hasAlgae)
+                .andThen(() -> stow.schedule())
+                .withName("SuperstructureRun_ALGAE_INTAKE");
         var algaeEject = superstructure.runState(SuperstructureState.ALGAE_EJECT);
-        var feed = superstructure.runState(SuperstructureState.FEED);
-        var stow = superstructure.runState(SuperstructureState.STOW);
-        var processor = robotState.setAlgaeSelection(AlgaeMode.PROCESSOR);
-        var barge = robotState.setAlgaeSelection(AlgaeMode.BARGE);
         var bumpForwards = superstructure.bumpFeedPosition(Inches.of(1));
         var bumpReverse = superstructure.bumpFeedPosition(Inches.of(-1));
+        var coralIntake = superstructure
+                .runState(SuperstructureState.CORAL_INTAKE)
+                .until(robotState::hasCoral)
+                .andThen(() -> stow.schedule())
+                .withName("SuperstructureRun_CORAL_INTAKE");
+        var coralReject = superstructure.runState(SuperstructureState.HOLD);
 
         var climbDeploy = climb.deploy();
         var climbRetract = climb.retract();
         var climbZero = climb.zero();
 
         // TODO: Make automatically switch between feed and stow when appropriate
-        superstructure.setDefaultCommand(stow);
+        superstructure.setDefaultCommand(either(
+                        superstructure.runState(SuperstructureState.STOW),
+                        superstructure.runState(SuperstructureState.FEED),
+                        robotState::hasGamePiece)
+                .withName("SuperstructureDefault"));
         climb.setDefaultCommand(climb.stop());
 
         teleop.onTrue(superstructure.hold(true));
@@ -241,15 +255,15 @@ public class RobotContainer {
                         .add(StreamDeckButton.L1_CORAL, () -> robotState.isSelected(CoralMode.L1_CORAL))
                         .add(StreamDeckButton.ALGAE_INTAKE, () -> algaeIntake.isScheduled())
                         .add(StreamDeckButton.ALGAE_EJECT, () -> algaeEject.isScheduled())
-                        .add(StreamDeckButton.FEED, () -> feed.isScheduled())
-                        .add(StreamDeckButton.STOW, () -> stow.isScheduled())
-                        .add(StreamDeckButton.PROCESSOR, () -> robotState.isSelected(AlgaeMode.PROCESSOR))
-                        .add(StreamDeckButton.BARGE, () -> robotState.isSelected(AlgaeMode.BARGE))
+                        .add(StreamDeckButton.FEED, () -> superstructure.getState() == SuperstructureState.FEED)
+                        .add(StreamDeckButton.STOW, () -> superstructure.getState() == SuperstructureState.STOW)
                         .add(StreamDeckButton.BUMP_FORWARDS, () -> bumpForwards.isScheduled())
                         .add(StreamDeckButton.BUMP_REVERSE, () -> bumpReverse.isScheduled())
                         .add(StreamDeckButton.DEPLOY, () -> climbDeploy.isScheduled())
                         .add(StreamDeckButton.RETRACT, () -> climbRetract.isScheduled())
-                        .add(StreamDeckButton.ZERO, () -> climbZero.isScheduled()));
+                        .add(StreamDeckButton.ZERO, () -> climbZero.isScheduled())
+                        .add(StreamDeckButton.CORAL_INTAKE, () -> coralIntake.isScheduled())
+                        .add(StreamDeckButton.CORAL_REJECT, () -> coralReject.isScheduled()));
 
         streamDeck.button(StreamDeckButton.L4_CORAL).onTrue(l4CoralScore);
         streamDeck.button(StreamDeckButton.L3_CORAL).onTrue(l3CoralScore);
@@ -259,13 +273,17 @@ public class RobotContainer {
         streamDeck.button(StreamDeckButton.ALGAE_EJECT).onTrue(algaeEject);
         streamDeck.button(StreamDeckButton.FEED).onTrue(feed);
         streamDeck.button(StreamDeckButton.STOW).onTrue(stow);
-        streamDeck.button(StreamDeckButton.PROCESSOR).onTrue(processor);
-        streamDeck.button(StreamDeckButton.BARGE).onTrue(barge);
         streamDeck.button(StreamDeckButton.BUMP_FORWARDS).onTrue(bumpForwards);
         streamDeck.button(StreamDeckButton.BUMP_REVERSE).onTrue(bumpReverse);
         streamDeck.button(StreamDeckButton.DEPLOY).onTrue(climbDeploy);
         streamDeck.button(StreamDeckButton.RETRACT).onTrue(climbRetract);
         streamDeck.button(StreamDeckButton.ZERO).onTrue(climbZero);
+        streamDeck.button(StreamDeckButton.CORAL_INTAKE).onTrue(coralIntake);
+        streamDeck.button(StreamDeckButton.CORAL_REJECT).onTrue(coralReject);
+
+        /* Dashboard Buttons */
+        SmartDashboard.putData(superstructure.zeroElevator().withName("ElevatorZero"));
+        SmartDashboard.putData(climbZero);
 
         /* Miscellaneous */
         teleop.onTrue(drive.resetRotation(robotState::getHeading));
@@ -301,7 +319,7 @@ public class RobotContainer {
 
         autoChooser.addRoutine("Right 4", autoRoutines::rightFour);
         autoChooser.addRoutine("Left 4", autoRoutines::leftFour);
-        autoChooser.addRoutine("Rught Bump", autoRoutines::rightBump);
+        autoChooser.addRoutine("Right Bump", autoRoutines::rightBump);
 
         SmartDashboard.putData("Auto Chooser", autoChooser);
 

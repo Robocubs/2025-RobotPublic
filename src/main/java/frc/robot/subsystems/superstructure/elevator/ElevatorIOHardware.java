@@ -260,9 +260,9 @@ public class ElevatorIOHardware implements ElevatorIO {
     }
 
     @Override
-    public void zeroPosition() {
-        masterMotor.setPosition(0, .01);
-        followerMotor.setPosition(0, .01);
+    public void zeroPosition(Distance position) {
+        masterMotor.setPosition(toMotorPosition(position), .01);
+        followerMotor.setPosition(toMotorPosition(position), .01);
     }
 
     @Override

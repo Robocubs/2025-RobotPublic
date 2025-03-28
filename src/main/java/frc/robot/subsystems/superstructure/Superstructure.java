@@ -195,7 +195,10 @@ public class Superstructure extends SubsystemBase {
                                 .gt(SuperstructureState.FEED.getData().getPose().elevatorHeight())) {
                     elevator.hold();
                 } else {
-                    elevator.setHeight(state.getData().getPose().elevatorHeight());
+                    elevator.setHeight(
+                            rollers.algaeDetected()
+                                    ? state.getData().getAlgaePose().elevatorHeight()
+                                    : state.getData().getPose().elevatorHeight());
                 }
                 arm.setAngle(
                         rollers.algaeDetected()

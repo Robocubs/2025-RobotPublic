@@ -2,6 +2,7 @@ package frc.robot.subsystems.superstructure.elevator;
 
 import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import frc.robot.util.simulation.SimNotifier;
@@ -10,9 +11,11 @@ import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.superstructure.elevator.ElevatorConstants.*;
 
 public class ElevatorIOSim extends ElevatorIOHardware {
+    private final ElevatorSim motorSim;
+
     public ElevatorIOSim() {
         var gearbox = DCMotor.getKrakenX60Foc(numMotors);
-        var motorSim = new ElevatorSim(
+        motorSim = new ElevatorSim(
                 gearbox,
                 reduction,
                 loadMass.in(Kilograms),
@@ -42,5 +45,13 @@ public class ElevatorIOSim extends ElevatorIOHardware {
             followerSimState.setRotorVelocity(velocity);
             followerSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
         });
+    }
+
+    @Override
+    public void zeroPosition(Distance position) {
+        motorSim.setState(position.in(Meters), 0);
+        masterMotor.getSimState().setRawRotorPosition(0);
+        followerMotor.getSimState().setRawRotorPosition(0);
+        super.zeroPosition(position);
     }
 }

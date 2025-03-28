@@ -40,7 +40,7 @@ public interface ElevatorIO {
 
     public default void setVelocity(LinearVelocity velocity, Force feedforward) {}
 
-    public default void zeroPosition() {}
+    public default void zeroPosition(Distance position) {}
 
     public default void stop() {}
 

@@ -107,5 +107,5 @@
     }
   ],
   "eslint.validate": ["javascript", "typescript"],
-  "cSpell.words": ["debouncer", "odometry", "setpoint"]
+  "cSpell.words": ["cancoder", "candi", "canivore", "Deadband", "debouncer", "feedforward", "LEDIO", "odometry", "setpoint", "teleop", "wpilibj"]
 }

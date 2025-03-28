@@ -6,6 +6,7 @@ import java.util.List;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.DistanceUnit;
@@ -15,7 +16,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.CoralMode;
-import frc.robot.commands.AutoScore;
+import frc.robot.commands.AutoScoreV2;
 import frc.robot.commands.SubsystemScheduler;
 import frc.robot.commands.logging.LoggedCommands;
 import frc.robot.subsystems.drive.Drive;
@@ -167,7 +168,8 @@ public class LoggedAutoRoutine {
         var flippedPose = GeometryUtil.autoFlip(pose);
         var goalPose = robotState.getClosestReefBranch(flippedPose).orElse(flippedPose);
 
-        commands.add(AutoScore.autoScore(drive, superstructure, robotState, goalPose));
+        commands.add(AutoScoreV2.autoScore(drive, superstructure, robotState, goalPose)
+                .until(() -> !robotState.hasCoral()));
         pathBuilder.add(GeometryUtil.autoFlip(goalPose));
 
         commands.add(superstructure.schedule(s -> s.runState(SuperstructureState.FEED)));
@@ -176,16 +178,18 @@ public class LoggedAutoRoutine {
     }
 
     public LoggedAutoRoutine waitForCoral(Pose2d pose) {
-        commands.add(parallel(
-                        drive.toPose(() -> GeometryUtil.autoFlip(pose), false, true),
-                        superstructure.schedule(s -> s.runState(SuperstructureState.FEED)))
-                .until(robotState::hasCoral)
-                .withTimeout(1.0));
+        commands.add(sequence(
+                        superstructure.schedule(s -> s.runState(SuperstructureState.FEED)),
+                        drive.toPose(() -> GeometryUtil.autoFlip(pose), true, false),
+                        drive.pointModules(() -> Rotation2d.kZero).withTimeout(0.5))
+                .until(robotState::hasCoral));
         pathBuilder.add(pose);
         return this;
     }
 
     public LoggedAutoRoutine followPathAndWaitForCoral(String pathName, int splitIndex) {
+        commands.add(superstructure.schedule(s -> s.runState(SuperstructureState.FEED)));
+
         var path = routine.trajectory(pathName, splitIndex);
         commands.add(path.cmd());
 

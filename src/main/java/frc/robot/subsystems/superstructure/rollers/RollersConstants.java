@@ -10,7 +10,7 @@ import static edu.wpi.first.units.Units.*;
 public final class RollersConstants {
     public static final Distance coralRollerRadius = Inches.of(4);
     public static final Distance algaeRollerRadius = Inches.of(1);
-    public static final double reduction = 5.0 * 24.0 / 19.0;
+    public static final double reduction = 9.0 * 24.0 / 20.0 * 24.0 / 19.0 * 24.0 / 22.0;
     public static final Angle coralAngleRelativeToArm = Degrees.of(-20.855);
     public static final Angle algaeAngleRelativeToArm = Degrees.of(10.332);
 
