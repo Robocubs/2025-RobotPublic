@@ -180,7 +180,7 @@ public class LoggedAutoRoutine {
     public LoggedAutoRoutine waitForCoral(Pose2d pose) {
         commands.add(sequence(
                         superstructure.schedule(s -> s.runState(SuperstructureState.FEED)),
-                        drive.toPose(() -> GeometryUtil.autoFlip(pose), true, false),
+                        drive.toPose(() -> GeometryUtil.autoFlip(pose), true, true),
                         drive.pointModules(() -> Rotation2d.kZero).withTimeout(0.5))
                 .until(robotState::hasCoral));
         pathBuilder.add(pose);

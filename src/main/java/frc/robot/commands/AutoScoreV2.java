@@ -103,6 +103,8 @@ public final class AutoScoreV2 {
                 drive.toPose(() -> autoScoreState.reversePose, true, true));
         Supplier<Command> stowSuperstructure =
                 () -> superstructure.schedule(s -> s.defer(() -> s.transitionToState(SuperstructureState.STOW)));
+        Supplier<Command> feedSuperstructure =
+                () -> superstructure.schedule(s -> s.defer(() -> s.transitionToState(SuperstructureState.FEED)));
         Supplier<Command> alignSuperstructure =
                 () -> superstructure.schedule(s -> s.defer(() -> s.transitionToState(autoScoreState.alignState)));
         var score = superstructure.schedule(
@@ -113,6 +115,9 @@ public final class AutoScoreV2 {
         return sequence(
                 updateState,
                 sequence(
+                                parallel(driveToAlignPose.get(), feedSuperstructure.get())
+                                        .until(() -> robotState.hasCoral())
+                                        .unless(() -> robotState.hasCoral()),
                                 parallel(driveToAlignPose.get(), stowSuperstructure.get())
                                         .until(() -> robotState
                                                 .getDistanceTo(autoScoreState.alignPose)

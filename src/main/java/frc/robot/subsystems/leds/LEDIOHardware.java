@@ -32,6 +32,7 @@ public class LEDIOHardware implements LEDIO {
 
     @Override
     public void setLEDs(int r, int g, int b, int start, int count) {
+        candle.clearAnimation(0);
         candle.setLEDs(r, g, b, 0, start, count);
     }
 

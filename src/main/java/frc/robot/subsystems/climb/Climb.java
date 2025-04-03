@@ -15,8 +15,10 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.leds.LED;
 import frc.robot.util.tuning.LoggedTunableMeasure;
 import org.littletonrobotics.junction.Logger;
 
@@ -25,15 +27,15 @@ import static edu.wpi.first.wpilibj2.command.Commands.sequence;
 
 public class Climb extends SubsystemBase {
     private static final LoggedTunableMeasure<AngleUnit, Angle> climbedPosition =
-            new LoggedTunableMeasure<>("Climb/ClimbedPosition", Radians.of(-13));
+            new LoggedTunableMeasure<>("Climb/ClimbedPosition", Radians.of(-8));
     private static final LoggedTunableMeasure<AngleUnit, Angle> preDeployedPosition =
             new LoggedTunableMeasure<>("Climb/PreDeployedPosition", Radians.of(-13));
     private static final LoggedTunableMeasure<AngleUnit, Angle> releaseStartPosition =
             new LoggedTunableMeasure<>("Climb/ReleaseStartPosition", Radians.of(-25));
     private static final LoggedTunableMeasure<AngleUnit, Angle> releasePosition =
-            new LoggedTunableMeasure<>("Climb/ReleasePosition", Radians.of(-36));
+            new LoggedTunableMeasure<>("Climb/ReleasePosition", Radians.of(-40));
     private static final LoggedTunableMeasure<AngleUnit, Angle> deployedPosition =
-            new LoggedTunableMeasure<>("Climb/DeployedPosition", Radians.of(-32));
+            new LoggedTunableMeasure<>("Climb/DeployedPosition", Radians.of(-36));
     private static final LoggedTunableMeasure<AngleUnit, Angle> brakeEngagedAngle =
             new LoggedTunableMeasure<>("Climb/BrakeEngagedAngle", Degrees.of(135.0));
     private static final LoggedTunableMeasure<AngleUnit, Angle> brakeDisengagedAngle =
@@ -45,16 +47,19 @@ public class Climb extends SubsystemBase {
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> zeroVelocityLimit =
             new LoggedTunableMeasure<>("Climb/ZeroVelocityLimit", RadiansPerSecond.of(0.1));
     private static final LoggedTunableMeasure<VoltageUnit, Voltage> retractVoltage =
-            new LoggedTunableMeasure<>("Climb/RetractVoltage", Volts.of(10));
+            new LoggedTunableMeasure<>("Climb/RetractVoltage", Volts.of(12));
 
     private final ClimbIO io;
     private final ClimbIOInputsAutoLogged inputs = new ClimbIOInputsAutoLogged();
 
+    private final LED led;
+
     private Optional<Angle> zeroedPosition = Optional.empty();
     private boolean deployed = false;
 
-    public Climb(ClimbIO io) {
+    public Climb(ClimbIO io, LED led) {
         this.io = io;
+        this.led = led;
     }
 
     @Override
@@ -69,6 +74,7 @@ public class Climb extends SubsystemBase {
 
     public Command deploy() {
         return sequence(
+                        runOnce(() -> led.setAll(Color.kRed)),
                         zero().unless(() -> hasBeenZeroed()),
                         run(() -> io.setBrakeServoAngle(brakeDisengagedAngle.get()))
                                 .withTimeout(0.5),
@@ -87,6 +93,7 @@ public class Climb extends SubsystemBase {
                                     io.setBrakeServoAngle(brakeDisengagedAngle.get());
                                 })
                                 .withTimeout(4.0),
+                        runOnce(() -> led.setAll(Color.kBlue)),
                         run(() -> {
                             var position = deployedPosition.get().plus(zeroedPosition.get());
                             io.setPosition(position, NewtonMeters.zero());
@@ -95,12 +102,13 @@ public class Climb extends SubsystemBase {
                             deployed = true;
                         }))
                 .finallyDo(() -> io.stopReleaseServo())
-                .unless(() -> DriverStation.getMatchTime() > 20)
+                .unless(() -> DriverStation.getMatchTime() > 25)
                 .withName("ClimbDeploy");
     }
 
     public Command retract() {
         return sequence(
+                        runOnce(() -> led.setStrobe(Color.kWhite)),
                         run(() -> {
                                     io.setBrakeServoAngle(brakeEngagedAngle.get());
                                     io.setVoltage(retractVoltage.get());

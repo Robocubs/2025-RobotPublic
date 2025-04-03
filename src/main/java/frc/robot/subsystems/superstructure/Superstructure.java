@@ -12,6 +12,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.RobotState;
@@ -335,6 +336,7 @@ public class Superstructure extends SubsystemBase {
                                 elevator.zeroRoutine(), run(() -> runStatePeriodic(SuperstructureState.ZERO_ELEVATOR))),
                         runOnce(() -> elevatorZeroed = true))
                 .finallyDo(() -> setState(SuperstructureState.STOW))
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming)
                 .withName("SuperstructureZeroElevator");
     }
 

@@ -18,7 +18,7 @@ public final class RollersConstants {
             RadiansPerSecond.of(CustomDCMotor.getKrakenX44(1).withReduction(reduction).freeSpeedRadPerSec * 0.8);
     public static final double kT = CustomDCMotor.getKrakenX44(1).withReduction(reduction).KtNMPerAmp;
 
-    public static final Distance coralDetectionDistance = Meters.of(0.3);
+    public static final Distance coralDetectionDistance = Meters.of(0.25);
     public static final Distance algaeDetectionDistance = Meters.of(0.05);
     public static final Distance funnelDetectionDistance = Meters.of(0.25);
     public static final Distance elevatorDetectionDistance = Meters.of(0.55);

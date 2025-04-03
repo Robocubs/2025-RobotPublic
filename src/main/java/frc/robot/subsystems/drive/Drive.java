@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 
 import choreo.trajectory.SwerveSample;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -22,6 +23,7 @@ import frc.robot.commands.DriveToPose;
 import frc.robot.commands.DriveWithJoysticks;
 import frc.robot.commands.DriveWithJoysticksEnhanced;
 import frc.robot.subsystems.drive.controllers.PathController;
+import frc.robot.util.GeometryUtil;
 import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
 
@@ -31,6 +33,8 @@ public class Drive extends SubsystemBase {
     private final SwerveRequest.SwerveDriveBrake brakeRequest = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt pointRequest = new SwerveRequest.PointWheelsAt();
     private final SwerveRequest.ApplyRobotSpeeds robotRequest = new SwerveRequest.ApplyRobotSpeeds();
+    private final SwerveRequest.FieldCentricFacingAngle fieldCentricFacingAngle =
+            new SwerveRequest.FieldCentricFacingAngle().withDriveRequestType(DriveRequestType.Velocity);
 
     private final DriveIO io;
     private final DriveIOInputsAutoLogged inputs = new DriveIOInputsAutoLogged();
@@ -69,6 +73,8 @@ public class Drive extends SubsystemBase {
             moduleStates = lastInput.moduleStates;
             modulePositions = lastInput.modulePositions;
         }
+
+        fieldCentricFacingAngle.HeadingController.setPID(7.0, 0.0, 0.0);
     }
 
     public void setRequest(SwerveRequest request) {
@@ -139,5 +145,30 @@ public class Drive extends SubsystemBase {
     public Command pointModules(Supplier<Rotation2d> rotation) {
         return run(() -> io.setControl(pointRequest.withModuleDirection(rotation.get())))
                 .withName("DrivePointModules");
+    }
+
+    public Command fineTuneClimb(DoubleSupplier throttle, DoubleSupplier strafe) {
+        var deadband = DriveConstants.maxSpeedFineControl.times(0.1);
+        return run(() -> {
+            var currentRotation = robotState.getPose().getRotation();
+            var rotationTargetRadians =
+                    GeometryUtil.isNear(currentRotation, Rotation2d.kZero, Rotation2d.kCCW_90deg) ? 0 : Math.PI;
+            var rotationTarget =
+                    Rotation2d.fromRadians(odometryPose.getRotation().getRadians()
+                            - robotState.getHeading().getRadians()
+                            + rotationTargetRadians);
+
+            var throttleValue = robotState.isBlue() ? throttle.getAsDouble() : -throttle.getAsDouble();
+            var strafeValue = robotState.isBlue() ? strafe.getAsDouble() : -strafe.getAsDouble();
+            var translation = Math.abs(throttleValue) > Math.abs(strafeValue)
+                    ? new Translation2d(throttleValue, 0)
+                    : new Translation2d(0, strafeValue);
+
+            setRequest(fieldCentricFacingAngle
+                    .withVelocityX(DriveConstants.maxSpeedFineControl.times(translation.getX()))
+                    .withVelocityY(DriveConstants.maxSpeedFineControl.times(translation.getY()))
+                    .withDeadband(deadband)
+                    .withTargetDirection(rotationTarget));
+        });
     }
 }

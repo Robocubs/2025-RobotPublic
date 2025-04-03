@@ -6,6 +6,7 @@ import com.ctre.phoenix.led.LarsonAnimation.BounceMode;
 import com.ctre.phoenix.led.TwinkleAnimation.TwinklePercent;
 import com.ctre.phoenix.led.TwinkleOffAnimation.TwinkleOffPercent;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class LED extends SubsystemBase {
@@ -13,6 +14,7 @@ public class LED extends SubsystemBase {
     private final int LedCount = 62;
 
     private Animation toAnimate = null;
+    private Color color = Color.kWhite;
 
     public enum AnimationTypes {
         ColorFlow,
@@ -37,19 +39,30 @@ public class LED extends SubsystemBase {
     @Override
     public void periodic() {
         if (DriverStation.isDisabled()) {
+            changeAnimation(AnimationTypes.SetAll);
             setLEDsToWhite();
-        } else if (toAnimate == null) {
-            setLEDsToWhite();
-        } else {
+            color = Color.kWhite;
+        } else if (toAnimate != null) {
             io.animate(toAnimate);
+        } else {
+            io.setLEDs((int) (color.red * 255), (int) (color.green * 255), (int) (color.blue * 255), 0, LedCount);
         }
     }
 
-    void setColors() {
+    public void setAll(Color color) {
         changeAnimation(AnimationTypes.SetAll);
+        this.color = color;
+    }
+
+    public void setStrobe(Color color) {
+        changeAnimation(AnimationTypes.Strobe);
     }
 
     public void changeAnimation(AnimationTypes toChange) {
+        if (currentAnimation == toChange) {
+            return;
+        }
+
         currentAnimation = toChange;
 
         switch (toChange) {
