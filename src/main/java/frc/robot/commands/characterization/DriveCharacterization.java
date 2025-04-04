@@ -55,7 +55,7 @@ public class DriveCharacterization {
     public static Command wheelRadius(Drive drive) {
         var driveBaseRadius = Math.hypot(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY);
         var configuredWheelRadius = TunerConstants.FrontLeft.WheelRadius;
-        var maxAngularVelocity = 0.25;
+        var maxAngularVelocity = 0.5;
         var rampRate = 0.05;
         var limiter = new SlewRateLimiter(rampRate);
         var state = new WheelRadiusCharacterizationState();
@@ -93,7 +93,7 @@ public class DriveCharacterization {
                                         wheelDelta += Math.abs(positions[i] - state.positions[i]) / 4.0;
                                     }
                                     var wheelRadius =
-                                            (state.gyroDelta * driveBaseRadius) / wheelDelta / configuredWheelRadius;
+                                            (state.gyroDelta * driveBaseRadius) / (wheelDelta / configuredWheelRadius);
 
                                     var formatter = new DecimalFormat("#0.000");
                                     System.out.println("********** Wheel Radius Characterization Results **********");

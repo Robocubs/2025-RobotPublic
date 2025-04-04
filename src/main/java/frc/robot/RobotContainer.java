@@ -287,7 +287,7 @@ public class RobotContainer {
         streamDeck.button(StreamDeckButton.BUMP_FORWARDS).onTrue(bumpForwards);
         streamDeck.button(StreamDeckButton.BUMP_REVERSE).onTrue(bumpReverse);
         streamDeck.button(StreamDeckButton.DEPLOY).onTrue(climbDeploy);
-        streamDeck.button(StreamDeckButton.RETRACT).onTrue(climbRetract);
+        streamDeck.button(StreamDeckButton.RETRACT).onTrue(climbRetract).onTrue(algaeIntake);
         streamDeck.button(StreamDeckButton.ZERO).onTrue(climbZero);
         streamDeck.button(StreamDeckButton.CORAL_INTAKE).onTrue(coralIntake);
         streamDeck.button(StreamDeckButton.CORAL_REJECT).onTrue(coralReject);

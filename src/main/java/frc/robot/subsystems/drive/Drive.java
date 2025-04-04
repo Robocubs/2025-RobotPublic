@@ -27,6 +27,7 @@ import frc.robot.util.GeometryUtil;
 import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
 import static frc.robot.subsystems.drive.DriveConstants.*;
 
 public class Drive extends SubsystemBase {
@@ -148,7 +149,8 @@ public class Drive extends SubsystemBase {
     }
 
     public Command fineTuneClimb(DoubleSupplier throttle, DoubleSupplier strafe) {
-        var deadband = DriveConstants.maxSpeedFineControl.times(0.1);
+        var maxSpeed = MetersPerSecond.of(2);
+        var deadband = maxSpeed.times(0.1);
         return run(() -> {
             var currentRotation = robotState.getPose().getRotation();
             var rotationTargetRadians =
@@ -160,13 +162,10 @@ public class Drive extends SubsystemBase {
 
             var throttleValue = robotState.isBlue() ? throttle.getAsDouble() : -throttle.getAsDouble();
             var strafeValue = robotState.isBlue() ? strafe.getAsDouble() : -strafe.getAsDouble();
-            var translation = Math.abs(throttleValue) > Math.abs(strafeValue)
-                    ? new Translation2d(throttleValue, 0)
-                    : new Translation2d(0, strafeValue);
 
             setRequest(fieldCentricFacingAngle
-                    .withVelocityX(DriveConstants.maxSpeedFineControl.times(translation.getX()))
-                    .withVelocityY(DriveConstants.maxSpeedFineControl.times(translation.getY()))
+                    .withVelocityX(maxSpeed.times(throttleValue))
+                    .withVelocityY(maxSpeed.times(strafeValue))
                     .withDeadband(deadband)
                     .withTargetDirection(rotationTarget));
         });

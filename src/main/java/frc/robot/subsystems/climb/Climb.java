@@ -27,7 +27,7 @@ import static edu.wpi.first.wpilibj2.command.Commands.sequence;
 
 public class Climb extends SubsystemBase {
     private static final LoggedTunableMeasure<AngleUnit, Angle> climbedPosition =
-            new LoggedTunableMeasure<>("Climb/ClimbedPosition", Radians.of(-8));
+            new LoggedTunableMeasure<>("Climb/ClimbedPosition", Radians.of(-9));
     private static final LoggedTunableMeasure<AngleUnit, Angle> preDeployedPosition =
             new LoggedTunableMeasure<>("Climb/PreDeployedPosition", Radians.of(-13));
     private static final LoggedTunableMeasure<AngleUnit, Angle> releaseStartPosition =
