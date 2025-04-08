@@ -45,7 +45,7 @@ public class RobotState {
     private static final Rotation2d facingBargeTolerance = Rotation2d.fromDegrees(45.0);
     private static final Distance reefAreaDistanceTolerance = Meters.of(2.5);
     private static final Distance processorAreaDistanceTolerance = Meters.of(2.0);
-    private static final Distance bargeAreaLengthTolerance = Meters.of(2.0);
+    private static final Distance bargeAreaLengthTolerance = Meters.of(3.0);
     private static final Distance underNetAreaTolerance = Meters.of(1.3);
     private static final Distance speedLimitMinHeight = Meters.of(0.5);
     private static final LinearVelocity nominalSpeedTolerance = MetersPerSecond.of(0.1);
@@ -196,6 +196,12 @@ public class RobotState {
     @AutoLogOutput
     public Rotation2d getHeading() {
         return poseEstimator.getEstimatedPosition().getRotation();
+    }
+
+    public Rotation2d getHeadingTo(Pose2d pose) {
+        return pose.getTranslation()
+                .minus(poseEstimator.getEstimatedPosition().getTranslation())
+                .getAngle();
     }
 
     public Distance getDistanceTo(Translation2d translation) {

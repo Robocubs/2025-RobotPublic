@@ -17,7 +17,7 @@ import frc.robot.Constants.RobotType;
 import frc.robot.RobotState.AlgaeMode;
 import frc.robot.RobotState.CoralMode;
 import frc.robot.autonomous.AutoRoutines;
-import frc.robot.commands.AutoScoreV2;
+import frc.robot.commands.AutoScore;
 import frc.robot.commands.SubsystemScheduler;
 import frc.robot.commands.characterization.DriveCharacterization;
 import frc.robot.commands.characterization.SuperstructureCharacterization;
@@ -185,11 +185,11 @@ public class RobotContainer {
         driverController
                 .leftTrigger()
                 .and(() -> !robotState.isSelected(CoralMode.L1_CORAL))
-                .whileTrue(AutoScoreV2.autoScore(drive, superstructure, robotState, robotState::getLeftReefPose));
+                .whileTrue(AutoScore.autoScore(drive, superstructure, robotState, robotState::getLeftReefPose));
         driverController
                 .rightTrigger()
                 .and(() -> !robotState.isSelected(CoralMode.L1_CORAL))
-                .whileTrue(AutoScoreV2.autoScore(drive, superstructure, robotState, robotState::getRightReefPose));
+                .whileTrue(AutoScore.autoScore(drive, superstructure, robotState, robotState::getRightReefPose));
 
         driverController
                 .rightTrigger()
@@ -203,11 +203,11 @@ public class RobotContainer {
         driverController
                 .a()
                 .and(() -> robotState.isSelected(AlgaeMode.L3))
-                .whileTrue(superstructure.runState(SuperstructureState.L3_ALGAE).unless(robotState::hasCoral));
+                .whileTrue(superstructure.runState(SuperstructureState.L3_ALGAE));
         driverController
                 .a()
                 .and(() -> robotState.isSelected(AlgaeMode.L2))
-                .whileTrue(superstructure.runState(SuperstructureState.L2_ALGAE).unless(robotState::hasCoral));
+                .whileTrue(superstructure.runState(SuperstructureState.L2_ALGAE));
         driverController
                 .a()
                 .and(() -> robotState.isSelected(AlgaeMode.BARGE))
@@ -330,7 +330,8 @@ public class RobotContainer {
 
         autoChooser.addRoutine("Right 4", autoRoutines::rightFour);
         autoChooser.addRoutine("Left 4", autoRoutines::leftFour);
-        autoChooser.addRoutine("Right Bump", autoRoutines::rightBump);
+        autoChooser.addRoutine("Ground Right 4", autoRoutines::groundRightFour);
+        autoChooser.addRoutine("Ground Right 2", autoRoutines::groundRightTwo);
 
         SmartDashboard.putData("Auto Chooser", autoChooser);
 

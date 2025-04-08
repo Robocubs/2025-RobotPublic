@@ -27,6 +27,12 @@ public final class AutoScore {
             new LoggedTunableMeasure<>("AutoScore/MaxDistanceReefLineup", Meters.of(1.0));
     public static final LoggedTunableMeasure<DistanceUnit, Distance> alignDistance =
             new LoggedTunableMeasure<>("AutoScore/AlignDistance", Meters.of(0.15));
+    public static final LoggedTunableMeasure<DistanceUnit, Distance> bounceDistance =
+            new LoggedTunableMeasure<>("AutoScore/BounceDistance", Meters.of(0.05));
+    public static final LoggedTunableMeasure<DistanceUnit, Distance> reverseDistance =
+            new LoggedTunableMeasure<>("AutoScore/ReverseDistance", Meters.of(0.5));
+    public static final LoggedTunableMeasure<DistanceUnit, Distance> releaseTolerance =
+            new LoggedTunableMeasure<>("AutoScore/ReleaseTolerance", Meters.of(0.05));
     public static final LoggedTunableMeasure<DistanceUnit, Distance> minArticulationDistance =
             new LoggedTunableMeasure<>("AutoScore/ArticulationDistance", Meters.of(1.5));
 
@@ -59,7 +65,13 @@ public final class AutoScore {
             autoScoreState.alignPose = scorePose
                     .get()
                     .transformBy(new Transform2d(-alignDistance.get().in(Meters), 0.0, Rotation2d.kZero));
-            autoScoreState.scorePose = scorePose.get();
+            autoScoreState.bouncePose = scorePose
+                    .get()
+                    .transformBy(new Transform2d(bounceDistance.get().in(Meters), 0.0, Rotation2d.kZero));
+            autoScoreState.reversePose = scorePose
+                    .get()
+                    .transformBy(new Transform2d(-reverseDistance.get().in(Meters), 0.0, Rotation2d.kZero));
+            autoScoreState.releaseDistance = bounceDistance.get().plus(releaseTolerance.get());
 
             switch (robotState.getCoralSelection()) {
                 case L4_CORAL:
@@ -81,37 +93,44 @@ public final class AutoScore {
             }
         });
 
-        var driveToAlignPose1 =
-                drive.toPose(() -> getTargetPose(robotState.getPose(), autoScoreState.alignPose), false, false);
-        var driveToAlignPose2 =
-                drive.toPose(() -> getTargetPose(robotState.getPose(), autoScoreState.alignPose), false, false);
-        var driveToScorePose1 =
-                drive.toPose(() -> getTargetPose(robotState.getPose(), autoScoreState.scorePose), false, false);
-        var driveToScorePose2 =
-                drive.toPose(() -> getTargetPose(robotState.getPose(), autoScoreState.scorePose), false, true);
-        var stowSuperstructure =
-                superstructure.schedule(s -> s.defer(() -> s.transitionToState(SuperstructureState.STOW)));
-        var alignSuperstructure1 =
-                superstructure.schedule(s -> s.defer(() -> s.transitionToState(autoScoreState.alignState)));
-        var alignSuperstructure2 =
-                superstructure.schedule(s -> s.defer(() -> s.transitionToState(autoScoreState.alignState)));
-        var score = superstructure.schedule(s -> s.defer(
-                () -> s.score(autoScoreState.alignState, autoScoreState.scoreState, driveToScorePose2::atGoal)));
+        Supplier<Command> driveToAlignPose =
+                () -> drive.toPose(() -> getTargetPose(robotState.getPose(), autoScoreState.alignPose), false, false);
+        var driveToBouncePose =
+                drive.toPose(() -> getTargetPose(robotState.getPose(), autoScoreState.bouncePose), false, false);
+        var driveToReversePose = drive.toPose(() -> autoScoreState.reversePose, false, false);
+        var bounce = sequence(
+                drive.toPose(() -> getTargetPose(robotState.getPose(), autoScoreState.bouncePose), true, true),
+                drive.toPose(() -> autoScoreState.reversePose, true, true));
+        Supplier<Command> stowSuperstructure =
+                () -> superstructure.schedule(s -> s.defer(() -> s.transitionToState(SuperstructureState.STOW)));
+        Supplier<Command> feedSuperstructure =
+                () -> superstructure.schedule(s -> s.defer(() -> s.transitionToState(SuperstructureState.FEED)));
+        Supplier<Command> alignSuperstructure =
+                () -> superstructure.schedule(s -> s.defer(() -> s.transitionToState(autoScoreState.alignState)));
+        var score = superstructure.schedule(
+                s -> s.defer(() -> s.score(autoScoreState.alignState, autoScoreState.scoreState, () -> robotState
+                        .getDistanceTo(autoScoreState.bouncePose)
+                        .lt(autoScoreState.releaseDistance))));
 
         return sequence(
                 updateState,
                 sequence(
-                                parallel(driveToAlignPose1, stowSuperstructure).until(() -> robotState
-                                        .getDistanceTo(autoScoreState.alignPose)
-                                        .lt(minArticulationDistance.get())),
-                                parallel(driveToAlignPose2, alignSuperstructure1)
+                                parallel(driveToAlignPose.get(), feedSuperstructure.get())
+                                        .until(() -> robotState.hasCoral())
+                                        .unless(() -> robotState.hasCoral()),
+                                parallel(driveToAlignPose.get(), stowSuperstructure.get())
+                                        .until(() -> robotState
+                                                .getDistanceTo(autoScoreState.alignPose)
+                                                .lt(minArticulationDistance.get())),
+                                parallel(driveToAlignPose.get(), alignSuperstructure.get())
                                         .until(() ->
                                                 superstructure.getSubsystem().isNear(autoScoreState.alignState)),
-                                parallel(driveToScorePose1, alignSuperstructure2)
+                                parallel(driveToBouncePose, alignSuperstructure.get())
                                         .until(() -> robotState
-                                                .getDistanceTo(autoScoreState.scorePose)
+                                                .getDistanceTo(autoScoreState.bouncePose)
                                                 .lt(alignDistance.get())),
-                                parallel(driveToScorePose2, score).until(() -> !robotState.hasCoral()))
+                                parallel(bounce, score).until(() -> !robotState.hasCoral()),
+                                parallel(driveToReversePose, stowSuperstructure.get()))
                         .unless(() -> autoScoreState.valid == false));
     }
 
@@ -133,6 +152,8 @@ public final class AutoScore {
         private SuperstructureState alignState = SuperstructureState.L4_CORAL;
         private SuperstructureState scoreState = SuperstructureState.L4_CORAL_SCORE;
         private Pose2d alignPose = Pose2d.kZero;
-        private Pose2d scorePose = Pose2d.kZero;
+        private Pose2d bouncePose = Pose2d.kZero;
+        private Pose2d reversePose = Pose2d.kZero;
+        private Distance releaseDistance = Meters.zero();
     }
 }

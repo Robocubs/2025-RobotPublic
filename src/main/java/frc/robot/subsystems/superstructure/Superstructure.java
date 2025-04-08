@@ -43,6 +43,7 @@ import static frc.robot.subsystems.superstructure.SuperstructureConstants.*;
 public class Superstructure extends SubsystemBase {
     private static final double armAngleOffsetDegrees = 90 - ElevatorConstants.elevatorAngle.in(Degrees);
     private static final LinearVelocity elevatorZeroMinVelocity = InchesPerSecond.of(-0.01);
+    private static final Angle elevatorZeroMinAngle = Degrees.of(20);
 
     private final Elevator elevator;
     private final Arm arm;
@@ -331,7 +332,7 @@ public class Superstructure extends SubsystemBase {
 
     public Command zeroElevator() {
         return sequence(
-                        retractArm(),
+                        retractArm().until(() -> arm.getAngle().gt(elevatorZeroMinAngle)),
                         deadline(
                                 elevator.zeroRoutine(), run(() -> runStatePeriodic(SuperstructureState.ZERO_ELEVATOR))),
                         runOnce(() -> elevatorZeroed = true))

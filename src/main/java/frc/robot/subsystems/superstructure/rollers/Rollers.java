@@ -39,7 +39,7 @@ public class Rollers {
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> algaeIntakeVelocity =
             new LoggedTunableMeasure<>("Rollers/AlgaeIntakeVelocity", RadiansPerSecond.of(45));
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> algaeForwardVelocity =
-            new LoggedTunableMeasure<>("Rollers/AlgaeForwardVelocity", RadiansPerSecond.of(-45));
+            new LoggedTunableMeasure<>("Rollers/AlgaeForwardVelocity", RadiansPerSecond.of(-70));
 
     private static final Angle positionTolerance = Radians.of(0.2);
 

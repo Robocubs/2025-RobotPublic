@@ -124,7 +124,7 @@ public class DriveWithJoysticksEnhanced extends Command {
             //     var targetPoses = closest3.map();
             // }
             // Target algae pickup
-            if (algaeTrigger && !robotState.hasGamePiece() && robotState.inReefArea() && robotState.isFacingReef()) {
+            if (algaeTrigger && !robotState.hasAlgae() && robotState.inReefArea() && robotState.isFacingReef()) {
                 targetPose = robotState.getClosestReefAlgae();
                 headingSetpoint = targetPose.map(Pose2d::getRotation);
             }

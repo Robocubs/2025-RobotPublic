@@ -5,9 +5,11 @@ import java.util.Set;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.RobotState;
 import frc.robot.RobotState.CoralMode;
+import frc.robot.autonomous.LoggedAutoRoutine.CoralIntakePose;
 import frc.robot.commands.SubsystemScheduler;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.superstructure.Superstructure;
@@ -85,6 +87,8 @@ public class AutoRoutines {
                 .followPathAndScore("Right4", 4)
                 .followPathAndWaitForCoral("Right4", 5)
                 .followPathAndScore("Right4", 6)
+                .setSuperstructureState(SuperstructureState.STOW)
+                .velocitySeconds(new ChassisSpeeds(), 1)
                 .build();
     }
 
@@ -100,6 +104,43 @@ public class AutoRoutines {
                 .followPathAndScore("Left4", 4)
                 .followPathAndWaitForCoral("Left4", 5)
                 .followPathAndScore("Left4", 6)
+                .setSuperstructureState(SuperstructureState.STOW)
+                .velocitySeconds(new ChassisSpeeds(), 1)
+                .build();
+    }
+
+    public AutoRoutine groundRightFour() {
+        return create("Ground Right 4")
+                .requireStartingPose("GRight4")
+                .setCoralSelection(CoralMode.L4_CORAL)
+                .followPathAndScore("GRight4", 0)
+                .pickupCoral(CoralIntakePose.RIGHT)
+                .setCoralSelection(CoralMode.L2_CORAL)
+                .followPathAndScore("GRight4", 2)
+                .pickupCoral(CoralIntakePose.CENTER)
+                .followPathAndScore("GRight4", 4)
+                .pickupCoral(CoralIntakePose.LEFT)
+                .setCoralSelection(CoralMode.L4_CORAL)
+                .followPathAndScore("GRight4", 6)
+                .setSuperstructureState(SuperstructureState.STOW)
+                .velocitySeconds(new ChassisSpeeds(), 1)
+                .build();
+    }
+
+    public AutoRoutine groundRightTwo() {
+        return create("Ground Right 2")
+                .requireStartingPose("GRight4")
+                .setCoralSelection(CoralMode.L4_CORAL)
+                .followPathAndScore("GRight4", 0)
+                .velocitySeconds(new ChassisSpeeds(-0.3, 0.0, 0.0), 1)
+                .waitForSuperstructureState(SuperstructureState.STOW)
+                .rotateTo(Rotation2d.k180deg)
+                .pickupCoral(CoralIntakePose.CENTER)
+                .setSuperstructureState(SuperstructureState.STOW)
+                .rotateTo(Rotation2d.kZero)
+                .scoreCoral(new Pose2d(2.9576961994171143, 4.200072288513184, Rotation2d.kZero))
+                .setSuperstructureState(SuperstructureState.STOW)
+                .velocitySeconds(new ChassisSpeeds(), 1)
                 .build();
     }
 

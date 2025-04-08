@@ -16,7 +16,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.CoralMode;
-import frc.robot.commands.AutoScoreV2;
+import frc.robot.commands.AutoIntake;
+import frc.robot.commands.AutoScore;
 import frc.robot.commands.SubsystemScheduler;
 import frc.robot.commands.logging.LoggedCommands;
 import frc.robot.subsystems.drive.Drive;
@@ -33,6 +34,8 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 public class LoggedAutoRoutine {
     private static final LoggedTunableMeasure<DistanceUnit, Distance> scoreDriveToPoseDistance =
             new LoggedTunableMeasure<>("Auto/ScoreDriveToPoseDistance", Meters.of(1.5));
+    private static final LoggedTunableMeasure<DistanceUnit, Distance> pickupCoralArticulationDistance =
+            new LoggedTunableMeasure<>("Auto/PickupCoralArticulationDistance", Meters.of(0.3));
 
     private final AutoFactory factory;
     private final AutoRoutine routine;
@@ -121,6 +124,17 @@ public class LoggedAutoRoutine {
         return this;
     }
 
+    public LoggedAutoRoutine rotateTo(Rotation2d rotation) {
+        commands.add(drive.toPose(
+                () -> {
+                    var pose = robotState.getPose();
+                    return new Pose2d(pose.getX(), pose.getY(), rotation);
+                },
+                true,
+                false));
+        return this;
+    }
+
     public LoggedAutoRoutine resetPose(String pathName) {
         commands.add(factory.resetOdometry(pathName));
         routine.trajectory(pathName).getRawTrajectory().getInitialPose(false).ifPresent(pathBuilder::add);
@@ -168,11 +182,10 @@ public class LoggedAutoRoutine {
         var flippedPose = GeometryUtil.autoFlip(pose);
         var goalPose = robotState.getClosestReefBranch(flippedPose).orElse(flippedPose);
 
-        commands.add(AutoScoreV2.autoScore(drive, superstructure, robotState, goalPose)
-                .until(() -> !robotState.hasCoral()));
+        commands.add(AutoScore.autoScore(drive, superstructure, robotState, goalPose)
+                .until(() -> !robotState.hasCoral())
+                .unless(() -> !robotState.hasCoral()));
         pathBuilder.add(GeometryUtil.autoFlip(goalPose));
-
-        commands.add(superstructure.schedule(s -> s.runState(SuperstructureState.FEED)));
 
         return this;
     }
@@ -184,6 +197,13 @@ public class LoggedAutoRoutine {
                         drive.pointModules(() -> Rotation2d.kZero).withTimeout(0.5))
                 .until(robotState::hasCoral));
         pathBuilder.add(pose);
+        return this;
+    }
+
+    public LoggedAutoRoutine waitForSuperstructureState(SuperstructureState state) {
+        commands.add(Commands.parallel(
+                        drive.pointModules(() -> Rotation2d.kZero), superstructure.schedule(s -> s.runState(state)))
+                .until(() -> superstructure.getSubsystem().isNear(state)));
         return this;
     }
 
@@ -201,11 +221,41 @@ public class LoggedAutoRoutine {
         return this;
     }
 
+    public LoggedAutoRoutine followPathAndPickupCoral(String pathName, int splitIndex) {
+        var path = routine.trajectory(pathName, splitIndex);
+        var initialPose = path.getRawTrajectory().getInitialPose(false);
+        commands.add(path.cmd()
+                .deadlineFor(sequence(
+                        superstructure.schedule(s -> s.runState(SuperstructureState.STOW)),
+                        idle().until(() -> initialPose.isPresent()
+                                && robotState
+                                        .getDistanceTo(GeometryUtil.autoFlip(initialPose.get()))
+                                        .gt(pickupCoralArticulationDistance.get())),
+                        superstructure.schedule(s -> s.runState(SuperstructureState.CORAL_INTAKE)),
+                        idle().until(() -> robotState.hasCoral()),
+                        superstructure.schedule(s -> s.runState(SuperstructureState.STOW)))));
+
+        var poses = path.getRawTrajectory().getPoses();
+        pathBuilder.add(poses);
+
+        this.setSuperstructureState(SuperstructureState.STOW);
+
+        return this;
+    }
+
+    public LoggedAutoRoutine pickupCoral(CoralIntakePose pose) {
+        commands.add(AutoIntake.autoIntake(drive, superstructure, robotState, GeometryUtil.autoFlip(pose.pose)));
+        pathBuilder.add(pose.pose);
+        commands.add(superstructure.schedule(s -> s.runState(SuperstructureState.STOW)));
+        return this;
+    }
+
     public LoggedAutoRoutine followPathAndScore(String pathName, int splitIndex) {
         var path = routine.trajectory(pathName, splitIndex);
         var finalPose = path.getRawTrajectory().getFinalPose(false);
         commands.add(path.cmd()
-                .until(() -> finalPose.isPresent()
+                .until(() -> robotState.hasCoral()
+                        && finalPose.isPresent()
                         && robotState
                                 .getDistanceTo(GeometryUtil.autoFlip(finalPose.get()))
                                 .lt(scoreDriveToPoseDistance.get())));
@@ -218,5 +268,17 @@ public class LoggedAutoRoutine {
                 .ifPresent(pose -> this.scoreCoral(new Pose2d(pose.getTranslation(), pose.getRotation())));
 
         return this;
+    }
+
+    public static enum CoralIntakePose {
+        LEFT(new Pose2d(1.5, 5.4, Rotation2d.fromDegrees(120))),
+        CENTER(new Pose2d(1.8, 4.04, Rotation2d.k180deg)),
+        RIGHT(new Pose2d(1.5, 2.67, Rotation2d.fromDegrees(-120)));
+
+        private final Pose2d pose;
+
+        private CoralIntakePose(Pose2d pose) {
+            this.pose = pose;
+        }
     }
 }

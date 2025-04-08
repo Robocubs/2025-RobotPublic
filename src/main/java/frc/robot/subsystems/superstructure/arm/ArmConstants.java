@@ -33,6 +33,6 @@ public final class ArmConstants {
     public static final AngularAcceleration maximumAcceleration = maximumVelocity.div(Seconds.of(0.2));
     public static final Velocity<AngularAccelerationUnit> maximumJerk = maximumAcceleration.div(Seconds.of(0.05));
 
-    public static final Angle safeTravelAngle = Degrees.of(75);
+    public static final Angle safeTravelAngle = Degrees.of(70);
     public static final Angle algaeSafeTravelAngle = Degrees.of(70);
 }

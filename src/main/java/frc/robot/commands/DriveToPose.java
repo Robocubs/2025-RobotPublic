@@ -48,9 +48,9 @@ public class DriveToPose extends Command {
             slowModeMaxLinearAcceleration = new LoggedTunableMeasure<>(
                     "DriveToPose/SlowModeMaxLinearAcceleration", MetersPerSecondPerSecond.of(2.0));
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> maxAngularRate =
-            new LoggedTunableMeasure<>("DriveToPose/MaxAngularRate", RadiansPerSecond.of(2.0));
+            new LoggedTunableMeasure<>("DriveToPose/MaxAngularRate", RadiansPerSecond.of(10.0));
     private static final LoggedTunableMeasure<AngularAccelerationUnit, AngularAcceleration> maxAngularAcceleration =
-            new LoggedTunableMeasure<>("DriveToPose/MaxAngularAcceleration", RadiansPerSecondPerSecond.of(4.0));
+            new LoggedTunableMeasure<>("DriveToPose/MaxAngularAcceleration", RadiansPerSecondPerSecond.of(10.0));
     private static final LoggedTunableMeasure<DistanceUnit, Distance> translationTolerance =
             new LoggedTunableMeasure<>("DriveToPose/TranslationTolerance", Inches.of(1.0));
     private static final LoggedTunableMeasure<AngleUnit, Angle> rotationTolerance =
