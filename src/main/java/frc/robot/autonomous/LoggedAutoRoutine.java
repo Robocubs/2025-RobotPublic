@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.CoralMode;
-import frc.robot.commands.AutoIntake;
+import frc.robot.commands.AutoIntakeCoral;
 import frc.robot.commands.AutoScore;
 import frc.robot.commands.SubsystemScheduler;
 import frc.robot.commands.logging.LoggedCommands;
@@ -244,7 +244,8 @@ public class LoggedAutoRoutine {
     }
 
     public LoggedAutoRoutine pickupCoral(CoralIntakePose pose) {
-        commands.add(AutoIntake.autoIntake(drive, superstructure, robotState, GeometryUtil.autoFlip(pose.pose)));
+        commands.add(
+                AutoIntakeCoral.autoIntakeCoral(drive, superstructure, robotState, GeometryUtil.autoFlip(pose.pose)));
         pathBuilder.add(pose.pose);
         commands.add(superstructure.schedule(s -> s.runState(SuperstructureState.STOW)));
         return this;

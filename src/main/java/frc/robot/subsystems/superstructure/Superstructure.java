@@ -142,6 +142,20 @@ public class Superstructure extends SubsystemBase {
         }
     }
 
+    public boolean elevatorIsNear(SuperstructureState state) {
+        switch (state) {
+            case STOP:
+            case HOLD:
+            case RETRACT_ARM:
+                return true;
+            default:
+                return elevator.isNear(
+                        rollers.algaeDetected()
+                                ? state.getData().getAlgaePose().elevatorHeight()
+                                : state.getData().getPose().elevatorHeight());
+        }
+    }
+
     @AutoLogOutput
     public boolean atStatePose() {
         return isNear(state);

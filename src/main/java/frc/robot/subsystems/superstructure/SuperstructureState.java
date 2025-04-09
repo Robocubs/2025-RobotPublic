@@ -54,9 +54,6 @@ public enum SuperstructureState {
             .pose(Preset.L4.getPose())
             .rollerState(Rollers.State.CORAL_FORWARD)
             .build()),
-    BARGE_RETRACTED(SuperstructureStateData.builder()
-            .pose(Preset.BARGE.getAlgaeRetractPose())
-            .build()),
     BARGE(SuperstructureStateData.builder().pose(Preset.BARGE.getPose()).build()),
     BARGE_SCORE(SuperstructureStateData.builder()
             .pose(Preset.BARGE.getPose())

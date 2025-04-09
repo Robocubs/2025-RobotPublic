@@ -131,7 +131,7 @@ public final class AutoScore {
                                                 .lt(alignDistance.get())),
                                 parallel(bounce, score).until(() -> !robotState.hasCoral()),
                                 parallel(driveToReversePose, stowSuperstructure.get()))
-                        .unless(() -> autoScoreState.valid == false));
+                        .unless(() -> !autoScoreState.valid));
     }
 
     private static Pose2d getTargetPose(Pose2d robot, Pose2d goal) {

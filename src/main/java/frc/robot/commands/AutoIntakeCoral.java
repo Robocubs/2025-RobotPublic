@@ -22,7 +22,7 @@ import frc.robot.util.tuning.LoggedTunableMeasure;
 import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
-public final class AutoIntake {
+public final class AutoIntakeCoral {
     private static final double reefFaceLength = FieldConstants.reefFaceLength.in(Meters);
 
     public static final LoggedTunableMeasure<DistanceUnit, Distance> maxDistanceReefLineup =
@@ -36,18 +36,18 @@ public final class AutoIntake {
     public static final LoggedTunableMeasure<AngleUnit, Angle> minArticulationAngle =
             new LoggedTunableMeasure<>("AutoIntake/ArticulationAngle", Degrees.of(90));
 
-    public static Command autoIntake(
+    public static Command autoIntakeCoral(
             Drive drive, Superstructure superstructure, RobotState robotState, Supplier<Pose2d> goalPose) {
         var scheduler = new SubsystemScheduler<Superstructure>(superstructure, superstructure.maintainState());
-        return deadline(autoIntake(drive, scheduler, robotState, goalPose), scheduler.cmd());
+        return deadline(autoIntakeCoral(drive, scheduler, robotState, goalPose), scheduler.cmd());
     }
 
-    public static Command autoIntake(
+    public static Command autoIntakeCoral(
             Drive drive, SubsystemScheduler<Superstructure> superstructure, RobotState robotState, Pose2d goalPose) {
-        return autoIntake(drive, superstructure, robotState, () -> goalPose);
+        return autoIntakeCoral(drive, superstructure, robotState, () -> goalPose);
     }
 
-    public static Command autoIntake(
+    public static Command autoIntakeCoral(
             Drive drive,
             SubsystemScheduler<Superstructure> superstructure,
             RobotState robotState,

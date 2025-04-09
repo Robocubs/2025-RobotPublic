@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureState;
-import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.util.tuning.LoggedTunableMeasure;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -49,7 +48,7 @@ public class GraphController implements SuperstructureController {
                 SuperstructureState.L3_CORAL,
                 SuperstructureState.L4_CORAL_RETRACTED,
                 SuperstructureState.CORAL_INTAKE_RETRACTED,
-                SuperstructureState.BARGE_RETRACTED,
+                SuperstructureState.BARGE,
                 SuperstructureState.L2_ALGAE_RETRACTED,
                 SuperstructureState.L3_ALGAE_RETRACTED,
                 SuperstructureState.ALGAE_INTAKE,
@@ -85,7 +84,6 @@ public class GraphController implements SuperstructureController {
                 Map.entry(SuperstructureState.FEED, SuperstructureState.FEED_RETRACTED),
                 Map.entry(SuperstructureState.L4_CORAL, SuperstructureState.L4_CORAL_RETRACTED),
                 Map.entry(SuperstructureState.L4_CORAL_SCORE, SuperstructureState.L4_CORAL_RETRACTED),
-                Map.entry(SuperstructureState.BARGE, SuperstructureState.BARGE_RETRACTED),
                 Map.entry(SuperstructureState.L2_ALGAE, SuperstructureState.L2_ALGAE_RETRACTED),
                 Map.entry(SuperstructureState.L3_ALGAE, SuperstructureState.L3_ALGAE_RETRACTED));
 
@@ -174,10 +172,7 @@ public class GraphController implements SuperstructureController {
             var minAngle = pose.armAngle().minus(l4RetractedAngleTolerance.get());
             return superstructure
                     .run(() -> superstructure.runStatePeriodic(to))
-                    .until(() -> superstructure.getArmAngle().gt(minAngle)
-                            && superstructure
-                                    .getElevatorHeight()
-                                    .isNear(pose.elevatorHeight(), ElevatorConstants.positionTolerance));
+                    .until(() -> superstructure.getArmAngle().gt(minAngle) && superstructure.elevatorIsNear(to));
         }
 
         // For moving to coral intake, allow arm to start moving before elevator is fully extended

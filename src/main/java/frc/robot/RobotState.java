@@ -43,7 +43,7 @@ public class RobotState {
 
     private static final Rotation2d facingProcessorTolerance = Rotation2d.fromDegrees(45.0);
     private static final Rotation2d facingBargeTolerance = Rotation2d.fromDegrees(45.0);
-    private static final Distance reefAreaDistanceTolerance = Meters.of(2.5);
+    private static final Distance reefAreaDistanceTolerance = Meters.of(3.0);
     private static final Distance processorAreaDistanceTolerance = Meters.of(2.0);
     private static final Distance bargeAreaLengthTolerance = Meters.of(3.0);
     private static final Distance underNetAreaTolerance = Meters.of(1.3);
@@ -162,9 +162,7 @@ public class RobotState {
                                 : translation.getY() < FieldConstants.fieldCenter.getY());
 
         if (inReefArea && isFacingReef) {
-            algaeSelection = MathUtil.inputModulus(pose.getRotation().getDegrees() + 30, 0, 360) % 120 > 60
-                    ? (isBlue() ? AlgaeMode.L2 : AlgaeMode.L3)
-                    : (isBlue() ? AlgaeMode.L3 : AlgaeMode.L2);
+            algaeSelection = getReefAlgaeMode(pose.getRotation());
         } else if (inProcessorArea && isFacingProcessor) {
             algaeSelection = AlgaeMode.PROCESSOR;
         } else if (inBargeArea && isFacingBarge) {
@@ -289,6 +287,12 @@ public class RobotState {
                     case L2_CORAL -> FieldConstants.robotCoralL2Poses();
                     case L1_CORAL -> FieldConstants.robotCoralL1Poses();
                 });
+    }
+
+    public AlgaeMode getReefAlgaeMode(Rotation2d rotation) {
+        return MathUtil.inputModulus(rotation.getDegrees() + 30, 0, 360) % 120 > 60
+                ? (isBlue() ? AlgaeMode.L2 : AlgaeMode.L3)
+                : (isBlue() ? AlgaeMode.L3 : AlgaeMode.L2);
     }
 
     public Optional<Pose2d> getClosestReefAlgae() {

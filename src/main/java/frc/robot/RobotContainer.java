@@ -17,6 +17,7 @@ import frc.robot.Constants.RobotType;
 import frc.robot.RobotState.AlgaeMode;
 import frc.robot.RobotState.CoralMode;
 import frc.robot.autonomous.AutoRoutines;
+import frc.robot.commands.AutoIntakeAlgae;
 import frc.robot.commands.AutoScore;
 import frc.robot.commands.SubsystemScheduler;
 import frc.robot.commands.characterization.DriveCharacterization;
@@ -195,19 +196,15 @@ public class RobotContainer {
                 .rightTrigger()
                 .and(() -> robotState.isSelected(CoralMode.L1_CORAL))
                 .whileTrue(superstructure.runState(SuperstructureState.L1_CORAL_SCORE));
-
         driverController
                 .rightBumper()
                 .and(() -> robotState.isSelected(AlgaeMode.PROCESSOR))
                 .whileTrue(superstructure.runState(SuperstructureState.PROCESSOR_SCORE));
         driverController
                 .a()
-                .and(() -> robotState.isSelected(AlgaeMode.L3))
-                .whileTrue(superstructure.runState(SuperstructureState.L3_ALGAE));
-        driverController
-                .a()
-                .and(() -> robotState.isSelected(AlgaeMode.L2))
-                .whileTrue(superstructure.runState(SuperstructureState.L2_ALGAE));
+                .and(() -> robotState.isSelected(AlgaeMode.L3) || robotState.isSelected(AlgaeMode.L2))
+                .whileTrue(
+                        AutoIntakeAlgae.autoIntakeAlgae(drive, superstructure, robotState, () -> robotState.getPose()));
         driverController
                 .a()
                 .and(() -> robotState.isSelected(AlgaeMode.BARGE))
@@ -217,6 +214,7 @@ public class RobotContainer {
                                 SuperstructureState.BARGE_SCORE,
                                 driverController.rightBumper())
                         .unless(robotState::underNetArea));
+
         driverController
                 .leftBumper()
                 .and(() -> robotState.inBargeArea())
