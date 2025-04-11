@@ -2,6 +2,7 @@ package frc.robot.autonomous;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
@@ -16,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.CoralMode;
+import frc.robot.commands.AutoIntakeAlgae;
 import frc.robot.commands.AutoIntakeCoral;
 import frc.robot.commands.AutoScore;
 import frc.robot.commands.SubsystemScheduler;
@@ -32,10 +34,15 @@ import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class LoggedAutoRoutine {
+    private static final Pose2d netAlignPose = new Pose2d(7, 4.9, Rotation2d.kZero);
+    private static final Pose2d netScorePose = new Pose2d(7.4, 4.9, Rotation2d.kZero);
+
     private static final LoggedTunableMeasure<DistanceUnit, Distance> scoreDriveToPoseDistance =
             new LoggedTunableMeasure<>("Auto/ScoreDriveToPoseDistance", Meters.of(1.5));
     private static final LoggedTunableMeasure<DistanceUnit, Distance> pickupCoralArticulationDistance =
             new LoggedTunableMeasure<>("Auto/PickupCoralArticulationDistance", Meters.of(0.3));
+    private static final LoggedTunableMeasure<DistanceUnit, Distance> scoreAlgaeDistance =
+            new LoggedTunableMeasure<>("Auto/ScoreAlgaeDistance", Meters.of(0.05));
 
     private final AutoFactory factory;
     private final AutoRoutine routine;
@@ -135,6 +142,15 @@ public class LoggedAutoRoutine {
         return this;
     }
 
+    public LoggedAutoRoutine resetRotation(Rotation2d rotation) {
+        commands.add(runOnce(() -> {
+            var pose = robotState.getPose();
+            robotState.resetPose(new Pose2d(pose.getX(), pose.getY(), GeometryUtil.autoFlip(rotation)));
+        }));
+
+        return this;
+    }
+
     public LoggedAutoRoutine resetPose(String pathName) {
         commands.add(factory.resetOdometry(pathName));
         routine.trajectory(pathName).getRawTrajectory().getInitialPose(false).ifPresent(pathBuilder::add);
@@ -156,14 +172,31 @@ public class LoggedAutoRoutine {
     }
 
     public LoggedAutoRoutine driveToPose(Pose2d pose) {
-        commands.add(drive.toPose(() -> GeometryUtil.autoFlip(pose), true, true));
+        driveToPose(pose, false);
+        return this;
+    }
+
+    public LoggedAutoRoutine driveToPose(Pose2d pose, boolean slowMode) {
+        commands.add(drive.toPose(() -> GeometryUtil.autoFlip(pose), true, slowMode));
         pathBuilder.add(pose);
         return this;
     }
 
+    public LoggedAutoRoutine pointModulesUntil(Rotation2d target, BooleanSupplier condition) {
+        commands.add(drive.pointModules(() -> target).until(condition).withName("PointModulesAndWaitForCondition"));
+        return this;
+    }
+
+    public LoggedAutoRoutine pointModulesUntil(Translation2d target, BooleanSupplier condition) {
+        commands.add(drive.pointModulesAt(() -> GeometryUtil.autoFlip(target))
+                .until(condition)
+                .withName("PointModulesAndWaitForCondition"));
+        return this;
+    }
+
     public LoggedAutoRoutine pointModulesWaitSeconds(Translation2d target, double seconds) {
-        commands.add(Commands.deadline(
-                        Commands.waitSeconds(seconds), drive.pointModulesAt(() -> GeometryUtil.autoFlip(target)))
+        commands.add(drive.pointModulesAt(() -> GeometryUtil.autoFlip(target))
+                .withTimeout(seconds)
                 .withName("PointModulesAndWait"));
         return this;
     }
@@ -251,6 +284,20 @@ public class LoggedAutoRoutine {
         return this;
     }
 
+    public LoggedAutoRoutine pickupAlgae(String pathName, int splitIndex) {
+        routine.trajectory(pathName, splitIndex)
+                .getRawTrajectory()
+                .getFinalPose(false)
+                .ifPresent(pose -> pickupAlgae(pose));
+        return this;
+    }
+
+    public LoggedAutoRoutine pickupAlgae(Pose2d pose) {
+        commands.add(AutoIntakeAlgae.autoIntakeAlgae(drive, superstructure, robotState, GeometryUtil.autoFlip(pose)));
+        pathBuilder.add(pose);
+        return this;
+    }
+
     public LoggedAutoRoutine followPathAndScore(String pathName, int splitIndex) {
         var path = routine.trajectory(pathName, splitIndex);
         var finalPose = path.getRawTrajectory().getFinalPose(false);
@@ -267,6 +314,30 @@ public class LoggedAutoRoutine {
         path.getRawTrajectory()
                 .getFinalPose(false)
                 .ifPresent(pose -> this.scoreCoral(new Pose2d(pose.getTranslation(), pose.getRotation())));
+
+        return this;
+    }
+
+    public LoggedAutoRoutine scoreInNet() {
+        driveToPose(netAlignPose);
+
+        var score = deadline(
+                sequence(
+                        idle().until(() -> robotState
+                                .getDistanceTo(GeometryUtil.autoFlip(netScorePose))
+                                .lt(scoreAlgaeDistance.get())),
+                        superstructure.schedule(s -> s.runState(SuperstructureState.BARGE_SCORE)),
+                        waitTime(Seconds.of(1.0))),
+                drive.toPose(() -> GeometryUtil.autoFlip(netScorePose), false, true));
+
+        commands.add(sequence(
+                        superstructure.schedule(s -> s.runState(SuperstructureState.BARGE)),
+                        drive.pointModules(() -> Rotation2d.kZero)
+                                .until(() -> superstructure.getSubsystem().elevatorIsNear(SuperstructureState.BARGE)),
+                        score,
+                        superstructure.schedule(s -> s.runState(SuperstructureState.STOW)))
+                .withName("AutoScoreInNet"));
+        pathBuilder.add(netScorePose);
 
         return this;
     }

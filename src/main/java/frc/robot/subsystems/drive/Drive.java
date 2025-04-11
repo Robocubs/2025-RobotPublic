@@ -160,8 +160,8 @@ public class Drive extends SubsystemBase {
                             - robotState.getHeading().getRadians()
                             + rotationTargetRadians);
 
-            var throttleValue = robotState.isBlue() ? throttle.getAsDouble() : -throttle.getAsDouble();
-            var strafeValue = robotState.isBlue() ? strafe.getAsDouble() : -strafe.getAsDouble();
+            var throttleValue = RobotState.isBlue() ? throttle.getAsDouble() : -throttle.getAsDouble();
+            var strafeValue = RobotState.isBlue() ? strafe.getAsDouble() : -strafe.getAsDouble();
 
             setRequest(fieldCentricFacingAngle
                     .withVelocityX(maxSpeed.times(throttleValue))

@@ -14,9 +14,11 @@ import frc.robot.commands.SubsystemScheduler;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureState;
+import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.util.GeometryUtil;
 import org.littletonrobotics.junction.Logger;
 
+import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class AutoRoutines {
@@ -69,12 +71,6 @@ public class AutoRoutines {
         return new LoggedAutoRoutine(name, factory, robotState, drive, superstructure);
     }
 
-    public AutoRoutine forwardAuto() {
-        return create("Forward Auto")
-                .velocitySeconds(new ChassisSpeeds(1, 0, 0), 5)
-                .build();
-    }
-
     public AutoRoutine rightFour() {
         return create("Right 4")
                 .requireStartingPose("Right4")
@@ -85,8 +81,7 @@ public class AutoRoutines {
                 .followPathAndScore("Right4", 2)
                 .followPathAndWaitForCoral("Right4", 3)
                 .followPathAndScore("Right4", 4)
-                .followPathAndWaitForCoral("Right4", 5)
-                .followPathAndScore("Right4", 6)
+                .pickupAlgae("Right4", 4)
                 .setSuperstructureState(SuperstructureState.STOW)
                 .velocitySeconds(new ChassisSpeeds(), 1)
                 .build();
@@ -102,8 +97,7 @@ public class AutoRoutines {
                 .followPathAndScore("Left4", 2)
                 .followPathAndWaitForCoral("Left4", 3)
                 .followPathAndScore("Left4", 4)
-                .followPathAndWaitForCoral("Left4", 5)
-                .followPathAndScore("Left4", 6)
+                .pickupAlgae("Light4", 4)
                 .setSuperstructureState(SuperstructureState.STOW)
                 .velocitySeconds(new ChassisSpeeds(), 1)
                 .build();
@@ -138,17 +132,31 @@ public class AutoRoutines {
                 .pickupCoral(CoralIntakePose.CENTER)
                 .setSuperstructureState(SuperstructureState.STOW)
                 .rotateTo(Rotation2d.kZero)
-                .scoreCoral(new Pose2d(2.9576961994171143, 4.200072288513184, Rotation2d.kZero))
+                .scoreCoral(new Pose2d(3.0, 4.2, Rotation2d.kZero))
                 .setSuperstructureState(SuperstructureState.STOW)
                 .velocitySeconds(new ChassisSpeeds(), 1)
                 .build();
     }
 
-    public AutoRoutine rightBump() {
-        return create("RightBump")
-                .resetPose("RightBump")
-                .followPath("RightBump")
-                .velocitySeconds(new ChassisSpeeds(), 1)
+    public AutoRoutine backAlgae() {
+        var maxElevatorHeightToTurn = ElevatorConstants.maximumHeight.times(0.75);
+        var coralPose = new Pose2d(6.1, 4.1, Rotation2d.k180deg);
+        var algae1Pose = new Pose2d(5.8, 4.0, Rotation2d.k180deg);
+        var algae2Pose = new Pose2d(5.2, 5.25, Rotation2d.fromDegrees(120));
+
+        return create("Back Algae")
+                .setCoralSelection(CoralMode.L4_CORAL)
+                .scoreCoral(coralPose)
+                .pickupAlgae(algae1Pose)
+                .setSuperstructureState(SuperstructureState.L2_ALGAE_RETRACTED)
+                .scoreInNet()
+                .pointModulesUntil(
+                        Rotation2d.k180deg,
+                        () -> superstructure.getSubsystem().getElevatorHeight().lt(maxElevatorHeightToTurn))
+                .pickupAlgae(algae2Pose)
+                .setSuperstructureState(SuperstructureState.L3_ALGAE_RETRACTED)
+                .scoreInNet()
+                .velocitySeconds(new ChassisSpeeds(-0.5, 0.0, 0.0), 2)
                 .build();
     }
 }

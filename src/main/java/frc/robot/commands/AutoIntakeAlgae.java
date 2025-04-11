@@ -90,7 +90,9 @@ public final class AutoIntakeAlgae {
         return sequence(
                 updateState,
                 sequence(
-                                stowSuperstructure,
+                                stowSuperstructure.unless(() -> robotState
+                                        .getDistanceTo(autoIntakeState.alignPose)
+                                        .lt(minArticulationDistance.get())),
                                 driveToAlignPose.get().until(() -> robotState
                                         .getDistanceTo(autoIntakeState.alignPose)
                                         .lt(minArticulationDistance.get())),

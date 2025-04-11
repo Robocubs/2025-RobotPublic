@@ -330,6 +330,7 @@ public class RobotContainer {
         autoChooser.addRoutine("Left 4", autoRoutines::leftFour);
         autoChooser.addRoutine("Ground Right 4", autoRoutines::groundRightFour);
         autoChooser.addRoutine("Ground Right 2", autoRoutines::groundRightTwo);
+        autoChooser.addRoutine("Back Algae", autoRoutines::backAlgae);
 
         SmartDashboard.putData("Auto Chooser", autoChooser);
 

@@ -25,7 +25,7 @@ public class Rollers {
     private static final LoggedTunableMeasure<DistanceUnit, Distance> coralIntakeDistance =
             new LoggedTunableMeasure<>("Rollers/CoralIntakeDistance", Meters.of(-0.05));
     private static final LoggedTunableMeasure<DistanceUnit, Distance> algaeIntakeDistance =
-            new LoggedTunableMeasure<>("Rollers/AlgaeIntakeDistance", Meters.of(0.05));
+            new LoggedTunableMeasure<>("Rollers/AlgaeIntakeDistance", Meters.of(0.0));
     public static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> coralFeedVelocity =
             new LoggedTunableMeasure<>("Rollers/CoralFeedVelocity", RadiansPerSecond.of(30));
     public static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> coralFastFeedVelocity =
