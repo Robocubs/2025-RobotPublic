@@ -104,7 +104,8 @@ public class Superstructure extends SubsystemBase {
         elevatorLigament.setLength(elevator.getHeight().in(Meters));
         armLigament.setAngle(arm.getAngle().in(Degrees) + armAngleOffsetDegrees);
 
-        robotState.setGamePieceStates(rollers.coralDetected(), rollers.algaeDetected());
+        robotState.setGamePieceStates(
+                rollers.coralDetected(), rollers.funnelDetected(), rollers.algaeDetected(), rollers.elevatorDetected());
         robotState.updateSuperstructureState(
                 state,
                 atStatePose()

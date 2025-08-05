@@ -116,8 +116,8 @@ public final class AutoScore {
                 updateState,
                 sequence(
                                 parallel(driveToAlignPose.get(), feedSuperstructure.get())
-                                        .until(() -> robotState.hasCoral())
-                                        .unless(() -> robotState.hasCoral()),
+                                        .until(() -> robotState.hasCoralLoaded())
+                                        .unless(() -> robotState.hasCoralLoaded()),
                                 parallel(driveToAlignPose.get(), stowSuperstructure.get())
                                         .until(() -> robotState
                                                 .getDistanceTo(autoScoreState.alignPose)
@@ -129,7 +129,7 @@ public final class AutoScore {
                                         .until(() -> robotState
                                                 .getDistanceTo(autoScoreState.bouncePose)
                                                 .lt(alignDistance.get())),
-                                parallel(bounce, score).until(() -> !robotState.hasCoral()),
+                                parallel(bounce, score).until(() -> !robotState.hasCoralLoaded()),
                                 parallel(driveToReversePose, stowSuperstructure.get()))
                         .unless(() -> !autoScoreState.valid));
     }

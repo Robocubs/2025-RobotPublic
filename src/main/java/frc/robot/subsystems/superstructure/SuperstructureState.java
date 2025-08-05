@@ -35,7 +35,7 @@ public enum SuperstructureState {
     L1_CORAL(SuperstructureStateData.builder().pose(Preset.L1.getPose()).build()),
     L1_CORAL_SCORE(SuperstructureStateData.builder()
             .pose(Preset.L1.getPose())
-            .rollerState(Rollers.State.CORAL_FORWARD)
+            .rollerState(Rollers.State.L1_CORAL_FORWARD)
             .build()),
     L2_CORAL(SuperstructureStateData.builder().pose(Preset.L2.getPose()).build()),
     L2_CORAL_SCORE(SuperstructureStateData.builder()
@@ -94,7 +94,8 @@ public enum SuperstructureState {
     PROCESSOR_SCORE(SuperstructureStateData.builder()
             .pose(Preset.PROCESSOR.getPose())
             .rollerState(Rollers.State.ALGAE_FORWARD)
-            .build());
+            .build()),
+    CLIMB(SuperstructureStateData.builder().pose(Preset.CLIMB.getPose()).build());
 
     private final SuperstructureStateData data;
 }

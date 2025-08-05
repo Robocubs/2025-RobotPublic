@@ -18,7 +18,6 @@ import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.util.GeometryUtil;
 import org.littletonrobotics.junction.Logger;
 
-import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class AutoRoutines {
@@ -81,7 +80,8 @@ public class AutoRoutines {
                 .followPathAndScore("Right4", 2)
                 .followPathAndWaitForCoral("Right4", 3)
                 .followPathAndScore("Right4", 4)
-                .pickupAlgae("Right4", 4)
+                .followPathAndWaitForCoral("Right4", 5)
+                .followPathAndScore("Right4", 6)
                 .setSuperstructureState(SuperstructureState.STOW)
                 .velocitySeconds(new ChassisSpeeds(), 1)
                 .build();
@@ -97,7 +97,8 @@ public class AutoRoutines {
                 .followPathAndScore("Left4", 2)
                 .followPathAndWaitForCoral("Left4", 3)
                 .followPathAndScore("Left4", 4)
-                .pickupAlgae("Light4", 4)
+                .followPathAndWaitForCoral("Left4", 5)
+                .followPathAndScore("Left4", 6)
                 .setSuperstructureState(SuperstructureState.STOW)
                 .velocitySeconds(new ChassisSpeeds(), 1)
                 .build();

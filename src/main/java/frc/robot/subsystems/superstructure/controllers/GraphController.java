@@ -54,7 +54,8 @@ public class GraphController implements SuperstructureController {
                 SuperstructureState.ALGAE_INTAKE,
                 SuperstructureState.ALGAE_EJECT,
                 SuperstructureState.PROCESSOR,
-                SuperstructureState.PROCESSOR_SCORE);
+                SuperstructureState.PROCESSOR_SCORE,
+                SuperstructureState.CLIMB);
 
         // Special states to free states
         for (var state : specialStates) {

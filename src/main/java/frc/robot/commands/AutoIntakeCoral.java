@@ -73,8 +73,8 @@ public final class AutoIntakeCoral {
         Supplier<Command> coralIntakeSuperstructure = () ->
                 superstructure.schedule(s -> s.defer(() -> s.transitionToState(SuperstructureState.CORAL_INTAKE)));
         Supplier<Command> intake = () -> superstructure.schedule(s -> sequence(
-                s.runState(SuperstructureState.CORAL_INTAKE).unless(() -> robotState.hasCoral()),
-                idle().until(() -> robotState.hasCoral()),
+                s.runState(SuperstructureState.CORAL_INTAKE).unless(() -> robotState.hasCoralLoaded()),
+                idle().until(() -> robotState.hasCoralLoaded()),
                 s.runState(SuperstructureState.STOW)));
 
         return sequence(
@@ -90,7 +90,7 @@ public final class AutoIntakeCoral {
                                                 .lt(minArticulationDistance.get())),
                         parallel(driveToAlignPose.get(), coralIntakeSuperstructure.get())
                                 .until(() -> superstructure.getSubsystem().isNear(SuperstructureState.CORAL_INTAKE))
-                                .unless(() -> robotState.hasCoral()),
+                                .unless(() -> robotState.hasCoralLoaded()),
                         parallel(driveToOvershootPose, intake.get()).until(() -> robotState
                                 .getDistanceTo(autoIntakeState.overshootPose)
                                 .lt(alignDistance.get())),

@@ -15,10 +15,9 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.leds.LED;
+import frc.robot.RobotState;
 import frc.robot.util.tuning.LoggedTunableMeasure;
 import org.littletonrobotics.junction.Logger;
 
@@ -31,7 +30,7 @@ public class Climb extends SubsystemBase {
     private static final LoggedTunableMeasure<AngleUnit, Angle> preDeployedPosition =
             new LoggedTunableMeasure<>("Climb/PreDeployedPosition", Radians.of(-13));
     private static final LoggedTunableMeasure<AngleUnit, Angle> releaseStartPosition =
-            new LoggedTunableMeasure<>("Climb/ReleaseStartPosition", Radians.of(-25));
+            new LoggedTunableMeasure<>("Climb/ReleaseStartPosition", Radians.of(-35));
     private static final LoggedTunableMeasure<AngleUnit, Angle> releasePosition =
             new LoggedTunableMeasure<>("Climb/ReleasePosition", Radians.of(-40));
     private static final LoggedTunableMeasure<AngleUnit, Angle> deployedPosition =
@@ -51,15 +50,14 @@ public class Climb extends SubsystemBase {
 
     private final ClimbIO io;
     private final ClimbIOInputsAutoLogged inputs = new ClimbIOInputsAutoLogged();
-
-    private final LED led;
+    private final RobotState robotState;
 
     private Optional<Angle> zeroedPosition = Optional.empty();
     private boolean deployed = false;
 
-    public Climb(ClimbIO io, LED led) {
+    public Climb(ClimbIO io, RobotState robotState) {
         this.io = io;
-        this.led = led;
+        this.robotState = robotState;
     }
 
     @Override
@@ -74,8 +72,8 @@ public class Climb extends SubsystemBase {
 
     public Command deploy() {
         return sequence(
-                        runOnce(() -> led.setAll(Color.kRed)),
-                        zero().unless(() -> hasBeenZeroed()),
+                        zero().unless(() -> hasBeenZeroed()).until(() -> hasBeenZeroed()),
+                        runOnce(() -> robotState.setClimbState(ClimbState.DEPLOYING)),
                         run(() -> io.setBrakeServoAngle(brakeDisengagedAngle.get()))
                                 .withTimeout(0.5),
                         run(() -> {
@@ -92,12 +90,12 @@ public class Climb extends SubsystemBase {
                                     io.setReleaseServoSpeed(1.0);
                                     io.setBrakeServoAngle(brakeDisengagedAngle.get());
                                 })
-                                .withTimeout(4.0),
-                        runOnce(() -> led.setAll(Color.kBlue)),
+                                .withTimeout(2.0),
+                        runOnce(() -> robotState.setClimbState(ClimbState.DEPLOYED)),
                         run(() -> {
                             var position = deployedPosition.get().plus(zeroedPosition.get());
                             io.setPosition(position, NewtonMeters.zero());
-                            io.setReleaseServoSpeed(1.0);
+                            io.stopReleaseServo();
                             io.setBrakeServoAngle(brakeDisengagedAngle.get());
                             deployed = true;
                         }))
@@ -108,7 +106,7 @@ public class Climb extends SubsystemBase {
 
     public Command retract() {
         return sequence(
-                        runOnce(() -> led.setStrobe(Color.kWhite)),
+                        runOnce(() -> robotState.setClimbState(ClimbState.RETRACTING)),
                         run(() -> {
                                     io.setBrakeServoAngle(brakeEngagedAngle.get());
                                     io.setVoltage(retractVoltage.get());
@@ -117,7 +115,10 @@ public class Climb extends SubsystemBase {
                                 .until(() -> inputs.position.in(Radians)
                                         > zeroedPosition.get().in(Radians)
                                                 + climbedPosition.get().in(Radians)),
-                        runOnce(() -> io.stop()))
+                        runOnce(() -> {
+                            io.stop();
+                            robotState.setClimbState(ClimbState.RETRACTED);
+                        }))
                 .unless(() -> !deployed || !hasBeenZeroed())
                 .withName("ClimbClimb");
     }
@@ -125,7 +126,10 @@ public class Climb extends SubsystemBase {
     public Command zero() {
         var debouncer = new Debouncer(0.1, DebounceType.kRising);
         return sequence(
-                        runOnce(() -> debouncer.calculate(false)),
+                        runOnce(() -> {
+                            robotState.setClimbState(ClimbState.ZEROING);
+                            debouncer.calculate(false);
+                        }),
                         run(() -> {
                                     io.setTorqueCurrent(zeroTorqueCurrent.get());
                                     io.setBrakeServoAngle(brakeDisengagedAngle.get());
@@ -134,6 +138,7 @@ public class Climb extends SubsystemBase {
                                 .until(() -> debouncer.calculate(inputs.velocity.lt(zeroVelocityLimit.get()))),
                         runOnce(() -> {
                             zeroedPosition = Optional.of(inputs.position);
+                            robotState.setClimbState(ClimbState.ZEROED);
                         }),
                         run(() -> {
                                     io.setPosition(

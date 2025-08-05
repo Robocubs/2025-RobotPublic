@@ -35,7 +35,7 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 public class LoggedAutoRoutine {
     private static final Pose2d netAlignPose = new Pose2d(7, 4.9, Rotation2d.kZero);
-    private static final Pose2d netScorePose = new Pose2d(7.4, 4.9, Rotation2d.kZero);
+    private static final Pose2d netScorePose = new Pose2d(7.5, 4.9, Rotation2d.kZero);
 
     private static final LoggedTunableMeasure<DistanceUnit, Distance> scoreDriveToPoseDistance =
             new LoggedTunableMeasure<>("Auto/ScoreDriveToPoseDistance", Meters.of(1.5));
@@ -216,8 +216,8 @@ public class LoggedAutoRoutine {
         var goalPose = robotState.getClosestReefBranch(flippedPose).orElse(flippedPose);
 
         commands.add(AutoScore.autoScore(drive, superstructure, robotState, goalPose)
-                .until(() -> !robotState.hasCoral())
-                .unless(() -> !robotState.hasCoral()));
+                .until(() -> !robotState.hasCoralLoaded())
+                .unless(() -> !robotState.hasCoralLoaded()));
         pathBuilder.add(GeometryUtil.autoFlip(goalPose));
 
         return this;
@@ -228,7 +228,7 @@ public class LoggedAutoRoutine {
                         superstructure.schedule(s -> s.runState(SuperstructureState.FEED)),
                         drive.toPose(() -> GeometryUtil.autoFlip(pose), true, true),
                         drive.pointModules(() -> Rotation2d.kZero).withTimeout(0.5))
-                .until(robotState::hasCoral));
+                .until(robotState::hasCoralLoaded));
         pathBuilder.add(pose);
         return this;
     }
@@ -265,7 +265,7 @@ public class LoggedAutoRoutine {
                                         .getDistanceTo(GeometryUtil.autoFlip(initialPose.get()))
                                         .gt(pickupCoralArticulationDistance.get())),
                         superstructure.schedule(s -> s.runState(SuperstructureState.CORAL_INTAKE)),
-                        idle().until(() -> robotState.hasCoral()),
+                        idle().until(() -> robotState.hasCoralLoaded()),
                         superstructure.schedule(s -> s.runState(SuperstructureState.STOW)))));
 
         var poses = path.getRawTrajectory().getPoses();
@@ -302,7 +302,7 @@ public class LoggedAutoRoutine {
         var path = routine.trajectory(pathName, splitIndex);
         var finalPose = path.getRawTrajectory().getFinalPose(false);
         commands.add(path.cmd()
-                .until(() -> robotState.hasCoral()
+                .until(() -> robotState.hasCoralLoaded()
                         && finalPose.isPresent()
                         && robotState
                                 .getDistanceTo(GeometryUtil.autoFlip(finalPose.get()))

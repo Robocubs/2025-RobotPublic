@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import frc.robot.subsystems.climb.ClimbState;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.DriveMeasurement;
 import frc.robot.subsystems.superstructure.SuperstructurePose;
@@ -30,6 +31,7 @@ import frc.robot.subsystems.vision.VisionMeasurement;
 import frc.robot.util.GeometryUtil;
 import frc.robot.util.tuning.LoggedTunableNumber;
 import lombok.Getter;
+import lombok.Setter;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -62,6 +64,7 @@ public class RobotState {
 
     private @AutoLogOutput @Getter double matchTimer;
     private @Getter boolean countingDown;
+    private @AutoLogOutput @Getter @Setter ClimbState climbState = ClimbState.NONE;
     private @AutoLogOutput @Getter CoralMode coralSelection = CoralMode.L4_CORAL;
     private @AutoLogOutput @Getter AlgaeMode algaeSelection = AlgaeMode.NONE;
     private @AutoLogOutput @Getter ChassisSpeeds robotVelocity = new ChassisSpeeds();
@@ -76,9 +79,11 @@ public class RobotState {
     private @AutoLogOutput boolean inProcessorArea;
     private @AutoLogOutput boolean inBargeArea;
     private @AutoLogOutput boolean underNetArea;
-    private Distance elevatorheight = Meters.zero();
-    private boolean hasCoral;
+    private Distance elevatorHeight = Meters.zero();
+    private boolean hasCoralLoaded;
+    private boolean hasCoralLoading;
     private boolean hasAlgae;
+    private boolean elevatorBlocked;
 
     public static enum CoralMode {
         L1_CORAL,
@@ -172,9 +177,11 @@ public class RobotState {
         }
 
         Logger.recordOutput(
-                "RobotState/LeftReefPose", hasCoral ? getLeftReefPose().orElse(Pose2d.kZero) : Pose2d.kZero);
+                "RobotState/LeftReefPose",
+                (hasCoralLoaded || hasCoralLoading) ? getLeftReefPose().orElse(Pose2d.kZero) : Pose2d.kZero);
         Logger.recordOutput(
-                "RobotState/RightReefPose", hasCoral ? getRightReefPose().orElse(Pose2d.kZero) : Pose2d.kZero);
+                "RobotState/RightReefPose",
+                (hasCoralLoaded || hasCoralLoading) ? getRightReefPose().orElse(Pose2d.kZero) : Pose2d.kZero);
     }
 
     @AutoLogOutput
@@ -249,7 +256,7 @@ public class RobotState {
     public boolean robotSpeedNominal(Distance elevatorHeight) {
         boolean speedNominal;
 
-        if (elevatorheight.lte(this.elevatorheight)) {
+        if (elevatorHeight.lte(this.elevatorHeight)) {
             // Always allow downward movements
             speedNominal = true;
         } else {
@@ -262,16 +269,24 @@ public class RobotState {
         return speedNominal;
     }
 
-    public boolean hasCoral() {
-        return hasCoral;
+    public boolean hasCoralLoaded() {
+        return hasCoralLoaded;
+    }
+
+    public boolean hasCoralLoading() {
+        return hasCoralLoading;
     }
 
     public boolean hasAlgae() {
         return hasAlgae;
     }
 
+    public boolean elevatorBlocked() {
+        return elevatorBlocked;
+    }
+
     public boolean hasGamePiece() {
-        return hasCoral || hasAlgae;
+        return hasCoralLoaded || hasCoralLoading || hasAlgae;
     }
 
     public Optional<Pose2d> getClosestReefBranch() {
@@ -404,9 +419,12 @@ public class RobotState {
         }
     }
 
-    public void setGamePieceStates(boolean hasCoral, boolean hasAlgae) {
-        this.hasCoral = hasCoral;
+    public void setGamePieceStates(
+            boolean hasCoralLoaded, boolean hasCoralLoading, boolean hasAlgae, boolean elevatorBlocked) {
+        this.hasCoralLoaded = hasCoralLoaded;
+        this.hasCoralLoading = hasCoralLoading;
         this.hasAlgae = hasAlgae;
+        this.elevatorBlocked = elevatorBlocked;
     }
 
     public void setPath(Pose2d... poses) {
@@ -414,7 +432,7 @@ public class RobotState {
     }
 
     public void updateSuperstructureState(SuperstructureState goal, SuperstructurePose currentPose) {
-        elevatorheight = currentPose.elevatorHeight();
+        elevatorHeight = currentPose.elevatorHeight();
 
         // Limit speed based current height or goal height, whichever is higher=
         maxSpeed = goal.getData().getPose().elevatorHeight().gte(currentPose.elevatorHeight())
@@ -449,11 +467,5 @@ public class RobotState {
         return Commands.runOnce(() -> coralSelection = selection)
                 .ignoringDisable(true)
                 .withName("RobotStateSetCoralSelection");
-    }
-
-    public Command setAlgaeSelection(AlgaeMode selection) {
-        return Commands.runOnce(() -> algaeSelection = selection)
-                .ignoringDisable(true)
-                .withName("RobotStateSetAlgaeSelection");
     }
 }

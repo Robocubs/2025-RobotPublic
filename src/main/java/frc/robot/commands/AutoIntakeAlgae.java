@@ -34,22 +34,35 @@ public final class AutoIntakeAlgae {
     public static final LoggedTunableMeasure<DistanceUnit, Distance> minArticulationDistance =
             new LoggedTunableMeasure<>("AutoIntakeAlgae/ArticulationDistance", Meters.of(1.0));
 
+    public static Command intakeHighAlgae(
+            Drive drive, Superstructure superstructure, RobotState robotState, Supplier<Pose2d> goalPose) {
+        var scheduler = new SubsystemScheduler<Superstructure>(superstructure, superstructure.maintainState());
+        return deadline(autoIntakeAlgae(drive, scheduler, robotState, goalPose, AlgaeLevel.HIGH), scheduler.cmd());
+    }
+
+    public static Command intakeLowAlgae(
+            Drive drive, Superstructure superstructure, RobotState robotState, Supplier<Pose2d> goalPose) {
+        var scheduler = new SubsystemScheduler<Superstructure>(superstructure, superstructure.maintainState());
+        return deadline(autoIntakeAlgae(drive, scheduler, robotState, goalPose, AlgaeLevel.LOW), scheduler.cmd());
+    }
+
     public static Command autoIntakeAlgae(
             Drive drive, Superstructure superstructure, RobotState robotState, Supplier<Pose2d> goalPose) {
         var scheduler = new SubsystemScheduler<Superstructure>(superstructure, superstructure.maintainState());
-        return deadline(autoIntakeAlgae(drive, scheduler, robotState, goalPose), scheduler.cmd());
+        return deadline(autoIntakeAlgae(drive, scheduler, robotState, goalPose, AlgaeLevel.AUTO), scheduler.cmd());
     }
 
     public static Command autoIntakeAlgae(
             Drive drive, SubsystemScheduler<Superstructure> superstructure, RobotState robotState, Pose2d goalPose) {
-        return autoIntakeAlgae(drive, superstructure, robotState, () -> goalPose);
+        return autoIntakeAlgae(drive, superstructure, robotState, () -> goalPose, AlgaeLevel.AUTO);
     }
 
     public static Command autoIntakeAlgae(
             Drive drive,
             SubsystemScheduler<Superstructure> superstructure,
             RobotState robotState,
-            Supplier<Pose2d> goalPose) {
+            Supplier<Pose2d> goalPose,
+            AlgaeLevel level) {
         var autoIntakeState = new AutoIntakeAlgaeState();
         var updateState = runOnce(() -> {
             var algaePose = robotState.getClosestReefAlgae(goalPose.get());
@@ -59,11 +72,22 @@ public final class AutoIntakeAlgae {
             }
 
             autoIntakeState.valid = true;
-            autoIntakeState.intakeState = robotState.getReefAlgaeMode(
-                                    algaePose.get().getRotation())
-                            == AlgaeMode.L2
-                    ? SuperstructureState.L2_ALGAE
-                    : SuperstructureState.L3_ALGAE;
+            switch (level) {
+                case HIGH:
+                    autoIntakeState.intakeState = SuperstructureState.L3_ALGAE;
+                    break;
+                case LOW:
+                    autoIntakeState.intakeState = SuperstructureState.L2_ALGAE;
+                    break;
+                case AUTO:
+                default:
+                    autoIntakeState.intakeState = robotState.getReefAlgaeMode(
+                                            algaePose.get().getRotation())
+                                    == AlgaeMode.L2
+                            ? SuperstructureState.L2_ALGAE
+                            : SuperstructureState.L3_ALGAE;
+                    break;
+            }
             autoIntakeState.alignPose = algaePose
                     .get()
                     .transformBy(new Transform2d(-alignDistance.get().in(Meters), 0.0, Rotation2d.kZero));
@@ -127,5 +151,11 @@ public final class AutoIntakeAlgae {
         private Pose2d overshootPose = Pose2d.kZero;
         private Pose2d finalPose = Pose2d.kZero;
         private SuperstructureState intakeState = SuperstructureState.L2_ALGAE;
+    }
+
+    private enum AlgaeLevel {
+        AUTO,
+        HIGH,
+        LOW
     }
 }

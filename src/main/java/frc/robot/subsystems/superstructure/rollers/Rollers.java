@@ -3,6 +3,8 @@ package frc.robot.subsystems.superstructure.rollers;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.measure.Angle;
@@ -32,8 +34,10 @@ public class Rollers {
             new LoggedTunableMeasure<>("Rollers/CoralFastFeedVelocity", RadiansPerSecond.of(30));
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> coralIntakeVelocity =
             new LoggedTunableMeasure<>("Rollers/CoralIntakeVelocity", RadiansPerSecond.of(40));
+    private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> l1CoralForwardVelocity =
+            new LoggedTunableMeasure<>("Rollers/L1CoralForwardVelocity", RadiansPerSecond.of(10));
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> coralForwardVelocity =
-            new LoggedTunableMeasure<>("Rollers/CoralForwardVelocity", RadiansPerSecond.of(40));
+            new LoggedTunableMeasure<>("Rollers/CoralForwardVelocity", RadiansPerSecond.of(30));
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> coralReverseVelocity =
             new LoggedTunableMeasure<>("Rollers/CoralReverseVelocity", RadiansPerSecond.of(-40));
     private static final LoggedTunableMeasure<AngularVelocityUnit, AngularVelocity> algaeIntakeVelocity =
@@ -55,6 +59,11 @@ public class Rollers {
             funnelDetectionDistance.in(Meters), detectionDistanceTolerance.in(Meters), false);
     private final Supplier<Distance> elevatorHeight;
 
+    private final ThresholdLatchedBoolean algaeDetectedFarLatch = ThresholdLatchedBoolean.fromThresholdTolerance(
+            algaeDetectionFarDistance.in(Meters), detectionDistanceTolerance.in(Meters), false);
+    private final Debouncer algaeDetectedFarDebouncer = new Debouncer(0.4, DebounceType.kRising);
+    private boolean algaeDetectedFar;
+
     private Angle coralFeedRollerPosition =
             Radians.of(coralFeedDistance.get().in(Meters) / coralRollerRadius.in(Meters));
     private Angle coralIntakeRollerPosition =
@@ -71,6 +80,7 @@ public class Rollers {
         AUTO_FEED_CORAL,
         AUTO_INTAKE_CORAL,
         AUTO_INTAKE_ALGAE,
+        L1_CORAL_FORWARD,
         CORAL_FORWARD,
         CORAL_REVERSE,
         ALGAE_FORWARD,
@@ -89,6 +99,9 @@ public class Rollers {
         coralDetected.update(inputs.coralDetectorDistance.in(Meters));
         algaeDetected.update(inputs.algaeDetectorDistance.in(Meters));
         funnelDetected.update(inputs.funnelDetectorDistance.in(Meters));
+
+        algaeDetectedFarLatch.update(inputs.algaeDetectorDistance.in(Meters));
+        algaeDetectedFar = algaeDetectedFarDebouncer.calculate(algaeDetectedFarLatch.get());
 
         if (elevatorHeight.get().lt(elevatorMaxHeightForDetection)) {
             elevatorDetected.update(inputs.elevatorDetectorDistance.in(Meters));
@@ -121,7 +134,7 @@ public class Rollers {
                                 ? inputs.position.plus(coralIntakeRollerPosition)
                                 : inputs.position.plus(coralFeedRollerPosition));
             }
-        } else if (algaeDetected.get() && state != State.AUTO_INTAKE_CORAL) {
+        } else if ((algaeDetected.get() || algaeDetectedFar) && state != State.AUTO_INTAKE_CORAL) {
             if (autoRollerPosition.isEmpty()) {
                 autoRollerPosition = Optional.of(inputs.position.plus(algaeIntakeRollerPosition));
             }
@@ -155,6 +168,8 @@ public class Rollers {
                     io.setVelocity(algaeIntakeVelocity.get());
                 }
                 break;
+            case L1_CORAL_FORWARD:
+                io.setVelocity(l1CoralForwardVelocity.get());
             case CORAL_FORWARD:
                 io.setVelocity(coralForwardVelocity.get());
                 break;
@@ -192,7 +207,7 @@ public class Rollers {
 
     @AutoLogOutput
     public boolean algaeDetected() {
-        return algaeDetected.get() && inputs.algaeSignalStrengthSignal > 2500;
+        return (algaeDetected.get() || algaeDetectedFar) && inputs.algaeSignalStrengthSignal > 2500;
     }
 
     @AutoLogOutput
