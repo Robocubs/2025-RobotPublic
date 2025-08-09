@@ -37,13 +37,13 @@ public final class AutoIntakeAlgae {
     public static Command intakeHighAlgae(
             Drive drive, Superstructure superstructure, RobotState robotState, Supplier<Pose2d> goalPose) {
         var scheduler = new SubsystemScheduler<Superstructure>(superstructure, superstructure.maintainState());
-        return deadline(autoIntakeAlgae(drive, scheduler, robotState, goalPose, AlgaeLevel.HIGH), scheduler.cmd());
+        return deadline(autoIntakeAlgae(drive, scheduler, robotState, goalPose, AlgaeLevel.L3), scheduler.cmd());
     }
 
     public static Command intakeLowAlgae(
             Drive drive, Superstructure superstructure, RobotState robotState, Supplier<Pose2d> goalPose) {
         var scheduler = new SubsystemScheduler<Superstructure>(superstructure, superstructure.maintainState());
-        return deadline(autoIntakeAlgae(drive, scheduler, robotState, goalPose, AlgaeLevel.LOW), scheduler.cmd());
+        return deadline(autoIntakeAlgae(drive, scheduler, robotState, goalPose, AlgaeLevel.L2), scheduler.cmd());
     }
 
     public static Command autoIntakeAlgae(
@@ -73,19 +73,23 @@ public final class AutoIntakeAlgae {
 
             autoIntakeState.valid = true;
             switch (level) {
-                case HIGH:
+                case L3:
                     autoIntakeState.intakeState = SuperstructureState.L3_ALGAE;
+                    autoIntakeState.removalState = SuperstructureState.L3_ALGAE_REMOVAL;
                     break;
-                case LOW:
+                case L2:
                     autoIntakeState.intakeState = SuperstructureState.L2_ALGAE;
+                    autoIntakeState.intakeState = SuperstructureState.L2_ALGAE_REMOVAL;
                     break;
                 case AUTO:
                 default:
-                    autoIntakeState.intakeState = robotState.getReefAlgaeMode(
-                                            algaePose.get().getRotation())
-                                    == AlgaeMode.L2
-                            ? SuperstructureState.L2_ALGAE
-                            : SuperstructureState.L3_ALGAE;
+                    if (robotState.getReefAlgaeMode(algaePose.get().getRotation()) == AlgaeMode.L2) {
+                        autoIntakeState.intakeState = SuperstructureState.L2_ALGAE;
+                        autoIntakeState.removalState = SuperstructureState.L2_ALGAE_REMOVAL;
+                    } else {
+                        autoIntakeState.intakeState = SuperstructureState.L3_ALGAE;
+                        autoIntakeState.removalState = SuperstructureState.L3_ALGAE_REMOVAL;
+                    }
                     break;
             }
             autoIntakeState.alignPose = algaePose
@@ -110,6 +114,8 @@ public final class AutoIntakeAlgae {
                 superstructure.schedule(s -> s.defer(() -> s.transitionToState(SuperstructureState.STOW)));
         var algaeIntakeSuperstructure =
                 superstructure.schedule(s -> s.defer(() -> s.transitionToState(autoIntakeState.intakeState)));
+        var algaeRemovalSuperstructure =
+                superstructure.schedule(s -> s.defer(() -> s.transitionToState(autoIntakeState.removalState)));
 
         return sequence(
                 updateState,
@@ -128,6 +134,7 @@ public final class AutoIntakeAlgae {
                                         .getDistanceTo(autoIntakeState.overshootPose)
                                         .lt(alignDistance.get())),
                                 driveToOvershootPoseSlow.until(() -> robotState.hasAlgae()),
+                                algaeRemovalSuperstructure,
                                 driveToFinalPose)
                         .unless(() -> !autoIntakeState.valid));
     }
@@ -151,11 +158,12 @@ public final class AutoIntakeAlgae {
         private Pose2d overshootPose = Pose2d.kZero;
         private Pose2d finalPose = Pose2d.kZero;
         private SuperstructureState intakeState = SuperstructureState.L2_ALGAE;
+        private SuperstructureState removalState = SuperstructureState.L2_ALGAE_REMOVAL;
     }
 
     private enum AlgaeLevel {
         AUTO,
-        HIGH,
-        LOW
+        L3,
+        L2
     }
 }

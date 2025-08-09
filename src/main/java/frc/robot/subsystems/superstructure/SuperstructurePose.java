@@ -34,12 +34,22 @@ public record SuperstructurePose(Distance elevatorHeight, Angle armAngle) {
     public static enum Preset {
         STOW(Inches.zero(), ArmConstants.safeTravelAngle, ArmConstants.algaeSafeTravelAngle),
         L1(Inches.of(3), Degrees.of(65)),
-        L2(Inches.of(16.5), Degrees.of(75)),
+        L2(Inches.of(16.25), Degrees.of(75)),
         L3(Inches.of(32), Degrees.of(75)),
         L4(Inches.of(60), Degrees.of(42.819)),
         BARGE(Inches.of(79), ArmConstants.algaeSafeTravelAngle),
         L2_ALGAE(Inches.of(21), Degrees.of(50)),
+        L2_ALGAE_REMOVAL(
+                L2_ALGAE.getPose().elevatorHeight.plus(Inches.of(3)),
+                L2_ALGAE.getPose().armAngle()),
+        // ArmConstants.safeTravelAngle,
+        // ArmConstants.algaeSafeTravelAngle),
         L3_ALGAE(Inches.of(36.5), Degrees.of(50)),
+        L3_ALGAE_REMOVAL(
+                L3_ALGAE.getPose().elevatorHeight.plus(Inches.of(3)),
+                L3_ALGAE.getPose().armAngle()),
+        // ArmConstants.safeTravelAngle,
+        // ArmConstants.algaeSafeTravelAngle),
         ALGAE_INTAKE(Inches.zero(), Degrees.of(22.0)),
         CORAL_INTAKE(Inches.of(7.5), Degrees.of(-65)),
         FEED(Inches.of(0), Degrees.of(88.8)),

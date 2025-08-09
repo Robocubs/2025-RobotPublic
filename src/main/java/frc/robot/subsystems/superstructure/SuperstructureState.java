@@ -59,12 +59,30 @@ public enum SuperstructureState {
             .pose(Preset.BARGE.getPose())
             .rollerState(Rollers.State.ALGAE_FORWARD)
             .build()),
+    L2_ALGAE_REMOVAL_RETRACTED(SuperstructureStateData.builder()
+            .pose(Preset.L2_ALGAE_REMOVAL.getRetractPose())
+            .algaePose(Preset.L2_ALGAE_REMOVAL.getAlgaeRetractPose())
+            .build()),
+    L2_ALGAE_REMOVAL(SuperstructureStateData.builder()
+            .pose(Preset.L2_ALGAE_REMOVAL.getPose())
+            .algaePose(Preset.L2_ALGAE_REMOVAL.getAlgaePose())
+            .rollerState(Rollers.State.AUTO_INTAKE_ALGAE)
+            .build()),
     L2_ALGAE_RETRACTED(SuperstructureStateData.builder()
             .pose(Preset.L2_ALGAE.getRetractPose())
             .algaePose(Preset.L2_ALGAE.getAlgaeRetractPose())
             .build()),
     L2_ALGAE(SuperstructureStateData.builder()
             .pose(Preset.L2_ALGAE.getPose())
+            .rollerState(Rollers.State.AUTO_INTAKE_ALGAE)
+            .build()),
+    L3_ALGAE_REMOVAL_RETRACTED(SuperstructureStateData.builder()
+            .pose(Preset.L3_ALGAE_REMOVAL.getRetractPose())
+            .algaePose(Preset.L3_ALGAE_REMOVAL.getAlgaeRetractPose())
+            .build()),
+    L3_ALGAE_REMOVAL(SuperstructureStateData.builder()
+            .pose(Preset.L3_ALGAE_REMOVAL.getPose())
+            .algaePose(Preset.L3_ALGAE_REMOVAL.getAlgaePose())
             .rollerState(Rollers.State.AUTO_INTAKE_ALGAE)
             .build()),
     L3_ALGAE_RETRACTED(SuperstructureStateData.builder()

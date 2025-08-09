@@ -50,7 +50,9 @@ public class GraphController implements SuperstructureController {
                 SuperstructureState.CORAL_INTAKE_RETRACTED,
                 SuperstructureState.BARGE,
                 SuperstructureState.L2_ALGAE_RETRACTED,
+                SuperstructureState.L2_ALGAE_REMOVAL_RETRACTED,
                 SuperstructureState.L3_ALGAE_RETRACTED,
+                SuperstructureState.L3_ALGAE_REMOVAL_RETRACTED,
                 SuperstructureState.ALGAE_INTAKE,
                 SuperstructureState.ALGAE_EJECT,
                 SuperstructureState.PROCESSOR,
@@ -86,13 +88,16 @@ public class GraphController implements SuperstructureController {
                 Map.entry(SuperstructureState.L4_CORAL, SuperstructureState.L4_CORAL_RETRACTED),
                 Map.entry(SuperstructureState.L4_CORAL_SCORE, SuperstructureState.L4_CORAL_RETRACTED),
                 Map.entry(SuperstructureState.L2_ALGAE, SuperstructureState.L2_ALGAE_RETRACTED),
-                Map.entry(SuperstructureState.L3_ALGAE, SuperstructureState.L3_ALGAE_RETRACTED));
+                Map.entry(SuperstructureState.L3_ALGAE, SuperstructureState.L3_ALGAE_RETRACTED),
+                Map.entry(SuperstructureState.L2_ALGAE_REMOVAL, SuperstructureState.L2_ALGAE_REMOVAL_RETRACTED),
+                Map.entry(SuperstructureState.L3_ALGAE_REMOVAL, SuperstructureState.L3_ALGAE_REMOVAL_RETRACTED));
 
         for (var entry : retractingStateMoves.entrySet()) {
             graph.addEdge(entry.getKey(), entry.getValue());
             graph.addEdge(entry.getValue(), entry.getKey());
         }
 
+        // To/from scoring states
         var scoringStates = Map.ofEntries(
                 Map.entry(SuperstructureState.L1_CORAL_SCORE, SuperstructureState.L1_CORAL),
                 Map.entry(SuperstructureState.L2_CORAL_SCORE, SuperstructureState.L2_CORAL),
@@ -101,13 +106,18 @@ public class GraphController implements SuperstructureController {
                 Map.entry(SuperstructureState.BARGE_SCORE, SuperstructureState.BARGE),
                 Map.entry(SuperstructureState.PROCESSOR_SCORE, SuperstructureState.PROCESSOR));
 
-        // To/from scoring states
         for (var entry : scoringStates.entrySet()) {
             graph.addEdge(entry.getKey(), entry.getValue());
             graph.addEdge(entry.getValue(), entry.getKey());
         }
 
-        // To/from intake states
+        // Algae removal states
+        graph.addEdge(SuperstructureState.L2_ALGAE, SuperstructureState.L2_ALGAE_REMOVAL);
+        graph.addEdge(SuperstructureState.L3_ALGAE, SuperstructureState.L3_ALGAE_REMOVAL);
+        graph.addEdge(SuperstructureState.L2_ALGAE_REMOVAL, SuperstructureState.L2_ALGAE);
+        graph.addEdge(SuperstructureState.L3_ALGAE_REMOVAL, SuperstructureState.L3_ALGAE);
+
+        // Intake states
         graph.addEdge(SuperstructureState.CORAL_INTAKE_RETRACTED, SuperstructureState.CORAL_INTAKE);
         graph.addEdge(SuperstructureState.CORAL_INTAKE, SuperstructureState.CORAL_INTAKE_RETRACTED);
     }

@@ -61,7 +61,7 @@ public class Rollers {
 
     private final ThresholdLatchedBoolean algaeDetectedFarLatch = ThresholdLatchedBoolean.fromThresholdTolerance(
             algaeDetectionFarDistance.in(Meters), detectionDistanceTolerance.in(Meters), false);
-    private final Debouncer algaeDetectedFarDebouncer = new Debouncer(0.4, DebounceType.kRising);
+    private final Debouncer algaeDetectedFarDebouncer = new Debouncer(0.5, DebounceType.kRising);
     private boolean algaeDetectedFar;
 
     private Angle coralFeedRollerPosition =

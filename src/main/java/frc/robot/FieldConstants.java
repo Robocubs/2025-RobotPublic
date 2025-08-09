@@ -235,8 +235,8 @@ public final class FieldConstants {
                     new Transform2d(Constants.halfRobotLength.in(Meters) + 0.12, 0.0, Rotation2d.k180deg);
             var l3CoralRobotTransform =
                     new Transform2d(Constants.halfRobotLength.in(Meters) + 0.12, 0.0, Rotation2d.k180deg);
-            var l4CoralRobotTransform =
-                    new Transform2d(Constants.halfRobotLength.in(Meters) + 0.27, 0.0, Rotation2d.k180deg);
+            var l4CoralRobotTransform = new Transform2d(
+                    Constants.halfRobotLength.in(Meters) + 0.27, Inches.of(1.0).in(Meters), Rotation2d.k180deg);
             var algaeRobotTransform = new Transform2d(Constants.halfRobotLength.in(Meters), 0.0, Rotation2d.k180deg);
             var l3AlgaeRobotTransform =
                     new Transform2d(Constants.halfRobotLength.in(Meters) + 0.1, 0.0, Rotation2d.k180deg);

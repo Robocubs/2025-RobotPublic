@@ -12,6 +12,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
+import frc.robot.RobotState.CoralMode;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureState;
@@ -25,16 +26,20 @@ public final class AutoScore {
 
     public static final LoggedTunableMeasure<DistanceUnit, Distance> maxDistanceReefLineup =
             new LoggedTunableMeasure<>("AutoScore/MaxDistanceReefLineup", Meters.of(1.0));
-    public static final LoggedTunableMeasure<DistanceUnit, Distance> alignDistance =
-            new LoggedTunableMeasure<>("AutoScore/AlignDistance", Meters.of(0.15));
+    public static final LoggedTunableMeasure<DistanceUnit, Distance> alignDistanceL4 =
+            new LoggedTunableMeasure<>("AutoScore/AlignDistanceL4", Meters.of(0.25));
+    public static final LoggedTunableMeasure<DistanceUnit, Distance> alignDistanceL23 =
+            new LoggedTunableMeasure<>("AutoScore/AlignDistanceL23", Meters.of(0.10));
     public static final LoggedTunableMeasure<DistanceUnit, Distance> bounceDistance =
-            new LoggedTunableMeasure<>("AutoScore/BounceDistance", Meters.of(0.05));
+            new LoggedTunableMeasure<>("AutoScore/BounceDistance", Meters.of(0.025));
     public static final LoggedTunableMeasure<DistanceUnit, Distance> reverseDistance =
             new LoggedTunableMeasure<>("AutoScore/ReverseDistance", Meters.of(0.5));
     public static final LoggedTunableMeasure<DistanceUnit, Distance> releaseTolerance =
             new LoggedTunableMeasure<>("AutoScore/ReleaseTolerance", Meters.of(0.05));
     public static final LoggedTunableMeasure<DistanceUnit, Distance> minArticulationDistance =
-            new LoggedTunableMeasure<>("AutoScore/ArticulationDistance", Meters.of(1.5));
+            new LoggedTunableMeasure<>("AutoScore/ArticulationDistance", Meters.of(1.75));
+    public static final LoggedTunableMeasure<DistanceUnit, Distance> minAlignDistance =
+            new LoggedTunableMeasure<>("AutoScore/MinAlignDistance", Meters.of(0.2));
 
     public static Command autoScore(
             Drive drive, Superstructure superstructure, RobotState robotState, Supplier<Optional<Pose2d>> goalPose) {
@@ -62,9 +67,12 @@ public final class AutoScore {
             }
 
             autoScoreState.valid = true;
+            autoScoreState.alignDistance = robotState.getCoralSelection() == CoralMode.L4_CORAL
+                    ? alignDistanceL4.get()
+                    : alignDistanceL23.get();
             autoScoreState.alignPose = scorePose
                     .get()
-                    .transformBy(new Transform2d(-alignDistance.get().in(Meters), 0.0, Rotation2d.kZero));
+                    .transformBy(new Transform2d(-autoScoreState.alignDistance.in(Meters), 0.0, Rotation2d.kZero));
             autoScoreState.bouncePose = scorePose
                     .get()
                     .transformBy(new Transform2d(bounceDistance.get().in(Meters), 0.0, Rotation2d.kZero));
@@ -124,11 +132,14 @@ public final class AutoScore {
                                                 .lt(minArticulationDistance.get())),
                                 parallel(driveToAlignPose.get(), alignSuperstructure.get())
                                         .until(() ->
-                                                superstructure.getSubsystem().isNear(autoScoreState.alignState)),
+                                                superstructure.getSubsystem().isNear(autoScoreState.alignState)
+                                                        && robotState
+                                                                .getDistanceTo(autoScoreState.alignPose)
+                                                                .lt(minArticulationDistance.get())),
                                 parallel(driveToBouncePose, alignSuperstructure.get())
                                         .until(() -> robotState
                                                 .getDistanceTo(autoScoreState.bouncePose)
-                                                .lt(alignDistance.get())),
+                                                .lt(autoScoreState.alignDistance)),
                                 parallel(bounce, score).until(() -> !robotState.hasCoralLoaded()),
                                 parallel(driveToReversePose, stowSuperstructure.get()))
                         .unless(() -> !autoScoreState.valid));
@@ -155,5 +166,6 @@ public final class AutoScore {
         private Pose2d bouncePose = Pose2d.kZero;
         private Pose2d reversePose = Pose2d.kZero;
         private Distance releaseDistance = Meters.zero();
+        private Distance alignDistance = Meters.zero();
     }
 }

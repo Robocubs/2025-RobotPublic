@@ -24,13 +24,13 @@ public final class AutoScoreQuick {
     private static final double reefFaceLength = FieldConstants.reefFaceLength.in(Meters);
 
     public static final LoggedTunableMeasure<DistanceUnit, Distance> maxDistanceReefLineup =
-            new LoggedTunableMeasure<>("AutoScore/MaxDistanceReefLineup", Meters.of(1.0));
+            new LoggedTunableMeasure<>("AutoScoreQuick/MaxDistanceReefLineup", Meters.of(1.0));
     public static final LoggedTunableMeasure<DistanceUnit, Distance> releaseTolerance =
-            new LoggedTunableMeasure<>("AutoScore/ReleaseTolerance", Inches.of(1.1));
+            new LoggedTunableMeasure<>("AutoScoreQuick/ReleaseTolerance", Inches.of(1.05));
     public static final LoggedTunableMeasure<DistanceUnit, Distance> slowModeDistance =
-            new LoggedTunableMeasure<>("AutoScore/SlowModeDistance", Meters.of(0.15));
+            new LoggedTunableMeasure<>("AutoScoreQuick/SlowModeDistance", Meters.of(0.15));
     public static final LoggedTunableMeasure<DistanceUnit, Distance> minArticulationDistance =
-            new LoggedTunableMeasure<>("AutoScore/ArticulationDistance", Meters.of(1.5));
+            new LoggedTunableMeasure<>("AutoScoreQuick/ArticulationDistance", Meters.of(1.5));
 
     public static Command autoScoreQuick(
             Drive drive, Superstructure superstructure, RobotState robotState, Supplier<Optional<Pose2d>> goalPose) {
