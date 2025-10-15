@@ -67,6 +67,14 @@ public final class FieldConstants {
         return RobotState.isBlue() ? blueConstants.rightCoralStationPose : redConstants.rightCoralStationPose;
     }
 
+    public static Pose2d getTopCoralStationPose() {
+        return RobotState.isBlue() ? blueConstants.robotCoralStationLeftPose : redConstants.robotCoralStationRightPose;
+    }
+
+    public static Pose2d getBottomCoralStationPose() {
+        return RobotState.isBlue() ? blueConstants.robotCoralStationRightPose : redConstants.robotCoralStationLeftPose;
+    }
+
     public static Pose2d[] reefBranchPoses() {
         return RobotState.isBlue() ? blueConstants.reefBranchPoses : redConstants.reefBranchPoses;
     }
@@ -244,8 +252,14 @@ public final class FieldConstants {
                     new Transform2d(Constants.halfRobotLength.in(Meters) + 0.1, 0.0, Rotation2d.k180deg);
 
             robotProcessorPose = processorPose.transformBy(processorRobotTransform);
-            robotCoralStationLeftPose = coralStationLeftPose.transformBy(coralStationRobotTransform);
-            robotCoralStationRightPose = coralStationRightPose.transformBy(coralStationRobotTransform);
+
+            var coralStationYOffset = Meters.of(0.5);
+            robotCoralStationLeftPose = coralStationLeftPose
+                    .transformBy(coralStationRobotTransform)
+                    .transformBy(new Transform2d(0, coralStationYOffset.in(Meters), Rotation2d.kZero));
+            robotCoralStationRightPose = coralStationRightPose
+                    .transformBy(coralStationRobotTransform)
+                    .transformBy(new Transform2d(0, -coralStationYOffset.in(Meters), Rotation2d.kZero));
 
             robotCoralL1Poses = Stream.of(reefAlgaePoses)
                     .map(pose -> pose.transformBy(l1CoralRobotTransform))

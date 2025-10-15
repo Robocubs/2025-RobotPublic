@@ -72,6 +72,7 @@ public class RobotState {
     private @AutoLogOutput @Getter LinearVelocity robotSpeed = MetersPerSecond.zero();
     private @AutoLogOutput @Getter LinearVelocity maxSpeed = DriveConstants.maxSpeed;
     private @Getter Rotation2d headingToReef = Rotation2d.kZero;
+    private @AutoLogOutput Pose2d coralStationPose = Pose2d.kZero;
     private @AutoLogOutput boolean isFacingReef;
     private @AutoLogOutput boolean isFacingProcessor;
     private @AutoLogOutput boolean isFacingBarge;
@@ -174,6 +175,16 @@ public class RobotState {
             algaeSelection = AlgaeMode.BARGE;
         } else {
             algaeSelection = AlgaeMode.NONE;
+        }
+
+        if (hasCoralLoaded() || hasAlgae()) {
+            coralStationPose = Pose2d.kZero;
+        } else if (pose.getY() < 3.526) {
+            coralStationPose = FieldConstants.getBottomCoralStationPose();
+        } else if (pose.getY() > 4.234) {
+            coralStationPose = FieldConstants.getTopCoralStationPose();
+        } else {
+            coralStationPose = Pose2d.kZero;
         }
 
         Logger.recordOutput(
@@ -395,6 +406,10 @@ public class RobotState {
         }
 
         return Optional.ofNullable(pose);
+    }
+
+    public Optional<Pose2d> getCoralStationPose() {
+        return coralStationPose == Pose2d.kZero ? Optional.empty() : Optional.of(coralStationPose);
     }
 
     public void addDriveMeasurements(DriveMeasurement... measurements) {

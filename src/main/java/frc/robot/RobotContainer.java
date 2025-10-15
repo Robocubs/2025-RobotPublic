@@ -181,8 +181,13 @@ public class RobotContainer {
 
         /* Driver Controller */
         driverController.start().onTrue(drive.resetRotation());
-        driverController.x().whileTrue(drive.brake());
         driverController.back().onTrue(superstructure.zeroElevator());
+
+        driverController
+                .x()
+                .and(() -> robotState.getCoralStationPose().isPresent())
+                .whileTrue(drive.toPose(
+                        () -> robotState.getCoralStationPose().orElse(robotState.getPose()), false, false));
 
         driverController
                 .leftTrigger()
