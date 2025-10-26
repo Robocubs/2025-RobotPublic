@@ -124,7 +124,7 @@ public class RobotState {
         var matchTimer = DriverStation.getMatchTime();
         if (DriverStation.isDisabled()) {
             countingDown = false;
-        } else if (matchTimer < matchTimer) {
+        } else if (matchTimer < this.matchTimer) {
             countingDown = true;
         }
         this.matchTimer = matchTimer;
